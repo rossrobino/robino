@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { process } from "./mod.js";
+import { process } from "./index.js";
 import { z } from "zod";
 
 const frontmatterSchema = z
