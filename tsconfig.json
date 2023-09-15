@@ -17,6 +17,7 @@
 		"lib": ["es2022", "dom", "dom.iterable"],
 		"declaration": true,
 		"rootDir": "src",
-		"outDir": "dist"
+		"outDir": "dist",
+		"types": ["bun-types"]
 	}
 }
