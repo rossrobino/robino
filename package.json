@@ -27,11 +27,11 @@
 	"repository": "github:rossrobino/mod",
 	"license": "MIT",
 	"dependencies": {
-		"prettier": "^3.0.3",
-		"robino": "^0.0.1"
+		"prettier": "^3.0.3"
 	},
 	"devDependencies": {
 		"@types/node": "^20.6.0",
+		"robino": "^0.0.1",
 		"typescript": "^5.2.2"
 	},
 	"prettier": "robino/config/prettier"
