@@ -1,24 +1,27 @@
 {
 	"name": "robino",
-	"version": "0.0.1",
+	"version": "0.0.15",
 	"description": "modules",
 	"type": "module",
-	"main": "./dist",
+	"main": "./mod.js",
+	"types": "./mod.d.ts",
 	"exports": {
+		".": {
+			"types": "./mod.d.ts",
+			"main": "./mod.js"
+		},
 		"./config/prettier": {
-			"types": "./dist/config/prettier/mod.d.ts",
-			"default": "./dist/config/prettier/mod.js"
+			"types": "./config/prettier/mod.d.ts",
+			"default": "./config/prettier/mod.js"
 		}
 	},
-	"files": [
-		"dist"
-	],
 	"scripts": {
 		"dev": "tsc --project tsconfig.build.json --watch",
 		"clean": "rm -rf ./dist",
-		"build": "pnpm clean && tsc --project tsconfig.build.json",
+		"copy": "cp package.json ./dist",
+		"build": "pnpm clean && tsc --project tsconfig.build.json && pnpm copy",
 		"format": "prettier --write .",
-		"pub": "pnpm i && pnpm format && pnpm build && pnpm publish --access public"
+		"pub": "pnpm i && pnpm build && pnpm publish --access public --no-git-checks ./dist"
 	},
 	"author": {
 		"name": "Ross Robino",
@@ -26,13 +29,10 @@
 	},
 	"repository": "github:rossrobino/mod",
 	"license": "MIT",
-	"dependencies": {
-		"prettier": "^3.0.3"
-	},
 	"devDependencies": {
-		"@types/node": "^20.6.0",
-		"robino": "^0.0.1",
+		"@types/node": "^20.6.1",
+		"prettier": "^3.0.3",
+		"robino": "^0.0.14",
 		"typescript": "^5.2.2"
-	},
-	"prettier": "robino/config/prettier"
+	}
 }
