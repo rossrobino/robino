@@ -1,6 +1,6 @@
 {
 	"name": "robino",
-	"version": "0.0.16",
+	"version": "0.0.18",
 	"description": "modules",
 	"type": "module",
 	"main": "./mod.js",
@@ -25,7 +25,7 @@
 		"copy": "cp package.json ./dist",
 		"build": "bun clean && tsc --project tsconfig.build.json && bun copy",
 		"format": "prettier --write .",
-		"pub": "bun i && bun run build && npm publish --access public --no-git-checks ./dist"
+		"pub": "bun i && bun run format && bun run build && npm publish --access public --no-git-checks ./dist"
 	},
 	"author": {
 		"name": "Ross Robino",

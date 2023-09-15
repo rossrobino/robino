@@ -35,12 +35,13 @@ console.log("hello");
 test("process", async () => {
 	const data = process(md);
 	expect(data.article).toBeString();
+	expect(data.article).toStartWith("---");
 	expect(data.headings).toBeArrayOfSize(2);
 	expect(data.headings.at(0)?.id).toBeString();
 	expect(data.headings.at(0)?.level).toBeNumber();
 	expect(data.headings.at(0)?.name).toBeString();
 	expect(data.html).toBeString();
-	expect(data.frontmatter).toBeUndefined();
+	expect(data.frontmatter).toEqual({});
 });
 
 test("with frontmatter", async () => {

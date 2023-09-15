@@ -23,17 +23,17 @@ marked.use(
 	}),
 );
 
-interface Heading {
+export interface MdHeading {
 	id: string;
 	level: number;
 	name: string;
 }
 
-interface Data<T extends z.ZodTypeAny> {
+export interface MdData<T extends z.ZodTypeAny> {
 	article: string;
-	headings: Heading[];
+	headings: MdHeading[];
 	html: string;
-	frontmatter?: z.infer<T>;
+	frontmatter: z.infer<T>;
 }
 
 /**
@@ -66,23 +66,19 @@ export const process = <T extends z.ZodTypeAny>(
 
 	const yaml = split.at(1);
 
-	const article = yaml ? split.slice(2).join("---") : md;
+	const shouldProcessFrontmatter = yaml && frontmatterSchema;
+
+	const article = shouldProcessFrontmatter ? split.slice(2).join("---") : md;
+
+	const frontmatter = shouldProcessFrontmatter
+		? getFrontmatter(yaml, frontmatterSchema)
+		: {};
 
 	const headings = getHeadings(article);
 
 	const html = marked.parse(article);
 
-	const data: Data<T> = { article, headings, html };
-
-	if (frontmatterSchema) {
-		if (!yaml) {
-			throw new Error(
-				"No yaml found.\n\nPlease ensure your frontmatter is at the beginning of your file and is surrounded by fences `---`",
-			);
-		}
-
-		data.frontmatter = getFrontmatter(yaml, frontmatterSchema);
-	}
+	const data: MdData<T> = { article, headings, html, frontmatter };
 
 	return data;
 };
@@ -93,7 +89,7 @@ const getHeadings = (md: string) => {
 	const codeFenceRegex = /^```/;
 
 	let inCodeFence = false;
-	const headings: Heading[] = [];
+	const headings: MdHeading[] = [];
 	for (let line of lines) {
 		line = line.trim();
 
