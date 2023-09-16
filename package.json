@@ -1,6 +1,6 @@
 {
 	"name": "robino",
-	"version": "0.0.20",
+	"version": "0.0.24",
 	"description": "modules",
 	"type": "module",
 	"types": "./index.d.ts",
