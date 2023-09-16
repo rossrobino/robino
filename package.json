@@ -1,32 +1,36 @@
 {
 	"name": "robino",
-	"version": "0.0.24",
+	"version": "0.0.30",
 	"description": "modules",
 	"type": "module",
-	"types": "./index.d.ts",
-	"main": "./index.js",
+	"types": "./dist/types/index.d.ts",
+	"main": "./dist/index.js",
 	"exports": {
 		".": {
-			"types": "./index.d.ts",
-			"default": "./index.js"
+			"types": "./dist/types/index.d.ts",
+			"default": "./dist/index.js"
 		},
 		"./config/prettier": {
-			"types": "./config/prettier/index.d.ts",
-			"default": "./config/prettier/index.js"
+			"types": "./dist/types/index.d.ts",
+			"default": "./dist/config/prettier/index.js"
 		},
 		"./util/md": {
-			"types": "./util/md/index.d.ts",
-			"default": "./util/md/index.js"
+			"types": "./dist/types/index.d.ts",
+			"default": "./dist/util/md/index.js"
 		}
 	},
+	"files": [
+		"dist"
+	],
 	"scripts": {
 		"dev": "tsc --project tsconfig.build.json --watch",
+		"format": "prettier --write .",
 		"build:clean": "rm -rf ./dist",
 		"build:js": "tsc --project tsconfig.build.json",
-		"build:copy": "cp package.json ./dist",
-		"build": "bun build:clean && bun build:js && bun build:copy",
-		"format": "prettier --write .",
-		"pub": "bun i && bun format && bun run build && npm publish --access public --no-git-checks ./dist"
+		"build:dts": "bun scripts/dts/index.ts",
+		"build": "bun build:clean && bun build:js && bun build:dts",
+		"pub:only": "npm publish --access public",
+		"pub": "bun i && bun format && bun run build && bun pub:only"
 	},
 	"author": {
 		"name": "Ross Robino",
