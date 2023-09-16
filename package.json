@@ -1,14 +1,14 @@
 {
 	"name": "robino",
-	"version": "0.0.19",
+	"version": "0.0.20",
 	"description": "modules",
 	"type": "module",
-	"main": "./index.js",
 	"types": "./index.d.ts",
+	"main": "./index.js",
 	"exports": {
 		".": {
 			"types": "./index.d.ts",
-			"main": "./index.js"
+			"default": "./index.js"
 		},
 		"./config/prettier": {
 			"types": "./config/prettier/index.d.ts",
@@ -21,11 +21,12 @@
 	},
 	"scripts": {
 		"dev": "tsc --project tsconfig.build.json --watch",
-		"clean": "rm -rf ./dist",
-		"copy": "cp package.json ./dist",
-		"build": "bun clean && tsc --project tsconfig.build.json && bun copy",
+		"build:clean": "rm -rf ./dist",
+		"build:js": "tsc --project tsconfig.build.json",
+		"build:copy": "cp package.json ./dist",
+		"build": "bun build:clean && bun build:js && bun build:copy",
 		"format": "prettier --write .",
-		"pub": "bun i && bun run format && bun run build && npm publish --access public --no-git-checks ./dist"
+		"pub": "bun i && bun format && bun run build && npm publish --access public --no-git-checks ./dist"
 	},
 	"author": {
 		"name": "Ross Robino",
@@ -34,7 +35,6 @@
 	"repository": "github:rossrobino/mod",
 	"license": "MIT",
 	"dependencies": {
-		"@types/js-yaml": "^4.0.5",
 		"highlight.js": "^11.8.0",
 		"js-yaml": "^4.1.0",
 		"marked": "^9.0.1",
@@ -44,7 +44,7 @@
 		"zod": "^3.22.2"
 	},
 	"devDependencies": {
-		"@types/node": "^20.6.1",
+		"@types/js-yaml": "^4.0.5",
 		"bun-types": "latest",
 		"prettier": "^3.0.3",
 		"robino": "^0.0.19",
