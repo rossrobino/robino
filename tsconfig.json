@@ -14,7 +14,7 @@
 		"noUncheckedIndexedAccess": true,
 		"moduleResolution": "NodeNext",
 		"module": "NodeNext",
-		"lib": ["es2022", "dom", "dom.iterable"],
+		"lib": ["ESNext", "dom", "dom.iterable"],
 		"declaration": true,
 		"rootDir": "src",
 		"outDir": "dist",
