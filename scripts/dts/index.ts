@@ -1,42 +1,60 @@
-import pkg from "../../package.json";
-import { unlink, mkdir } from "node:fs/promises";
+import { unlink, mkdir, readFile, writeFile, exists } from "node:fs/promises";
 import { dirname } from "node:path";
 import { format } from "prettier";
+import { z } from "zod";
 
-interface Export {
-	[key: string]: {
-		types: string;
-		default: string;
-	};
-}
+const ModuleTypes = z.object({
+	types: z.string(),
+	default: z.string(),
+});
 
-interface PackageJson {
-	name: string;
-	types: string;
-	exports: Export;
-}
+const PackageJsonSchema = z.object({
+	name: z.string(),
+	types: z.string(),
+	exports: z.record(ModuleTypes),
+});
 
-const combine = async (pkg: PackageJson) => {
-	const exports: Export = pkg.exports;
-	const { name, types } = pkg;
+export const main = async (pkg: z.infer<typeof PackageJsonSchema>) => {
+	const data = PackageJsonSchema.parse(pkg);
+	const { name, types, exports } = data;
 
 	let combined = "";
 
 	for (const key in exports) {
-		if (exports[key]?.default) {
-			const filePath = exports[key]?.default;
-			if (filePath) {
-				const path = filePath.replace("js", "d.ts");
-				const dts = (await Bun.file(path).text()).replaceAll("declare", "");
-				await unlink(path);
-				const mod = name + key.slice(1); // remove "."
-				combined += `declare module "${mod}" {${dts}}`;
-			}
+		if (!key.startsWith(".")) {
+			throw new Error(`sub path ${key} does not start with "."`);
+		}
+
+		const mod = name + key.slice(1); // remove "."...
+
+		const entryPoint = exports[key];
+
+		if (entryPoint) {
+			const tsPath = entryPoint.default;
+
+			// replace the last "js"
+			const path = tsPath.replace(/js$/, "d.ts");
+
+			const dts = await readFileAndDelete(path);
+
+			combined += `declare module "${mod}" {${dts}}`;
 		}
 	}
 	combined = await format(combined, { parser: "babel-ts" });
-	await mkdir(dirname(types));
-	await Bun.write(types, combined);
+	await mkdir(dirname(types), { recursive: true });
+	await writeFile(types, combined);
 };
 
-combine(pkg);
+const readFileAndDelete = async (path: string) => {
+	const fileExists = await exists(path);
+	if (!fileExists) {
+		throw new Error(`${path} not found.`);
+	}
+	const text = await readFile(path, "utf-8");
+	await unlink(path);
+	return text;
+};
+
+import pkg from "../../package.json";
+
+main(pkg);

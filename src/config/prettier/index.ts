@@ -1,8 +1,6 @@
 import type { Config } from "prettier";
 
-const config = {
+export const config = {
 	useTabs: true,
 	htmlWhitespaceSensitivity: "ignore",
 } satisfies Config;
-
-export default config;
