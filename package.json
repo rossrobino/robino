@@ -1,6 +1,6 @@
 {
 	"name": "robino",
-	"version": "0.0.38",
+	"version": "0.0.39",
 	"description": "modules",
 	"type": "module",
 	"types": "./index.d.ts",
@@ -38,17 +38,16 @@
 	"dependencies": {
 		"highlight.js": "^11.8.0",
 		"js-yaml": "^4.1.0",
-		"marked": "^9.0.1",
+		"marked": "^9.0.2",
 		"marked-gfm-heading-id": "^3.0.8",
 		"marked-highlight": "^2.0.6",
 		"marked-smartypants": "^1.1.3",
 		"zod": "^3.22.2"
 	},
 	"devDependencies": {
-		"@types/js-yaml": "^4.0.5",
+		"@types/js-yaml": "^4.0.6",
 		"bun-types": "latest",
 		"prettier": "^3.0.3",
-		"robino": "^0.0.19",
 		"typescript": "^5.2.2"
 	}
 }
