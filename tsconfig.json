@@ -6,18 +6,18 @@
 		"verbatimModuleSyntax": true,
 		"allowJs": true,
 		"checkJs": true,
-		"noUnusedLocals": true,
-		"noUnusedParameters": true,
 		"resolveJsonModule": true,
 		"moduleDetection": "force",
 		"strict": true,
 		"noUncheckedIndexedAccess": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
 		"moduleResolution": "NodeNext",
 		"module": "NodeNext",
-		"lib": ["ESNext", "dom", "dom.iterable"],
 		"declaration": true,
+		"lib": ["ESNext", "dom", "dom.iterable"],
+		"types": ["bun-types"],
 		"rootDir": "src",
 		"outDir": "dist",
-		"types": ["bun-types"]
-	}
+	},
 }

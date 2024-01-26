@@ -33,7 +33,7 @@ console.log("hello");
 `;
 
 test("process", async () => {
-	const data = process(md);
+	const data = await process(md);
 	expect(data.article).toBeString();
 	expect(data.article).toStartWith("---");
 	expect(data.headings).toBeArrayOfSize(2);
@@ -45,7 +45,7 @@ test("process", async () => {
 });
 
 test("with frontmatter", async () => {
-	const data = process(md, frontmatterSchema);
+	const data = await process(md, frontmatterSchema);
 	expect(data.frontmatter?.title).toBeString();
 	expect(data.frontmatter?.description).toBeString();
 	expect(data.frontmatter?.keywords).toBeArrayOfSize(3);

@@ -15,7 +15,7 @@ marked.use(
 			let language = "plaintext";
 			if (hljs.getLanguage(lang)) {
 				language = lang;
-			} else if (lang === "svelte") {
+			} else if (lang === "svelte" || lang === "vue") {
 				language = "html";
 			}
 			return hljs.highlight(code, { language }).value;
@@ -58,7 +58,7 @@ export interface MdData<T extends z.ZodTypeAny> {
  * @param frontmatterSchema an optional zod schema
  * @returns headings, article, frontmatter, html
  */
-export const process = <T extends z.ZodTypeAny>(
+export const process = async <T extends z.ZodTypeAny>(
 	md: string,
 	frontmatterSchema?: T,
 ) => {
@@ -76,7 +76,7 @@ export const process = <T extends z.ZodTypeAny>(
 
 	const headings = getHeadings(article);
 
-	const html = marked.parse(article);
+	const html = await marked.parse(article);
 
 	const data: MdData<T> = { article, headings, html, frontmatter };
 
