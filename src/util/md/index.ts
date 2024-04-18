@@ -24,15 +24,27 @@ marked.use(
 );
 
 export interface MdHeading {
+	/** The heading's `id` (lowercase name separated by dashes). */
 	id: string;
+
+	/** Heading level - ex: h4 is level 4. */
 	level: number;
+
+	/** The text content of the heading element. */
 	name: string;
 }
 
 export interface MdData<T extends z.ZodTypeAny> {
+	/** The markdown content, without the frontmatter if it is parsed. */
 	article: string;
+
+	/** An array of headings with `id`, `level` and `name`. */
 	headings: MdHeading[];
+
+	/** The generated HTML. */
 	html: string;
+
+	/** The parsed frontmatter inferred from the passed in schema. */
 	frontmatter: z.infer<T>;
 }
 
@@ -41,6 +53,8 @@ export interface MdData<T extends z.ZodTypeAny> {
  * - uses `highlight.js` to syntax highlight
  *
  * ```ts
+ * import { processMarkdown } from "robino/util/md";
+ *
  * const frontmatterSchema = z
  *		.object({
  *			title: z.string(),
@@ -52,13 +66,13 @@ export interface MdData<T extends z.ZodTypeAny> {
  *		})
  *		.strict();
  *
- * const data = process(md, frontmatterSchema);
+ * const data = processMarkdown(md, frontmatterSchema);
  * ```
  * @param md string
  * @param frontmatterSchema an optional zod schema
  * @returns headings, article, frontmatter, html
  */
-export const process = async <T extends z.ZodTypeAny>(
+export const processMarkdown = async <T extends z.ZodTypeAny>(
 	md: string,
 	frontmatterSchema?: T,
 ) => {

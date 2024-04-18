@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { process } from "./index.js";
+import { processMarkdown } from "./index.js";
 import { z } from "zod";
 
 const frontmatterSchema = z
@@ -32,8 +32,8 @@ console.log("hello");
 
 `;
 
-test("process", async () => {
-	const data = await process(md);
+test("processMarkdown", async () => {
+	const data = await processMarkdown(md);
 	expect(data.article).toBeString();
 	expect(data.article).toStartWith("---");
 	expect(data.headings).toBeArrayOfSize(2);
@@ -45,7 +45,7 @@ test("process", async () => {
 });
 
 test("with frontmatter", async () => {
-	const data = await process(md, frontmatterSchema);
+	const data = await processMarkdown(md, frontmatterSchema);
 	expect(data.frontmatter?.title).toBeString();
 	expect(data.frontmatter?.description).toBeString();
 	expect(data.frontmatter?.keywords).toBeArrayOfSize(3);
