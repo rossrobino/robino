@@ -1,15 +1,8 @@
 import { load } from "js-yaml";
 import { z } from "zod";
-import { Marked } from "marked";
-import { gfmHeadingId } from "marked-gfm-heading-id";
-import { markedHighlight } from "marked-highlight";
-import { markedSmartypants } from "marked-smartypants";
-import {
-	codeToHtml,
-	type BundledLanguage,
-	type BundledTheme,
-	type CodeToHastOptions,
-} from "shiki";
+import MarkdownIt from "markdown-it";
+import Shiki, { type MarkdownItShikiOptions } from "@shikijs/markdown-it";
+import Anchor from "markdown-it-anchor";
 
 export interface MdHeading {
 	/** The heading's `id` (lowercase name separated by dashes). */
@@ -68,32 +61,21 @@ export const processMarkdown = async <T extends z.ZodTypeAny>(options: {
 	 *
 	 * @default { theme: "github-dark-default" }
 	 */
-	shiki?: Partial<CodeToHastOptions<BundledLanguage, BundledTheme>>;
+	shiki?: MarkdownItShikiOptions;
 
 	/** an optional zod schema */
 	frontmatterSchema?: T;
 }) => {
 	const { md, frontmatterSchema, shiki } = options;
 
-	const marked = new Marked();
+	const it = MarkdownIt({ typographer: true });
 
-	marked.use(gfmHeadingId());
+	const dfShiki: MarkdownItShikiOptions = { theme: "github-dark-default" };
 
-	marked.use(markedSmartypants());
+	Object.assign(dfShiki, shiki);
 
-	marked.use(
-		markedHighlight({
-			async: true,
-			highlight: async (code, lang) => {
-				const options: CodeToHastOptions<BundledLanguage, BundledTheme> = {
-					lang,
-					theme: "github-dark-default",
-				};
-				Object.assign(options, shiki);
-				return codeToHtml(code, options);
-			},
-		}),
-	);
+	it.use(await Shiki(dfShiki));
+	it.use(Anchor, { permalink: Anchor.permalink.headerLink() });
 
 	const split = md.split("---");
 
@@ -109,7 +91,7 @@ export const processMarkdown = async <T extends z.ZodTypeAny>(options: {
 
 	const headings = getHeadings(article);
 
-	const html = await marked.parse(article);
+	const html = it.render(article);
 
 	const data: MdData<T> = { article, headings, html, frontmatter };
 
