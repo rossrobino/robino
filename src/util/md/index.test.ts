@@ -33,20 +33,20 @@ console.log("hello");
 `;
 
 test("processMarkdown", async () => {
-	const data = await processMarkdown(md);
-	expect(data.article).toBeString();
-	expect(data.article).toStartWith("---");
-	expect(data.headings).toBeArrayOfSize(2);
-	expect(data.headings.at(0)?.id).toBeString();
-	expect(data.headings.at(0)?.level).toBeNumber();
-	expect(data.headings.at(0)?.name).toBeString();
-	expect(data.html).toBeString();
-	expect(data.frontmatter).toEqual({});
+	const { article, headings, html, frontmatter } = await processMarkdown(md);
+	expect(article).toBeString();
+	expect(article).toStartWith("---");
+	expect(headings).toBeArrayOfSize(2);
+	expect(headings.at(0)?.id).toBeString();
+	expect(headings.at(0)?.level).toBeNumber();
+	expect(headings.at(0)?.name).toBeString();
+	expect(html).toBeString();
+	expect(frontmatter).toEqual({});
 });
 
 test("with frontmatter", async () => {
-	const data = await processMarkdown(md, frontmatterSchema);
-	expect(data.frontmatter?.title).toBeString();
-	expect(data.frontmatter?.description).toBeString();
-	expect(data.frontmatter?.keywords).toBeArrayOfSize(3);
+	const { frontmatter } = await processMarkdown(md, frontmatterSchema);
+	expect(frontmatter.title).toBeString();
+	expect(frontmatter.description).toBeString();
+	expect(frontmatter.keywords).toBeArrayOfSize(3);
 });
