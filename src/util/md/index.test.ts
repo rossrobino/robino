@@ -33,7 +33,10 @@ console.log("hello");
 `;
 
 test("processMarkdown", async () => {
-	const { article, headings, html, frontmatter } = await processMarkdown(md);
+	const { article, headings, html, frontmatter } = await processMarkdown({
+		md,
+		shiki: { theme: "night-owl" },
+	});
 	expect(article).toBeString();
 	expect(article).toStartWith("---");
 	expect(headings).toBeArrayOfSize(2);
@@ -45,7 +48,11 @@ test("processMarkdown", async () => {
 });
 
 test("with frontmatter", async () => {
-	const { frontmatter } = await processMarkdown(md, frontmatterSchema);
+	const { frontmatter, html } = await processMarkdown({
+		md,
+		frontmatterSchema,
+	});
+	Bun.write("./src/util/md/test.html", html);
 	expect(frontmatter.title).toBeString();
 	expect(frontmatter.description).toBeString();
 	expect(frontmatter.keywords).toBeArrayOfSize(3);

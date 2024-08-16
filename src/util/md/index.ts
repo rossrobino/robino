@@ -1,27 +1,15 @@
 import { load } from "js-yaml";
 import { z } from "zod";
-import { marked } from "marked";
+import { Marked } from "marked";
 import { gfmHeadingId } from "marked-gfm-heading-id";
 import { markedHighlight } from "marked-highlight";
 import { markedSmartypants } from "marked-smartypants";
-import hljs from "highlight.js/lib/common";
-
-marked.use(gfmHeadingId());
-marked.use(markedSmartypants());
-marked.use(
-	markedHighlight({
-		langPrefix: "hljs language-",
-		highlight: (code, lang) => {
-			let language = "plaintext";
-			if (hljs.getLanguage(lang)) {
-				language = lang;
-			} else if (lang === "svelte" || lang === "vue") {
-				language = "html";
-			}
-			return hljs.highlight(code, { language }).value;
-		},
-	}),
-);
+import {
+	codeToHtml,
+	type BundledLanguage,
+	type BundledTheme,
+	type CodeToHastOptions,
+} from "shiki";
 
 export interface MdHeading {
 	/** The heading's `id` (lowercase name separated by dashes). */
@@ -68,14 +56,45 @@ export interface MdData<T extends z.ZodTypeAny> {
  *
  * const data = processMarkdown(md, frontmatterSchema);
  * ```
- * @param md string
- * @param frontmatterSchema an optional zod schema
+ * @param options string
  * @returns headings, article, frontmatter, html
  */
-export const processMarkdown = async <T extends z.ZodTypeAny>(
-	md: string,
-	frontmatterSchema?: T,
-) => {
+export const processMarkdown = async <T extends z.ZodTypeAny>(options: {
+	/** String of markdown to process. */
+	md: string;
+
+	/**
+	 * Don't need to assign a new `lang`, that's passed in for you.
+	 *
+	 * @default { theme: "github-dark-default" }
+	 */
+	shiki?: Partial<CodeToHastOptions<BundledLanguage, BundledTheme>>;
+
+	/** an optional zod schema */
+	frontmatterSchema?: T;
+}) => {
+	const { md, frontmatterSchema, shiki } = options;
+
+	const marked = new Marked();
+
+	marked.use(gfmHeadingId());
+
+	marked.use(markedSmartypants());
+
+	marked.use(
+		markedHighlight({
+			async: true,
+			highlight: async (code, lang) => {
+				const options: CodeToHastOptions<BundledLanguage, BundledTheme> = {
+					lang,
+					theme: "github-dark-default",
+				};
+				Object.assign(options, shiki);
+				return codeToHtml(code, options);
+			},
+		}),
+	);
+
 	const split = md.split("---");
 
 	const yaml = split.at(1);

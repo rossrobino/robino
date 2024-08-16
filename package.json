@@ -1,6 +1,6 @@
 {
 	"name": "robino",
-	"version": "0.2.1",
+	"version": "0.3.0",
 	"description": "modules",
 	"type": "module",
 	"types": "./index.d.ts",
@@ -36,12 +36,12 @@
 	"repository": "github:rossrobino/robino",
 	"license": "MIT",
 	"dependencies": {
-		"highlight.js": "^11.10.0",
 		"js-yaml": "^4.1.0",
 		"marked": "^14.0.0",
 		"marked-gfm-heading-id": "^4.0.1",
 		"marked-highlight": "^2.1.4",
 		"marked-smartypants": "^1.1.8",
+		"shiki": "^1.13.0",
 		"zod": "^3.23.8"
 	},
 	"devDependencies": {
