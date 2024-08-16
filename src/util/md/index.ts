@@ -38,7 +38,7 @@ export interface MdData<T extends z.ZodTypeAny> {
 
 /**
  * - processes markdown strings, pass in a zod schema for frontmatter parsing
- * - uses `highlight.js` to syntax highlight
+ * - uses `shiki` to syntax highlight
  *
  * ```ts
  * import { processMarkdown } from "robino/util/md";
@@ -54,9 +54,9 @@ export interface MdData<T extends z.ZodTypeAny> {
  *		})
  *		.strict();
  *
- * const data = processMarkdown(md, frontmatterSchema);
+ * const data = processMarkdown({ md, frontmatterSchema });
  * ```
- * @param options string
+ * @param options
  * @returns headings, article, frontmatter, html
  */
 export const processMarkdown = async <T extends z.ZodTypeAny>(options: {
