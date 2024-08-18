@@ -36,7 +36,7 @@ export interface MdData<T extends z.ZodTypeAny> {
 
 const variableTheme = createCssVariablesTheme({
 	name: "css-variables",
-	variablePrefix: "--hl-",
+	variablePrefix: "--shiki-",
 	fontStyle: true,
 });
 
