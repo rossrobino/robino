@@ -1,8 +1,13 @@
 import { load } from "js-yaml";
 import { z } from "zod";
 import MarkdownIt from "markdown-it";
-import Shiki, { type MarkdownItShikiOptions } from "@shikijs/markdown-it";
+import { fromHighlighter } from "@shikijs/markdown-it";
 import Anchor from "markdown-it-anchor";
+import { createCssVariablesTheme, createHighlighter } from "shiki";
+import {
+	transformerNotationDiff,
+	transformerNotationHighlight,
+} from "@shikijs/transformers";
 
 export interface MdHeading {
 	/** The heading's `id` (lowercase name separated by dashes). */
@@ -28,6 +33,39 @@ export interface MdData<T extends z.ZodTypeAny> {
 	/** The parsed frontmatter inferred from the passed in schema. */
 	frontmatter: z.infer<T>;
 }
+
+const variableTheme = createCssVariablesTheme({
+	name: "css-variables",
+	variablePrefix: "--hl-",
+	fontStyle: true,
+});
+
+const highlighter = await createHighlighter({
+	themes: [variableTheme],
+	langs: [
+		"javascript",
+		"typescript",
+		"css",
+		"html",
+		"svelte",
+		"jsx",
+		"tsx",
+		"json",
+		"md",
+		"bash",
+	],
+});
+
+const mdIt = MarkdownIt({ typographer: true, linkify: true, html: true });
+
+mdIt.use(
+	fromHighlighter(highlighter, {
+		theme: "css-variables",
+		transformers: [transformerNotationDiff(), transformerNotationHighlight()],
+	}),
+);
+
+mdIt.use(Anchor, { permalink: Anchor.permalink.headerLink() });
 
 /**
  * - processes markdown strings, pass in a zod schema for frontmatter parsing
@@ -56,26 +94,10 @@ export const processMarkdown = async <T extends z.ZodTypeAny>(options: {
 	/** String of markdown to process. */
 	md: string;
 
-	/**
-	 * Don't need to assign a new `lang`, that's passed in for you.
-	 *
-	 * @default { theme: "github-dark-default" }
-	 */
-	shiki?: MarkdownItShikiOptions;
-
 	/** an optional zod schema */
 	frontmatterSchema?: T;
 }) => {
-	const { md, frontmatterSchema, shiki } = options;
-
-	const it = MarkdownIt({ typographer: true });
-
-	const dfShiki: MarkdownItShikiOptions = { theme: "github-dark-default" };
-
-	Object.assign(dfShiki, shiki);
-
-	it.use(await Shiki(dfShiki));
-	it.use(Anchor, { permalink: Anchor.permalink.headerLink() });
+	const { md, frontmatterSchema } = options;
 
 	const split = md.split("---");
 
@@ -91,7 +113,7 @@ export const processMarkdown = async <T extends z.ZodTypeAny>(options: {
 
 	const headings = getHeadings(article);
 
-	const html = it.render(article);
+	const html = mdIt.render(article);
 
 	const data: MdData<T> = { article, headings, html, frontmatter };
 

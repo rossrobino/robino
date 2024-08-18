@@ -27,15 +27,18 @@ date: 10, 23, 23
 Paragraph
 
 \`\`\`ts
-console.log("hello");
+console.log("hello"); // [!code ++]
+console.log("hello"); // [!code --]
 \`\`\`
 
+\`\`\`html
+<hello>test</hello>
+\`\`\`
 `;
 
 test("processMarkdown", async () => {
 	const { article, headings, html, frontmatter } = await processMarkdown({
 		md,
-		shiki: { theme: "night-owl" },
 	});
 	expect(article).toBeString();
 	expect(article).toStartWith("---");

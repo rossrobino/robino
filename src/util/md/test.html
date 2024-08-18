@@ -6,7 +6,13 @@
 </h2>
 <p>Paragraph</p>
 <pre
-	class="shiki github-dark-default"
-	style="background-color: #0d1117; color: #e6edf3"
+	class="shiki css-variables has-diff"
+	style="background-color: var(--hl-background); color: var(--hl-foreground)"
 	tabindex="0"
-><code class="language-ts"><span class="line"><span style="color:#E6EDF3">console.</span><span style="color:#D2A8FF">log</span><span style="color:#E6EDF3">(</span><span style="color:#A5D6FF">"hello"</span><span style="color:#E6EDF3">);</span></span></code></pre>
+><code class="language-ts"><span class="line diff add"><span style="color:var(--hl-token-constant)">console</span><span style="color:var(--hl-token-function)">.log</span><span style="color:var(--hl-foreground)">(</span><span style="color:var(--hl-token-string-expression)">"hello"</span><span style="color:var(--hl-foreground)">); </span></span>
+<span class="line diff remove"><span style="color:var(--hl-token-constant)">console</span><span style="color:var(--hl-token-function)">.log</span><span style="color:var(--hl-foreground)">(</span><span style="color:var(--hl-token-string-expression)">"hello"</span><span style="color:var(--hl-foreground)">); </span></span></code></pre>
+<pre
+	class="shiki css-variables"
+	style="background-color: var(--hl-background); color: var(--hl-foreground)"
+	tabindex="0"
+><code class="language-html"><span class="line"><span style="color:var(--hl-foreground)">&#x3C;</span><span style="color:var(--hl-token-string-expression)">hello</span><span style="color:var(--hl-foreground)">>test&#x3C;/</span><span style="color:var(--hl-token-string-expression)">hello</span><span style="color:var(--hl-foreground)">></span></span></code></pre>
