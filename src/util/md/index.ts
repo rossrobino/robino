@@ -4,10 +4,7 @@ import MarkdownIt from "markdown-it";
 import { fromHighlighter } from "@shikijs/markdown-it";
 import Anchor from "markdown-it-anchor";
 import { createCssVariablesTheme, createHighlighter } from "shiki";
-import {
-	transformerNotationDiff,
-	transformerNotationHighlight,
-} from "@shikijs/transformers";
+import { transformerMetaHighlight } from "@shikijs/transformers";
 
 export interface MdHeading {
 	/** The heading's `id` (lowercase name separated by dashes). */
@@ -61,7 +58,7 @@ const mdIt = MarkdownIt({ typographer: true, linkify: true, html: true });
 mdIt.use(
 	fromHighlighter(highlighter, {
 		theme: "css-variables",
-		transformers: [transformerNotationDiff(), transformerNotationHighlight()],
+		transformers: [transformerMetaHighlight()],
 	}),
 );
 
