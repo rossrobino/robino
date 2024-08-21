@@ -2,7 +2,7 @@
 	"name": "@robino/tsconfig",
 	"description": "tsconfig",
 	"license": "MIT",
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"dependencies": {
 		"@types/node": "^22.4.2"
 	}
