@@ -159,7 +159,7 @@ const getFrontmatter = (yaml: string, frontmatterSchema: z.ZodSchema) => {
 
 	if (!parsed.success) {
 		throw new Error(
-			`Invalid frontmatter, please correct or update schema in src/schemas:\n\n${JSON.stringify(
+			`Invalid frontmatter, please correct or update schema:\n\n${JSON.stringify(
 				parsed.error.issues[0],
 				null,
 				4,

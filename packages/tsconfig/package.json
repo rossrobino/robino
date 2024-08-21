@@ -3,6 +3,10 @@
 	"description": "tsconfig",
 	"license": "MIT",
 	"version": "0.1.0",
+	"files": [
+		"tsconfig.json",
+		"README.md"
+	],
 	"dependencies": {
 		"@types/node": "^22.4.2"
 	}
