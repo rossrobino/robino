@@ -1,8 +1,7 @@
 import type { Config } from "prettier";
 
-const config = {
+export default {
 	useTabs: true,
 	htmlWhitespaceSensitivity: "ignore",
+	plugins: ["@trivago/prettier-plugin-sort-imports"],
 } satisfies Config;
-
-export default config;

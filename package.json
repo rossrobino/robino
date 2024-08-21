@@ -1,54 +1,37 @@
 {
-	"name": "robino",
-	"version": "0.3.5",
-	"description": "modules",
+	"name": "robino-monorepo",
 	"type": "module",
-	"types": "./index.d.ts",
-	"main": "./index.js",
-	"exports": {
-		".": {
-			"types": "./index.d.ts",
-			"default": "./index.js"
-		},
-		"./config/prettier": {
-			"types": "./config/prettier/index.d.ts",
-			"default": "./config/prettier/index.js"
-		},
-		"./util/md": {
-			"types": "./util/md/index.d.ts",
-			"default": "./util/md/index.js"
-		}
+	"version": "0.0.0",
+	"private": true,
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/rossrobino/robino.git"
 	},
-	"scripts": {
-		"dev": "tsc --project tsconfig.build.json --watch",
-		"format": "prettier --write .",
-		"build:clean": "rm -rf ./dist",
-		"build:js": "tsc --project tsconfig.build.json",
-		"build:copy": "cp package.json ./dist",
-		"build": "bun build:clean && bun build:js && bun build:copy",
-		"pub:only": "npm publish ./dist",
-		"pub": "bun i && bun format && bun run build && bun pub:only"
-	},
+	"license": "MIT",
+	"packageManager": "npm@10.8.2",
+	"workspaces": [
+		"packages/*"
+	],
 	"author": {
 		"name": "Ross Robino",
 		"url": "https://robino.dev"
 	},
-	"repository": "github:rossrobino/robino",
-	"license": "MIT",
-	"dependencies": {
-		"@shikijs/markdown-it": "^1.14.1",
-		"js-yaml": "^4.1.0",
-		"markdown-it": "^14.1.0",
-		"markdown-it-anchor": "^9.0.1",
-		"shiki": "^1.14.1",
-		"zod": "^3.23.8"
+	"scripts": {
+		"test": "vitest run",
+		"test:dev": "vitest",
+		"dev": "turbo dev",
+		"check": "turbo check",
+		"build": "turbo build",
+		"format": "prettier --write .",
+		"changeset": "changeset",
+		"version": "changeset version",
+		"release": "npm run build && changeset publish"
 	},
 	"devDependencies": {
-		"@shikijs/transformers": "^1.14.1",
-		"@types/js-yaml": "^4.0.9",
-		"@types/markdown-it": "^14.1.2",
-		"bun-types": "latest",
+		"@changesets/cli": "^2.27.7",
 		"prettier": "^3.3.3",
-		"typescript": "^5.5.4"
+		"turbo": "^2.0.14",
+		"typescript": "^5.5.4",
+		"vitest": "^2.0.5"
 	}
 }

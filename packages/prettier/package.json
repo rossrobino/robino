@@ -1,0 +1,27 @@
+{
+	"name": "@robino/prettier",
+	"description": "prettier config",
+	"version": "0.0.1",
+	"type": "module",
+	"types": "./dist/index.d.ts",
+	"main": "./dist/index.js",
+	"license": "MIT",
+	"files": [
+		"dist",
+		"README.md"
+	],
+	"scripts": {
+		"check": "tsc --noEmit",
+		"dev": "tsc --watch",
+		"build": "tsc"
+	},
+	"peerDependencies": {
+		"prettier": "^3.3.3"
+	},
+	"dependencies": {
+		"@trivago/prettier-plugin-sort-imports": "^4.3.0"
+	},
+	"devDependencies": {
+		"@robino/tsconfig": "*"
+	}
+}

@@ -4,3 +4,6 @@ node_modules
 .env.*
 !.env.example
 bun.lockb
+package-lock.json
+dist
+.turbo

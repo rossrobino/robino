@@ -1,0 +1,9 @@
+{
+	"name": "@robino/tsconfig",
+	"description": "tsconfig",
+	"license": "MIT",
+	"version": "0.0.1",
+	"dependencies": {
+		"@types/node": "^22.4.2"
+	}
+}

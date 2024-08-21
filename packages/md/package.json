@@ -1,0 +1,32 @@
+{
+	"name": "@robino/md",
+	"description": "markdown processor",
+	"version": "0.0.1",
+	"type": "module",
+	"types": "./dist/index.d.ts",
+	"main": "./dist/index.js",
+	"license": "MIT",
+	"files": [
+		"dist",
+		"README.md"
+	],
+	"scripts": {
+		"check": "tsc --noEmit",
+		"dev": "tsc --watch",
+		"build": "tsc"
+	},
+	"dependencies": {
+		"@shikijs/markdown-it": "^1.14.1",
+		"@shikijs/transformers": "^1.14.1",
+		"js-yaml": "^4.1.0",
+		"markdown-it": "^14.1.0",
+		"markdown-it-anchor": "^9.0.1",
+		"shiki": "^1.14.1",
+		"zod": "^3.23.8"
+	},
+	"devDependencies": {
+		"@robino/tsconfig": "*",
+		"@types/js-yaml": "^4.0.9",
+		"@types/markdown-it": "^14.1.2"
+	}
+}

@@ -1,10 +1,10 @@
-import { load } from "js-yaml";
-import { z } from "zod";
-import MarkdownIt from "markdown-it";
 import { fromHighlighter } from "@shikijs/markdown-it";
+import { transformerMetaHighlight } from "@shikijs/transformers";
+import { load } from "js-yaml";
+import MarkdownIt from "markdown-it";
 import Anchor from "markdown-it-anchor";
 import { createCssVariablesTheme, createHighlighter } from "shiki";
-import { transformerMetaHighlight } from "@shikijs/transformers";
+import { z } from "zod";
 
 export interface MdHeading {
 	/** The heading's `id` (lowercase name separated by dashes). */
@@ -31,11 +31,9 @@ export interface MdData<T extends z.ZodTypeAny> {
 	frontmatter: z.infer<T>;
 }
 
-const variableTheme = createCssVariablesTheme({
-	name: "css-variables",
-	variablePrefix: "--shiki-",
-	fontStyle: true,
-});
+const mdIt = MarkdownIt({ typographer: true, linkify: true, html: true });
+
+const variableTheme = createCssVariablesTheme();
 
 const highlighter = await createHighlighter({
 	themes: [variableTheme],
@@ -52,8 +50,6 @@ const highlighter = await createHighlighter({
 		"bash",
 	],
 });
-
-const mdIt = MarkdownIt({ typographer: true, linkify: true, html: true });
 
 mdIt.use(
 	fromHighlighter(highlighter, {
@@ -91,7 +87,7 @@ export const processMarkdown = async <T extends z.ZodTypeAny>(options: {
 	/** String of markdown to process. */
 	md: string;
 
-	/** an optional zod schema */
+	/** An optional zod schema */
 	frontmatterSchema?: T;
 }) => {
 	const { md, frontmatterSchema } = options;

@@ -1,0 +1,32 @@
+{
+	"compilerOptions": {
+		"outDir": "${configDir}/dist",
+		"target": "ESNext",
+		"module": "NodeNext",
+		"moduleResolution": "NodeNext",
+		"lib": ["ESNext", "DOM", "DOM.Iterable"],
+		"declaration": true,
+
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"resolveJsonModule": true,
+		"moduleDetection": "force",
+		"verbatimModuleSyntax": true,
+
+		"strict": true,
+		"noImplicitOverride": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noUncheckedIndexedAccess": true,
+		"noFallthroughCasesInSwitch": true,
+
+		"allowJs": true,
+		"checkJs": true
+	},
+	"include": ["${configDir}/src", "${configDir}/**/*.test.*"],
+	"exclude": [
+		"${configDir}/**/*.test.*",
+		"${configDir}/node_modules",
+		"${configDir}/dist"
+	]
+}
