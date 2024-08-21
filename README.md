@@ -1,3 +1,8 @@
 # robino
 
-A collection of JS modules
+## Packages
+
+- [robino](https://github.com/rossrobino/robino/tree/main/packages/robino)
+- [@robino/md](https://github.com/rossrobino/robino/tree/main/packages/md)
+- [@robino/prettier](https://github.com/rossrobino/robino/tree/main/packages/prettier)
+- [@robino/tsconfig](https://github.com/rossrobino/robino/tree/main/packages/tsconfig)
