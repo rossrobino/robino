@@ -1,5 +1,11 @@
 # @robino/tsconfig
 
+## 0.2.1
+
+### Patch Changes
+
+- 1febc22: fix: update files in package.json
+
 ## 0.2.0
 
 ### Minor Changes
