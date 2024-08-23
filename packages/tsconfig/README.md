@@ -9,11 +9,11 @@ npm i -D @robino/tsconfig
 - Sets source dir to `src` and out dir to `dist`
 - Assumes you know your runtime, includes `@types/node` as a dependency, and sets `lib` to include DOM types.
 
-## default
+## tsc
 
 ```json
 {
-	"extends": "@robino/tsconfig/tsconfig.json"
+	"extends": "@robino/tsconfig/tsc.json"
 }
 ```
 
@@ -21,11 +21,6 @@ npm i -D @robino/tsconfig
 
 ```json
 {
-	"extends": "@robino/tsconfig/tsconfig.json",
-	"compilerOptions": {
-		"moduleResolution": "Bundler",
-		"module": "Preserve",
-		"noEmit": true
-	}
+	"extends": "@robino/tsconfig/bundler.json"
 }
 ```

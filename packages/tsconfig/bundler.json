@@ -1,0 +1,9 @@
+{
+	"$schema": "https://json.schemastore.org/tsconfig",
+	"extends": "./tsc.json",
+	"compilerOptions": {
+		"moduleResolution": "Bundler",
+		"module": "Preserve",
+		"noEmit": true
+	}
+}
