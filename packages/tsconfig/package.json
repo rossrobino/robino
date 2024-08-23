@@ -4,7 +4,8 @@
 	"license": "MIT",
 	"version": "0.2.0",
 	"files": [
-		"tsconfig.json",
+		"tsc.json",
+		"bundler.json",
 		"README.md"
 	],
 	"dependencies": {
