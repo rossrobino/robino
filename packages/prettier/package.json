@@ -19,7 +19,8 @@
 		"prettier": "^3.3.3"
 	},
 	"dependencies": {
-		"@trivago/prettier-plugin-sort-imports": "^4.3.0"
+		"@trivago/prettier-plugin-sort-imports": "^4.3.0",
+		"prettier-plugin-css-order": "^2.1.2"
 	},
 	"devDependencies": {
 		"@robino/tsconfig": "*"
