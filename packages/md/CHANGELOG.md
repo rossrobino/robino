@@ -1,5 +1,11 @@
 # @robino/md
 
+## 0.1.3
+
+### Patch Changes
+
+- a3ae427: remove top level await
+
 ## 0.1.2
 
 ### Patch Changes
