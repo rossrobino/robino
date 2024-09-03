@@ -1,9 +1,13 @@
-import { fromHighlighter } from "@shikijs/markdown-it";
+import { fromHighlighter } from "@shikijs/markdown-it/core";
 import { transformerMetaHighlight } from "@shikijs/transformers";
 import { load } from "js-yaml";
 import MarkdownIt from "markdown-it";
 import Anchor from "markdown-it-anchor";
-import { createCssVariablesTheme, createHighlighter } from "shiki";
+import {
+	createCssVariablesTheme,
+	createHighlighterCore,
+	type HighlighterGeneric,
+} from "shiki/core";
 import { z } from "zod";
 
 export interface MdHeading {
@@ -35,21 +39,22 @@ const mdIt = MarkdownIt({ typographer: true, linkify: true, html: true });
 
 const variableTheme = createCssVariablesTheme();
 
-const highlighter = await createHighlighter({
+const highlighter = (await createHighlighterCore({
 	themes: [variableTheme],
 	langs: [
-		"javascript",
-		"typescript",
-		"css",
-		"html",
-		"svelte",
-		"jsx",
-		"tsx",
-		"json",
-		"md",
-		"bash",
+		import("shiki/langs/javascript.mjs"),
+		import("shiki/langs/typescript.mjs"),
+		import("shiki/langs/css.mjs"),
+		import("shiki/langs/html.mjs"),
+		import("shiki/langs/svelte.mjs"),
+		import("shiki/langs/jsx.mjs"),
+		import("shiki/langs/tsx.mjs"),
+		import("shiki/langs/json.mjs"),
+		import("shiki/langs/md.mjs"),
+		import("shiki/langs/bash.mjs"),
 	],
-});
+	loadWasm: import("shiki/wasm"),
+})) as HighlighterGeneric<any, any>;
 
 mdIt.use(
 	fromHighlighter(highlighter, {
