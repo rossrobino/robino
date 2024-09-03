@@ -35,36 +35,6 @@ export interface MdData<T extends z.ZodTypeAny> {
 	frontmatter: z.infer<T>;
 }
 
-const mdIt = MarkdownIt({ typographer: true, linkify: true, html: true });
-
-const variableTheme = createCssVariablesTheme();
-
-const highlighter = (await createHighlighterCore({
-	themes: [variableTheme],
-	langs: [
-		import("shiki/langs/javascript.mjs"),
-		import("shiki/langs/typescript.mjs"),
-		import("shiki/langs/css.mjs"),
-		import("shiki/langs/html.mjs"),
-		import("shiki/langs/svelte.mjs"),
-		import("shiki/langs/jsx.mjs"),
-		import("shiki/langs/tsx.mjs"),
-		import("shiki/langs/json.mjs"),
-		import("shiki/langs/md.mjs"),
-		import("shiki/langs/bash.mjs"),
-	],
-	loadWasm: import("shiki/wasm"),
-})) as HighlighterGeneric<any, any>;
-
-mdIt.use(
-	fromHighlighter(highlighter, {
-		theme: "css-variables",
-		transformers: [transformerMetaHighlight()],
-	}),
-);
-
-mdIt.use(Anchor, { permalink: Anchor.permalink.headerLink() });
-
 /**
  * - processes markdown strings, pass in a zod schema for frontmatter parsing
  * - uses `shiki` to syntax highlight
@@ -110,6 +80,36 @@ export const processMarkdown = async <T extends z.ZodTypeAny>(options: {
 		: {};
 
 	const headings = getHeadings(article);
+
+	const mdIt = MarkdownIt({ typographer: true, linkify: true, html: true });
+
+	const variableTheme = createCssVariablesTheme();
+
+	const highlighter = (await createHighlighterCore({
+		themes: [variableTheme],
+		langs: [
+			import("shiki/langs/javascript.mjs"),
+			import("shiki/langs/typescript.mjs"),
+			import("shiki/langs/css.mjs"),
+			import("shiki/langs/html.mjs"),
+			import("shiki/langs/svelte.mjs"),
+			import("shiki/langs/jsx.mjs"),
+			import("shiki/langs/tsx.mjs"),
+			import("shiki/langs/json.mjs"),
+			import("shiki/langs/md.mjs"),
+			import("shiki/langs/bash.mjs"),
+		],
+		loadWasm: import("shiki/wasm"),
+	})) as HighlighterGeneric<any, any>;
+
+	mdIt.use(
+		fromHighlighter(highlighter, {
+			theme: "css-variables",
+			transformers: [transformerMetaHighlight()],
+		}),
+	);
+
+	mdIt.use(Anchor, { permalink: Anchor.permalink.headerLink() });
 
 	const html = mdIt.render(article);
 
