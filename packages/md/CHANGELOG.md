@@ -1,5 +1,11 @@
 # @robino/md
 
+## 0.2.0
+
+### Minor Changes
+
+- 47aada0: make `processMarkdown` sync
+
 ## 0.1.3
 
 ### Patch Changes
