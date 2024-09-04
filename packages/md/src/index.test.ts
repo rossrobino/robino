@@ -48,8 +48,8 @@ const add = (a: number, b: number): number => {
 \`\`\`
 `;
 
-test("processMarkdown", async () => {
-	const { article, headings, html, frontmatter } = await processMarkdown({
+test("processMarkdown", () => {
+	const { article, headings, html, frontmatter } = processMarkdown({
 		md,
 	});
 	expect(article).toBeTypeOf("string");
@@ -63,7 +63,7 @@ test("processMarkdown", async () => {
 });
 
 test("with frontmatter", async () => {
-	const { frontmatter, html } = await processMarkdown({
+	const { frontmatter, html } = processMarkdown({
 		md,
 		frontmatterSchema,
 	});

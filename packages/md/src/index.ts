@@ -5,9 +5,20 @@ import MarkdownIt from "markdown-it";
 import Anchor from "markdown-it-anchor";
 import {
 	createCssVariablesTheme,
-	createHighlighterCore,
+	createHighlighterCoreSync,
 	type HighlighterGeneric,
+	createJavaScriptRegexEngine,
 } from "shiki/core";
+import langBash from "shiki/langs/bash.mjs";
+import langCss from "shiki/langs/css.mjs";
+import langHtml from "shiki/langs/html.mjs";
+import langJs from "shiki/langs/javascript.mjs";
+import langJson from "shiki/langs/json.mjs";
+import langJsx from "shiki/langs/jsx.mjs";
+import langMd from "shiki/langs/md.mjs";
+import langSvelte from "shiki/langs/svelte.mjs";
+import langTsx from "shiki/langs/tsx.mjs";
+import langTs from "shiki/langs/typescript.mjs";
 import { z } from "zod";
 
 export interface MdHeading {
@@ -35,6 +46,36 @@ export interface MdData<T extends z.ZodTypeAny> {
 	frontmatter: z.infer<T>;
 }
 
+const mdIt = MarkdownIt({ typographer: true, linkify: true, html: true });
+
+const variableTheme = createCssVariablesTheme();
+
+const highlighter = createHighlighterCoreSync({
+	themes: [variableTheme],
+	langs: [
+		langJs,
+		langTs,
+		langHtml,
+		langCss,
+		langSvelte,
+		langJsx,
+		langTsx,
+		langMd,
+		langBash,
+		langJson,
+	],
+	engine: createJavaScriptRegexEngine(),
+}) as HighlighterGeneric<any, any>;
+
+mdIt.use(
+	fromHighlighter(highlighter, {
+		theme: "css-variables",
+		transformers: [transformerMetaHighlight()],
+	}),
+);
+
+mdIt.use(Anchor, { permalink: Anchor.permalink.headerLink() });
+
 /**
  * - processes markdown strings, pass in a zod schema for frontmatter parsing
  * - uses `shiki` to syntax highlight
@@ -58,7 +99,7 @@ export interface MdData<T extends z.ZodTypeAny> {
  * @param options
  * @returns headings, article, frontmatter, html
  */
-export const processMarkdown = async <T extends z.ZodTypeAny>(options: {
+export const processMarkdown = <T extends z.ZodTypeAny>(options: {
 	/** String of markdown to process. */
 	md: string;
 
@@ -80,36 +121,6 @@ export const processMarkdown = async <T extends z.ZodTypeAny>(options: {
 		: {};
 
 	const headings = getHeadings(article);
-
-	const mdIt = MarkdownIt({ typographer: true, linkify: true, html: true });
-
-	const variableTheme = createCssVariablesTheme();
-
-	const highlighter = (await createHighlighterCore({
-		themes: [variableTheme],
-		langs: [
-			import("shiki/langs/javascript.mjs"),
-			import("shiki/langs/typescript.mjs"),
-			import("shiki/langs/css.mjs"),
-			import("shiki/langs/html.mjs"),
-			import("shiki/langs/svelte.mjs"),
-			import("shiki/langs/jsx.mjs"),
-			import("shiki/langs/tsx.mjs"),
-			import("shiki/langs/json.mjs"),
-			import("shiki/langs/md.mjs"),
-			import("shiki/langs/bash.mjs"),
-		],
-		loadWasm: import("shiki/wasm"),
-	})) as HighlighterGeneric<any, any>;
-
-	mdIt.use(
-		fromHighlighter(highlighter, {
-			theme: "css-variables",
-			transformers: [transformerMetaHighlight()],
-		}),
-	);
-
-	mdIt.use(Anchor, { permalink: Anchor.permalink.headerLink() });
 
 	const html = mdIt.render(article);
 
