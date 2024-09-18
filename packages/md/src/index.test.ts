@@ -68,6 +68,7 @@ test("with frontmatter", async () => {
 		frontmatterSchema,
 	});
 	await fs.writeFile(path.join(import.meta.dirname, "test.html"), html);
+	console.log(html);
 	expect(frontmatter.title).toBeTypeOf("string");
 	expect(frontmatter.description).toBeTypeOf("string");
 	expect(frontmatter.keywords).toBeInstanceOf(Array);

@@ -12,13 +12,9 @@ import {
 import langBash from "shiki/langs/bash.mjs";
 import langCss from "shiki/langs/css.mjs";
 import langHtml from "shiki/langs/html.mjs";
-import langJs from "shiki/langs/javascript.mjs";
 import langJson from "shiki/langs/json.mjs";
-import langJsx from "shiki/langs/jsx.mjs";
 import langMd from "shiki/langs/md.mjs";
-import langSvelte from "shiki/langs/svelte.mjs";
 import langTsx from "shiki/langs/tsx.mjs";
-import langTs from "shiki/langs/typescript.mjs";
 import { z } from "zod";
 
 export interface MdHeading {
@@ -52,19 +48,14 @@ const variableTheme = createCssVariablesTheme();
 
 const highlighter = createHighlighterCoreSync({
 	themes: [variableTheme],
-	langs: [
-		langJs,
-		langTs,
-		langHtml,
-		langCss,
-		langSvelte,
-		langJsx,
-		langTsx,
-		langMd,
-		langBash,
-		langJson,
-	],
+	langs: [langHtml, langCss, langTsx, langMd, langBash, langJson],
 	engine: createJavaScriptRegexEngine(),
+	langAlias: {
+		svelte: "html",
+		js: "tsx",
+		jsx: "tsx",
+		ts: "tsx",
+	},
 }) as HighlighterGeneric<any, any>;
 
 mdIt.use(
