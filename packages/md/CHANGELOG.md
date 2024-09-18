@@ -1,5 +1,11 @@
 # @robino/md
 
+## 0.2.1
+
+### Patch Changes
+
+- cf7594b: remove some langs - replace with aliases
+
 ## 0.2.0
 
 ### Minor Changes
