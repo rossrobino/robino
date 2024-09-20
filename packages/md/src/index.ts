@@ -15,7 +15,7 @@ import langHtml from "shiki/langs/html.mjs";
 import langJson from "shiki/langs/json.mjs";
 import langMd from "shiki/langs/md.mjs";
 import langTsx from "shiki/langs/tsx.mjs";
-import { z } from "zod";
+import type { z } from "zod";
 
 export interface MdHeading {
 	/** The heading's `id` (lowercase name separated by dashes). */
