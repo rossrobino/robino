@@ -49,7 +49,7 @@ const add = (a: number, b: number): number => {
 \`\`\`
 `;
 
-test.skip("processMarkdown", () => {
+test("processMarkdown", () => {
 	const { article, headings, html, frontmatter } = processMarkdown({
 		md,
 	});
