@@ -1,9 +1,21 @@
-import { processMarkdown } from "./index.js";
+import { MarkdownProcessor } from "./index.js";
 import fs from "node:fs/promises";
 import path from "node:path";
-import langLua from "shiki/langs/lua.mjs"
+import langHtml from "shiki/langs/html.mjs";
+import langLua from "shiki/langs/lua.mjs";
+import langMd from "shiki/langs/md.mjs";
+import langTsx from "shiki/langs/tsx.mjs";
 import { expect, test } from "vitest";
 import { z } from "zod";
+
+const processor = new MarkdownProcessor({
+	highlighter: {
+		langs: [langHtml, langMd, langTsx, langLua],
+		langAlias: {
+			ts: "tsx",
+		},
+	},
+});
 
 const frontmatterSchema = z
 	.object({
@@ -47,12 +59,17 @@ const add = (a: number, b: number): number => {
 \`\`\`html
 <hello attr="hi">test</hello>
 \`\`\`
+
+\`\`\`lua
+function hello_world()
+  print("Hello, World!")
+end
+\`\`\`
 `;
 
-test("processMarkdown", () => {
-	const { article, headings, html, frontmatter } = processMarkdown({
-		md,
-	});
+test("process", () => {
+	const { article, headings, html, frontmatter } = processor.process(md);
+
 	expect(article).toBeTypeOf("string");
 	expect(article.at(0)).toBe("-");
 	expect(headings).toBeInstanceOf(Array);
@@ -64,31 +81,17 @@ test("processMarkdown", () => {
 });
 
 test("with frontmatter", async () => {
-	const { frontmatter, html } = processMarkdown({
-		md,
-		frontmatterSchema,
-	});
+	const { frontmatter, html } = processor.process(md, frontmatterSchema);
+
 	await fs.writeFile(path.join(import.meta.dirname, "test.html"), html);
+
 	expect(frontmatter.title).toBeTypeOf("string");
 	expect(frontmatter.description).toBeTypeOf("string");
 	expect(frontmatter.keywords).toBeInstanceOf(Array);
 });
 
-const mdWithLua = `
-# Lua Code Example
-
-\`\`\`lua
-function hello_world()
-  print("Hello, World!")
-end
-\`\`\`
-`;
-
-test("processMarkdown with custom Lua language support", async () => {
-	const { html } = processMarkdown({
-		md: mdWithLua,
-		langConfig: {langs: [langLua]},  // Pass the custom Lua language grammar
-	});
+test("check Lua language support", async () => {
+	const { html } = processor.process(md);
 
 	// Verify that the Lua code block was properly highlighted in the output HTML
 	expect(html).toContain('<pre class="shiki');
