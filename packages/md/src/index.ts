@@ -8,6 +8,8 @@ import {
 	createHighlighterCoreSync,
 	type HighlighterGeneric,
 	createJavaScriptRegexEngine,
+	type MaybeArray,
+	type LanguageRegistration,
 } from "shiki/core";
 import langBash from "shiki/langs/bash.mjs";
 import langCss from "shiki/langs/css.mjs";
@@ -42,84 +44,129 @@ export interface MdData<T extends z.ZodTypeAny> {
 	frontmatter: z.infer<T>;
 }
 
+export interface LangConfig {
+	/** Custom shiki grammars to load */
+	langs: MaybeArray<LanguageRegistration>[],
+
+	/** Define custom aliases used */
+	aliases?: Record<string, string>
+}
+
+export interface Options<T extends z.ZodTypeAny> {
+		md: string;
+		frontmatterSchema?: T;
+		processFrontmatter?: boolean; // New option: Whether to process frontmatter (default: true)
+		langConfig?: LangConfig
+}
+
 const mdIt = MarkdownIt({ typographer: true, linkify: true, html: true });
 
 const variableTheme = createCssVariablesTheme();
 
-const highlighter = createHighlighterCoreSync({
-	themes: [variableTheme],
-	langs: [langHtml, langCss, langTsx, langMd, langBash, langJson],
-	engine: createJavaScriptRegexEngine(),
-	langAlias: {
-		svelte: "html",
-		js: "tsx",
-		jsx: "tsx",
-		ts: "tsx",
-	},
-}) as HighlighterGeneric<any, any>;
-
-mdIt.use(
-	fromHighlighter(highlighter, {
-		theme: "css-variables",
-		transformers: [transformerMetaHighlight()],
-	}),
-);
-
 mdIt.use(Anchor, { permalink: Anchor.permalink.headerLink() });
 
+const defaultOptions = {
+	md: "",
+	lint: false,
+	processFrontmatter: true,	
+	langConfig: {
+		langs: [langHtml, langCss, langTsx, langMd, langBash, langJson],
+		aliases: {
+			svelte: "html",
+			js: "tsx",
+			jsx: "tsx",
+			ts: "tsx",
+		}
+	}
+}
+
 /**
- * - processes markdown strings, pass in a zod schema for frontmatter parsing
- * - uses `shiki` to syntax highlight
+ * - Processes markdown strings with optional frontmatter and syntax highlighting.
+ * - Users can optionally pass custom language options for syntax highlighting.
+ * - The function merges user-defined languages with default ones.
  *
  * ```ts
  * import { processMarkdown } from "robino/util/md";
  *
- * const frontmatterSchema = z
- *		.object({
- *			title: z.string(),
- *			description: z.string(),
- *			keywords: z
- *				.string()
- *				.transform((val) => val.split(",").map((s) => s.trim().toLowerCase())),
- *			date: z.string(),
- *		})
- *		.strict();
+ * const frontmatterSchema = z.object({
+ *   title: z.string(),
+ *   description: z.string(),
+ *   keywords: z.string().transform((val) => val.split(",").map((s) => s.trim().toLowerCase())),
+ *   date: z.string(),
+ * }).strict();
  *
- * const data = processMarkdown({ md, frontmatterSchema });
+ * const data = processMarkdown({
+ *   md,
+ *   frontmatterSchema,
+ *   processFrontmatter: true,
+ *   langConfig: {
+ *     langs: [customLang],
+ *     aliases: { customAlias: "customLang" }
+ *   }
+ * });
  * ```
- * @param options
+ *
+ * @param options - An object containing markdown and optional configurations
  * @returns headings, article, frontmatter, html
  */
-export const processMarkdown = <T extends z.ZodTypeAny>(options: {
-	/** String of markdown to process. */
-	md: string;
+export const processMarkdown = <T extends z.ZodTypeAny>(options: Options<T>) => {
+	// Define default options
 
-	/** An optional zod schema */
-	frontmatterSchema?: T;
-}) => {
-	const { md, frontmatterSchema } = options;
+	// Merge passed options with default options
+	const mergedOptions = {
+		...defaultOptions,
+		...options, // This overrides default options with user-defined options
+		langConfig: {
+			...defaultOptions.langConfig,
+			...options.langConfig,
+			langs: [
+				...(defaultOptions.langConfig.langs || []), // Default languages
+				...(options.langConfig?.langs || []) // User-defined languages (if provided)
+			]
+		}
+	};
+	const { md, frontmatterSchema, processFrontmatter, langConfig } = mergedOptions;
+
+
+	// Create the highlighter core with provided or default languages
+	const highlighter = createHighlighterCoreSync({
+		themes: [variableTheme],
+		langs: langConfig.langs, // Use merged languages
+		engine: createJavaScriptRegexEngine(),
+		langAlias: langConfig.aliases,
+	}) as HighlighterGeneric<any, any>;
+
+	// Configure MarkdownIt with syntax highlighting
+	mdIt.use(
+		fromHighlighter(highlighter, {
+			theme: "css-variables",
+			transformers: [transformerMetaHighlight()],
+		}),
+	);
 
 	const split = md.split("---");
-
 	const yaml = split.at(1);
+	const shouldProcessFrontmatter =
+		processFrontmatter && yaml && frontmatterSchema;
 
-	const shouldProcessFrontmatter = yaml && frontmatterSchema;
-
+	// Process frontmatter based on option
 	const article = shouldProcessFrontmatter ? split.slice(2).join("---") : md;
-
 	const frontmatter = shouldProcessFrontmatter
 		? getFrontmatter(yaml, frontmatterSchema)
 		: {};
 
 	const headings = getHeadings(article);
 
-	const html = mdIt.render(article);
+	// Render markdown to HTML
+	let html = mdIt.render(article);
 
-	const data: MdData<T> = { article, headings, html, frontmatter };
-
-	return data;
+	return { article, headings, html, frontmatter };
 };
 
+
+/**
+ * Extracts headings from markdown content, skipping code blocks.
+ */
 const getHeadings = (md: string) => {
 	const lines = md.split("\n");
 	const headingRegex = /^(#{1,6})\s*(.+)/;
@@ -159,6 +206,10 @@ const getHeadings = (md: string) => {
 	return headings;
 };
 
+/**
+ * Extracts and validates frontmatter using the provided Zod schema.
+ * If frontmatter is invalid, returns an empty object.
+ */
 const getFrontmatter = (yaml: string, frontmatterSchema: z.ZodSchema) => {
 	const loaded = load(yaml);
 
