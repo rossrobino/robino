@@ -74,16 +74,6 @@ test("with frontmatter", async () => {
 	expect(frontmatter.keywords).toBeInstanceOf(Array);
 });
 
-test("processMarkdown with processFrontmatter set to false", () => {
-	const { article, frontmatter } = processMarkdown({
-		md,
-		processFrontmatter: false, // Explicitly skip frontmatter processing
-	});
-	expect(frontmatter).toEqual({}); // Frontmatter should be skipped
-	expect(article).toBeTypeOf("string");
-	expect(article).toContain("title: Title");
-});
-
 const mdWithLua = `
 # Lua Code Example
 

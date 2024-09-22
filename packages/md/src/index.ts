@@ -55,7 +55,6 @@ export interface LangConfig {
 export interface Options<T extends z.ZodTypeAny> {
 		md: string;
 		frontmatterSchema?: T;
-		processFrontmatter?: boolean; // New option: Whether to process frontmatter (default: true)
 		langConfig?: LangConfig
 }
 
@@ -68,7 +67,6 @@ mdIt.use(Anchor, { permalink: Anchor.permalink.headerLink() });
 const defaultOptions = {
 	md: "",
 	lint: false,
-	processFrontmatter: true,	
 	langConfig: {
 		langs: [langHtml, langCss, langTsx, langMd, langBash, langJson],
 		aliases: {
@@ -125,7 +123,7 @@ export const processMarkdown = <T extends z.ZodTypeAny>(options: Options<T>) => 
 			]
 		}
 	};
-	const { md, frontmatterSchema, processFrontmatter, langConfig } = mergedOptions;
+	const { md, frontmatterSchema, langConfig } = mergedOptions;
 
 
 	// Create the highlighter core with provided or default languages
@@ -145,9 +143,9 @@ export const processMarkdown = <T extends z.ZodTypeAny>(options: Options<T>) => 
 	);
 
 	const split = md.split("---");
+	
 	const yaml = split.at(1);
-	const shouldProcessFrontmatter =
-		processFrontmatter && yaml && frontmatterSchema;
+	const shouldProcessFrontmatter = yaml && frontmatterSchema;
 
 	// Process frontmatter based on option
 	const article = shouldProcessFrontmatter ? split.slice(2).join("---") : md;
