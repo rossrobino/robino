@@ -1,5 +1,13 @@
 # @robino/md
 
+## 1.0.0
+
+### Major Changes
+
+- e28349e: v1.0.0
+
+  - This package follows semantic versioning, so it will no longer have breaking changes on minor releases.
+
 ## 0.2.2
 
 ### Patch Changes
