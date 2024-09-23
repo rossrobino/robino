@@ -111,23 +111,24 @@ export class MarkdownProcessor {
 
 		this.markdownIt = MarkdownIt(options.markdownIt);
 
-		this.markdownIt.use(Anchor, { permalink: Anchor.permalink.headerLink() });
-
-		// Create the highlighter core with provided languages
-		const hl = createHighlighterCoreSync({
-			themes: [createCssVariablesTheme()],
-			langs: options.highlighter.langs, // Use merged languages
-			engine: createJavaScriptRegexEngine(),
-			langAlias: options.highlighter.langAlias,
-		}) as HighlighterGeneric<any, any>;
-
 		// Configure MarkdownIt with syntax highlighting
-		this.markdownIt.use(
-			fromHighlighter(hl, {
-				theme: "css-variables",
-				transformers: [transformerMetaHighlight()],
-			}),
-		);
+		this.markdownIt
+			.use(
+				fromHighlighter(
+					// Create the highlighter core with provided languages
+					createHighlighterCoreSync({
+						themes: [createCssVariablesTheme()],
+						langs: options.highlighter.langs,
+						engine: createJavaScriptRegexEngine(),
+						langAlias: options.highlighter.langAlias,
+					}) as HighlighterGeneric<any, any>,
+					{
+						theme: "css-variables",
+						transformers: [transformerMetaHighlight()],
+					},
+				),
+			)
+			.use(Anchor, { permalink: Anchor.permalink.headerLink() });
 	}
 
 	/**
