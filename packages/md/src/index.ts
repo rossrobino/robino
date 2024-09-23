@@ -2,19 +2,15 @@ import { fromHighlighter } from "@shikijs/markdown-it/core";
 import { transformerMetaHighlight } from "@shikijs/transformers";
 import { load } from "js-yaml";
 import MarkdownIt from "markdown-it";
+import type { Options as MarkdownItOptions } from "markdown-it";
 import Anchor from "markdown-it-anchor";
 import {
 	createCssVariablesTheme,
 	createHighlighterCoreSync,
 	type HighlighterGeneric,
 	createJavaScriptRegexEngine,
+	type HighlighterCoreOptions,
 } from "shiki/core";
-import langBash from "shiki/langs/bash.mjs";
-import langCss from "shiki/langs/css.mjs";
-import langHtml from "shiki/langs/html.mjs";
-import langJson from "shiki/langs/json.mjs";
-import langMd from "shiki/langs/md.mjs";
-import langTsx from "shiki/langs/tsx.mjs";
 import type { z } from "zod";
 
 export interface MdHeading {
@@ -42,137 +38,185 @@ export interface MdData<T extends z.ZodTypeAny> {
 	frontmatter: z.infer<T>;
 }
 
-const mdIt = MarkdownIt({ typographer: true, linkify: true, html: true });
+export type MarkdownProcessorOptions = {
+	/**
+	 * MarkdownIt options
+	 *
+	 * @default
+	 *
+	 * ```ts
+	 * {
+	 * 	typographer: true,
+	 * 	linkify: true,
+	 * 	html: true,
+	 * }
+	 * ```
+	 */
+	markdownIt?: MarkdownItOptions;
 
-const variableTheme = createCssVariablesTheme();
+	/** Shiki highlighter options. */
+	highlighter: {
+		/** Custom shiki grammars to load */
+		langs: HighlighterCoreOptions<true>["langs"];
 
-const highlighter = createHighlighterCoreSync({
-	themes: [variableTheme],
-	langs: [langHtml, langCss, langTsx, langMd, langBash, langJson],
-	engine: createJavaScriptRegexEngine(),
-	langAlias: {
-		svelte: "html",
-		js: "tsx",
-		jsx: "tsx",
-		ts: "tsx",
-	},
-}) as HighlighterGeneric<any, any>;
-
-mdIt.use(
-	fromHighlighter(highlighter, {
-		theme: "css-variables",
-		transformers: [transformerMetaHighlight()],
-	}),
-);
-
-mdIt.use(Anchor, { permalink: Anchor.permalink.headerLink() });
+		/**
+		 * Define custom aliases used
+		 *
+		 * @default undefined
+		 */
+		langAlias?: HighlighterCoreOptions<true>["langAlias"];
+	};
+};
 
 /**
- * - processes markdown strings, pass in a zod schema for frontmatter parsing
- * - uses `shiki` to syntax highlight
+ * - Processes markdown strings with optional frontmatter and syntax highlighting.
+ * - Pass custom language options for syntax highlighting, import from `"shiki/langs/..."`.
  *
  * ```ts
- * import { processMarkdown } from "robino/util/md";
+ * import { MarkdownProcessor } from "@robino/md";
+ * import langHtml from "shiki/langs/html.mjs";
  *
- * const frontmatterSchema = z
- *		.object({
- *			title: z.string(),
- *			description: z.string(),
- *			keywords: z
- *				.string()
- *				.transform((val) => val.split(",").map((s) => s.trim().toLowerCase())),
- *			date: z.string(),
- *		})
- *		.strict();
+ * const frontmatterSchema = z.object({
+ *   title: z.string(),
+ *   description: z.string(),
+ *   keywords: z.string().transform((val) => val.split(",").map((s) => s.trim().toLowerCase())),
+ *   date: z.string(),
+ * }).strict();
  *
- * const data = processMarkdown({ md, frontmatterSchema });
+ * const processor = new MarkdownProcessor({
+ * 	highlighter: {
+ * 		langs: [langHtml],
+ * 		langAlias: {
+ * 			svelte: "html",
+ * 		},
+ * 	},
+ * });
+ *
+ * const data = processor.process(md, frontmatterSchema);
  * ```
- * @param options
- * @returns headings, article, frontmatter, html
  */
-export const processMarkdown = <T extends z.ZodTypeAny>(options: {
-	/** String of markdown to process. */
-	md: string;
+export class MarkdownProcessor {
+	/** MarkdownIt instance */
+	markdownIt: MarkdownIt;
 
-	/** An optional zod schema */
-	frontmatterSchema?: T;
-}) => {
-	const { md, frontmatterSchema } = options;
-
-	const split = md.split("---");
-
-	const yaml = split.at(1);
-
-	const shouldProcessFrontmatter = yaml && frontmatterSchema;
-
-	const article = shouldProcessFrontmatter ? split.slice(2).join("---") : md;
-
-	const frontmatter = shouldProcessFrontmatter
-		? getFrontmatter(yaml, frontmatterSchema)
-		: {};
-
-	const headings = getHeadings(article);
-
-	const html = mdIt.render(article);
-
-	const data: MdData<T> = { article, headings, html, frontmatter };
-
-	return data;
-};
-
-const getHeadings = (md: string) => {
-	const lines = md.split("\n");
-	const headingRegex = /^(#{1,6})\s*(.+)/;
-	const codeFenceRegex = /^```/;
-
-	let inCodeFence = false;
-	const headings: MdHeading[] = [];
-	for (let line of lines) {
-		line = line.trim();
-
-		// Check for code fence
-		if (codeFenceRegex.test(line)) {
-			inCodeFence = !inCodeFence;
-			continue;
+	constructor(options: MarkdownProcessorOptions) {
+		if (!options.markdownIt) {
+			// default MarkdownIt options
+			options.markdownIt = {
+				typographer: true,
+				linkify: true,
+				html: true,
+			};
 		}
 
-		// Skip headings within code fences
-		if (inCodeFence) continue;
+		this.markdownIt = MarkdownIt(options.markdownIt);
 
-		const match = headingRegex.exec(line);
-		if (match) {
-			const level = match.at(1)?.length;
-			const name = match.at(2);
+		// Configure MarkdownIt with syntax highlighting
+		this.markdownIt
+			.use(
+				fromHighlighter(
+					// Create the highlighter core with provided languages
+					createHighlighterCoreSync({
+						themes: [createCssVariablesTheme()],
+						langs: options.highlighter.langs,
+						engine: createJavaScriptRegexEngine(),
+						langAlias: options.highlighter.langAlias,
+					}) as HighlighterGeneric<any, any>,
+					{
+						theme: "css-variables",
+						transformers: [transformerMetaHighlight()],
+					},
+				),
+			)
+			.use(Anchor, { permalink: Anchor.permalink.headerLink() });
+	}
 
-			if (level && name) {
-				const id = name
-					.trim()
-					.toLowerCase()
-					.replace(/\s+/g, "-")
-					.replace(/[^\w-]+/g, "");
+	/**
+	 * @param md Markdown string to process.
+	 * @param frontmatterSchema Optional Zod frontmatter schema
+	 * @returns headings, article, frontmatter, html
+	 */
+	process<T extends z.ZodTypeAny>(
+		md: string,
+		frontmatterSchema?: T,
+	): MdData<T> {
+		const split = md.split("---");
 
-				headings.push({ id, level, name });
+		const yaml = split.at(1);
+		const shouldProcessFrontmatter = yaml && frontmatterSchema;
+
+		const article = shouldProcessFrontmatter ? split.slice(2).join("---") : md;
+
+		// Process frontmatter based on option
+		const frontmatter = shouldProcessFrontmatter
+			? this.getFrontmatter(yaml, frontmatterSchema)
+			: {};
+
+		const headings = this.getHeadings(article);
+
+		// Render markdown to HTML
+		const html = this.markdownIt.render(article);
+
+		return { article, headings, html, frontmatter };
+	}
+
+	/** Extracts headings from markdown content, skipping code blocks. */
+	getHeadings(md: string) {
+		const lines = md.split("\n");
+		const headingRegex = /^(#{1,6})\s*(.+)/;
+		const codeFenceRegex = /^```/;
+
+		let inCodeFence = false;
+		const headings: MdHeading[] = [];
+		for (let line of lines) {
+			line = line.trim();
+
+			// Check for code fence
+			if (codeFenceRegex.test(line)) {
+				inCodeFence = !inCodeFence;
+				continue;
+			}
+
+			// Skip headings within code fences
+			if (inCodeFence) continue;
+
+			const match = headingRegex.exec(line);
+			if (match) {
+				const level = match.at(1)?.length;
+				const name = match.at(2);
+
+				if (level && name) {
+					const id = name
+						.trim()
+						.toLowerCase()
+						.replace(/\s+/g, "-")
+						.replace(/[^\w-]+/g, "");
+
+					headings.push({ id, level, name });
+				}
 			}
 		}
+
+		return headings;
 	}
 
-	return headings;
-};
+	/**
+	 * Extracts and validates frontmatter using the provided Zod schema.
+	 * If frontmatter is invalid, throws an error.
+	 */
+	getFrontmatter(yaml: string, frontmatterSchema: z.ZodSchema) {
+		const parsed = frontmatterSchema.safeParse(load(yaml));
 
-const getFrontmatter = (yaml: string, frontmatterSchema: z.ZodSchema) => {
-	const loaded = load(yaml);
+		if (!parsed.success) {
+			throw new Error(
+				`Invalid frontmatter, please correct or update schema:\n\n${JSON.stringify(
+					parsed.error.issues[0],
+					null,
+					4,
+				)}`,
+			);
+		}
 
-	const parsed = frontmatterSchema.safeParse(loaded);
-
-	if (!parsed.success) {
-		throw new Error(
-			`Invalid frontmatter, please correct or update schema:\n\n${JSON.stringify(
-				parsed.error.issues[0],
-				null,
-				4,
-			)}`,
-		);
+		return parsed.data;
 	}
-
-	return parsed.data;
-};
+}
