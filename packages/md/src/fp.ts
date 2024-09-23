@@ -46,10 +46,10 @@ export interface MdData<T extends z.ZodTypeAny> {
 
 export interface LangConfig {
 	/** Custom shiki grammars to load */
-	langs: MaybeArray<LanguageRegistration>[],
+	langs: MaybeArray<LanguageRegistration>[];
 
 	/** Define custom aliases used */
-	aliases?: Record<string, string>
+	aliases?: Record<string, string>;
 }
 
 export interface Options<T extends z.ZodTypeAny> {
@@ -84,11 +84,11 @@ const defaultMdIt = MarkdownIt({ typographer: true, linkify: true, html: true })
 
 /**
  * Processes a markdown string with optional frontmatter parsing and a custom MarkdownIt instance.
- * 
+ *
  * If a custom `mdItInstance` is provided, it will be used for rendering. Otherwise, a default MarkdownIt instance
  * (created outside of the function scope) will be used.
- * 
- * This function retains its simplicity by accepting only the markdown content (`md`), 
+ *
+ * This function retains its simplicity by accepting only the markdown content (`md`),
  * the optional frontmatter schema (`frontmatterSchema`), and a custom MarkdownIt instance (`mdItInstance`) if needed.
  *
  * ```ts
@@ -114,42 +114,43 @@ const defaultMdIt = MarkdownIt({ typographer: true, linkify: true, html: true })
  * @param options.mdItInstance - (Optional) A custom MarkdownIt instance to use for rendering.
  * @returns An object containing the processed `article`, `headings`, `html`, and `frontmatter`.
  */
+export const processMarkdown = <T extends z.ZodTypeAny>(
+	options: Options<T>,
+) => {
+	const { md, frontmatterSchema, mdItInstance } = options;
 
-export const processMarkdown = <T extends z.ZodTypeAny>(options: Options<T>) => {
-  const { md, frontmatterSchema, mdItInstance } = options;
+	// Use the provided MarkdownIt instance or default one
+	const mdIt = mdItInstance ?? defaultMdIt;
+	const split = md.split("---");
+	const yaml = split.at(1);
+	// Split and process frontmatter if applicable
+	const shouldProcessFrontmatter = yaml && frontmatterSchema;
 
-  // Use the provided MarkdownIt instance or default one
-  const mdIt = mdItInstance ?? defaultMdIt;
-  const split = md.split("---");
-  const yaml = split.at(1);
-  // Split and process frontmatter if applicable
-  const shouldProcessFrontmatter = yaml && frontmatterSchema;
+	const article = shouldProcessFrontmatter ? split.slice(2).join("---") : md;
+	const frontmatter = shouldProcessFrontmatter
+		? getFrontmatter(yaml, frontmatterSchema)
+		: {};
 
-  const article = shouldProcessFrontmatter ? split.slice(2).join("---") : md;
-  const frontmatter = shouldProcessFrontmatter
-    ? getFrontmatter(yaml, frontmatterSchema)
-    : {};
+	const headings = getHeadings(article);
 
-  const headings = getHeadings(article);
+	// Render markdown to HTML using the mdIt instance
+	const html = mdIt.render(article);
 
-  // Render markdown to HTML using the mdIt instance
-  const html = mdIt.render(article);
-
-  return { article, headings, html, frontmatter };
+	return { article, headings, html, frontmatter };
 };
 
 /**
  * A higher-order function that creates a `processMarkdown` function with a pre-configured MarkdownIt instance.
  *
  * It merges the default language configurations (langs and aliases) with any custom language configurations provided
- * through the `langConfig`. Once created, the resulting `processMarkdown` function will utilize the generated `mdItInstance` 
+ * through the `langConfig`. Once created, the resulting `processMarkdown` function will utilize the generated `mdItInstance`
  * for markdown processing.
  *
- * This approach retains flexibility while optimizing repeated usage by avoiding re-creating the MarkdownIt instance 
+ * This approach retains flexibility while optimizing repeated usage by avoiding re-creating the MarkdownIt instance
  * for each markdown string processed.
- * 
+ *
  * Example:
- * 
+ *
  * ```ts
  * import { createProcessMarkdown } from "robino/util/md";
  *
@@ -162,62 +163,62 @@ export const processMarkdown = <T extends z.ZodTypeAny>(options: Options<T>) => 
  *
  * const customProcessor = createProcessMarkdown({
  *   frontmatterSchema,
- *   langConfig: { 
- *     langs: [customLang], 
- *     aliases: { customAlias: "customLang" } 
+ *   langConfig: {
+ *     langs: [customLang],
+ *     aliases: { customAlias: "customLang" }
  *   }
  * });
  *
  * const data = customProcessor({
- *   md: "# Your markdown string here", 
- *   frontmatterSchema 
+ *   md: "# Your markdown string here",
+ *   frontmatterSchema
  * });
  * ```
- * 
+ *
  * @param options - An object containing the configuration for the MarkdownIt instance.
  * @param options.frontmatterSchema - (Optional) Zod schema for frontmatter validation.
  * @param options.langConfig - (Optional) Custom language configurations for syntax highlighting.
  * @returns A `processMarkdown` function pre-configured with the merged MarkdownIt instance.
  */
+export const createProcessMarkdown = <T extends z.ZodTypeAny>({
+	langConfig,
+	frontmatterSchema,
+}: Omit<Options<T>, "md">) => {
+	const mergedLangs =
+		langConfig?.langs && langConfig.langs.length > 0
+			? langConfig.langs // Use custom languages if provided
+			: defaultLangs; // Fallback to default languages
 
-export const createProcessMarkdown = <T extends z.ZodTypeAny>(
-  options: Omit<Options<T>, 'md'>
-) => {
-  // Merge default language configurations with user-defined ones
-  const mergedLangConfig = {
-    langs: [
-      ...(defaultLangs || []), // Default languages
-      ...(options.langConfig?.langs || []), // User-defined languages
-    ],
-    aliases: {
-      ...defaultAliases, // Default aliases
-      ...options.langConfig?.aliases, // User-defined aliases
-    },
-  };
+	const mergedAliases =
+		langConfig?.aliases && Object.keys(langConfig.aliases).length > 0
+			? langConfig.aliases // Use custom aliases if provided
+			: defaultAliases; // Fallback to default aliases
 
-  // Create a MarkdownIt instance with the merged language configurations
-  const mdItInstance = MarkdownIt({ typographer: true, linkify: true, html: true })
-    .use(
-      fromHighlighter(
-        createHighlighterCoreSync({
-          themes: [variableTheme],
-          langs: mergedLangConfig.langs,
-          engine: createJavaScriptRegexEngine(),
-          langAlias: mergedLangConfig.aliases,
-        }) as HighlighterGeneric<any, any>,
-        {
-          theme: "css-variables",
-          transformers: [transformerMetaHighlight()],
-        }
-      )
-    )
-    .use(Anchor, { permalink: Anchor.permalink.headerLink() });
+	// We can update this to mirror your class based version too
+	const mdItInstance = MarkdownIt({
+		typographer: true,
+		linkify: true,
+		html: true,
+	})
+		.use(
+			fromHighlighter(
+				createHighlighterCoreSync({
+					themes: [variableTheme],
+					langs: mergedLangs,
+					engine: createJavaScriptRegexEngine(),
+					langAlias: mergedAliases,
+				}) as HighlighterGeneric<any, any>,
+				{
+					theme: "css-variables",
+					transformers: [transformerMetaHighlight()],
+				},
+			),
+		)
+		.use(Anchor, { permalink: Anchor.permalink.headerLink() });
 
-  // Return a pre-configured `processMarkdown` function
-  return (processOptions: { md: string; frontmatterSchema?: T }) => {
-    // Forward the `mdItInstance` to `processMarkdown`
-    return processMarkdown({ ...processOptions, mdItInstance });
-  };
+	// Return a pre-configured `processMarkdown` function
+	return (opts: Options<T>) =>
+		processMarkdown({ frontmatterSchema, mdItInstance, ...opts });
 };
 
 /**
