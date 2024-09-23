@@ -1,5 +1,11 @@
 # @robino/md
 
+## 1.0.1
+
+### Patch Changes
+
+- 5477333: make zod a peer dependency since only types are used in the package, user supplies the frontmatterSchema
+
 ## 1.0.0
 
 ### Major Changes
