@@ -16,10 +16,10 @@
 		"build": "tsc"
 	},
 	"peerDependencies": {
-		"prettier": "^3.3.3"
+		"prettier": "^3.0.0"
 	},
 	"dependencies": {
-		"@trivago/prettier-plugin-sort-imports": "^4.3.0",
+		"@trivago/prettier-plugin-sort-imports": "^5.2.1",
 		"prettier-plugin-css-order": "^2.1.2"
 	},
 	"devDependencies": {
