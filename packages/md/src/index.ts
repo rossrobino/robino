@@ -8,9 +8,9 @@ import {
 	createCssVariablesTheme,
 	createHighlighterCoreSync,
 	type HighlighterGeneric,
-	createJavaScriptRegexEngine,
 	type HighlighterCoreOptions,
 } from "shiki/core";
+import { createJavaScriptRegexEngine } from "shiki/engine-javascript.mjs";
 import type { z } from "zod";
 
 export interface MdHeading {
@@ -55,7 +55,7 @@ export type MarkdownProcessorOptions = {
 	markdownIt?: MarkdownItOptions;
 
 	/** Shiki highlighter options. */
-	highlighter: {
+	highlighter?: {
 		/** Custom shiki grammars to load */
 		langs: HighlighterCoreOptions<true>["langs"];
 
@@ -99,7 +99,7 @@ export class MarkdownProcessor {
 	/** MarkdownIt instance */
 	markdownIt: MarkdownIt;
 
-	constructor(options: MarkdownProcessorOptions) {
+	constructor(options: MarkdownProcessorOptions = {}) {
 		if (!options.markdownIt) {
 			// default MarkdownIt options
 			options.markdownIt = {
@@ -118,9 +118,9 @@ export class MarkdownProcessor {
 					// Create the highlighter core with provided languages
 					createHighlighterCoreSync({
 						themes: [createCssVariablesTheme()],
-						langs: options.highlighter.langs,
+						langs: options.highlighter?.langs,
 						engine: createJavaScriptRegexEngine(),
-						langAlias: options.highlighter.langAlias,
+						langAlias: options.highlighter?.langAlias,
 					}) as HighlighterGeneric<any, any>,
 					{
 						theme: "css-variables",

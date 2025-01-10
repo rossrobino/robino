@@ -16,12 +16,12 @@
 		"build": "tsc"
 	},
 	"dependencies": {
-		"@shikijs/markdown-it": "^1.18.0",
-		"@shikijs/transformers": "^1.18.0",
+		"@shikijs/markdown-it": "^1.26.1",
+		"@shikijs/transformers": "^1.26.1",
 		"js-yaml": "^4.1.0",
 		"markdown-it": "^14.1.0",
 		"markdown-it-anchor": "^9.2.0",
-		"shiki": "^1.18.0"
+		"shiki": "^1.26.1"
 	},
 	"peerDependencies": {
 		"zod": "^3.23.8"
