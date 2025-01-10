@@ -1,5 +1,11 @@
 # @robino/prettier
 
+## 0.1.2
+
+### Patch Changes
+
+- 08c4a51: update dependencies
+
 ## 0.1.1
 
 ### Patch Changes

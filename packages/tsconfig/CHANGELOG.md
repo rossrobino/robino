@@ -1,5 +1,11 @@
 # @robino/tsconfig
 
+## 0.2.3
+
+### Patch Changes
+
+- ff1d57c: update dependencies
+
 ## 0.2.2
 
 ### Patch Changes

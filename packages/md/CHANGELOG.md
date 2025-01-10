@@ -1,5 +1,12 @@
 # @robino/md
 
+## 1.0.2
+
+### Patch Changes
+
+- f8cf9e7: update dependencies
+- f8cf9e7: fix: make MarkdownProcessor `options` optional
+
 ## 1.0.1
 
 ### Patch Changes
