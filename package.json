@@ -8,7 +8,7 @@
 		"url": "git+https://github.com/rossrobino/robino.git"
 	},
 	"license": "MIT",
-	"packageManager": "npm@10.8.3",
+	"packageManager": "npm@10.9.2",
 	"workspaces": [
 		"packages/*"
 	],
@@ -32,6 +32,6 @@
 		"prettier": "^3.4.2",
 		"turbo": "^2.3.3",
 		"typescript": "^5.7.3",
-		"vitest": "^2.1.8"
+		"vitest": "^3.0.2"
 	}
 }
