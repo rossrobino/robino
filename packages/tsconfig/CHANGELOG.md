@@ -1,5 +1,11 @@
 # @robino/tsconfig
 
+## 1.0.0
+
+### Major Changes
+
+- c547a20: add ts peer dep
+
 ## 0.2.3
 
 ### Patch Changes
