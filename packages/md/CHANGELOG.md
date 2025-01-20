@@ -1,5 +1,11 @@
 # @robino/md
 
+## 1.0.3
+
+### Patch Changes
+
+- f2e4111: update to shiki v2
+
 ## 1.0.2
 
 ### Patch Changes

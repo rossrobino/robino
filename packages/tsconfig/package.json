@@ -2,7 +2,7 @@
 	"name": "@robino/tsconfig",
 	"description": "tsconfig",
 	"license": "MIT",
-	"version": "0.2.3",
+	"version": "1.0.0",
 	"files": [
 		"tsc.json",
 		"bundler.json",
