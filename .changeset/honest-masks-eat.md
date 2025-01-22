@@ -1,0 +1,5 @@
+---
+"@robino/html": patch
+---
+
+init
