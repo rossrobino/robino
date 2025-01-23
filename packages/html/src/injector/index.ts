@@ -56,15 +56,13 @@ export class Injector {
 		let str = "";
 
 		for (const key in attrs) {
-			if (
-				// if `false` don't add
-				attrs[key] &&
-				typeof attrs[key] === "boolean"
-			) {
+			if (attrs[key] === true) {
+				// if true don't put the value
 				str += ` ${key}`;
-			} else {
+			} else if (typeof attrs[key] === "string") {
 				str += ` ${key}=${JSON.stringify(attrs[key])}`;
 			}
+			// otherwise, don't include the attribute
 		}
 
 		return str;

@@ -1,3 +1,5 @@
+import type { Elements } from "./elements.js";
+
 /** An object that describes a tag and its children. */
 export type TagDescriptor = {
 	/**
@@ -38,3 +40,19 @@ export type TagInput = string | TagDescriptor | TagDescriptor[];
 
 /** How to inject tags into the HTML string. */
 export type InjectMethod = "append" | "prepend" | "replace";
+
+export type JSXChildren = string | string[];
+
+export type JSXProps = Record<
+	string,
+	boolean | number | bigint | string | null | undefined
+> & {
+	children?: JSXChildren;
+};
+
+export type FC = (props?: JSXProps) => string;
+
+export namespace JSX {
+	export type IntrinsicElements = Elements;
+	export type Element = ReturnType<FC>;
+}

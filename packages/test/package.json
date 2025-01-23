@@ -1,0 +1,14 @@
+{
+	"name": "test",
+	"description": "A private package for testing other packages in the robino monorepo",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"check": "tsc --noEmit",
+		"dev": "tsc --watch",
+		"build": "tsc"
+	},
+	"dependencies": {
+		"@robino/html": "*"
+	}
+}
