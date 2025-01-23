@@ -13,19 +13,14 @@ export const P = () => {
 export const AsyncComp = async () => {
 	await new Promise((res) => setTimeout(res, 1000));
 
-	return <>ASYNC</>;
+	return <p>ASYNC</p>;
 };
 
 export const Comp = () => {
 	return (
-		<>
+		<p>
+			hello
 			<H1 />
-			<P />
-			<>
-				hello my name is ross
-				<H1 />
-				<P />
-			</>
-		</>
+		</p>
 	);
 };
