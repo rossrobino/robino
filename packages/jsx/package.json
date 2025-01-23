@@ -1,7 +1,7 @@
 {
 	"name": "@robino/jsx",
 	"description": "custom jsx",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"type": "module",
 	"types": "./dist/index.d.ts",
 	"main": "./dist/index.js",
@@ -30,6 +30,6 @@
 		"build": "tsc"
 	},
 	"dependencies": {
-		"@robino/html": "^0.0.1"
+		"@robino/html": "^0.0.2"
 	}
 }
