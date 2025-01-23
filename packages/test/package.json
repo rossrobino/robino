@@ -9,6 +9,6 @@
 		"build": "tsc"
 	},
 	"dependencies": {
-		"@robino/html": "*"
+		"@robino/jsx": "*"
 	}
 }

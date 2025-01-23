@@ -1,5 +1,5 @@
 ---
-"@robino/html": minor
+"@robino/jsx": patch
 ---
 
-feat: adds jsx to html
+add jsx package

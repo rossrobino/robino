@@ -1,10 +1,5 @@
-import { Injector } from "../injector/index.js";
-import type {
-	TagDescriptor,
-	JSXProps,
-	FC,
-	JSXChildren,
-} from "../types/index.js";
+import type { Props, FC, Children } from "../types/index.js";
+import { Injector, type TagDescriptor } from "@robino/html";
 
 /**
  * The main function of the jsx transform cycle, each time jsx is encountered
@@ -14,15 +9,11 @@ import type {
  * @param props object containing all the properties and attributes passed to the element or component
  * @returns the result of the jsx transform
  */
-export const jsx = (tag: string | FC, props: JSXProps) => {
-	console.log("starting jsx for tag: " + tag);
+export const jsx = async (tag: string | FC, props: Props) => {
 	// it's another component or a Fragment...
 	if (typeof tag === "function") {
-		console.log("tag is a function, running...");
-		return tag(props);
+		return await tag(props);
 	}
-
-	console.log("tag is an element");
 
 	// it's an element...
 	const { children = "", ...rest } = props;
@@ -32,7 +23,7 @@ export const jsx = (tag: string | FC, props: JSXProps) => {
 		// @ts-expect-error - serializeTags will ignore attrs that don't work,
 		// but the type will be correct for Injector users
 		rest,
-		serializeChildren(children),
+		await serializeChildren(children),
 	);
 };
 
@@ -48,10 +39,7 @@ export const createElement = (
 	name: string,
 	attrs: TagDescriptor["attrs"],
 	children: string,
-) => {
-	console.log("creating element: ", { name, attrs, children });
-	return Injector.serializeTags({ name, attrs, children });
-};
+) => Injector.serializeTags({ name, attrs, children });
 
 /**
  * serializes an array of children into a string
@@ -59,9 +47,13 @@ export const createElement = (
  * @param children
  * @returns string of concatenated children
  */
-const serializeChildren = (children: JSXChildren) => {
-	console.log("serializing children: ", { children });
-	return Array.isArray(children) ? children.join("") : String(children);
+const serializeChildren = async (children: Children) => {
+	if (Array.isArray(children)) {
+		const resolvedChildren = await Promise.all(children);
+		return resolvedChildren.join("");
+	}
+
+	return String(await children);
 };
 
 /**
@@ -70,9 +62,7 @@ const serializeChildren = (children: JSXChildren) => {
  * @param props
  * @returns string of concatenated children
  */
-export const Fragment = (props: JSXProps) => {
-	console.log("created fragment: ", { props });
-	return serializeChildren(props.children ?? "");
-};
+export const Fragment = async (props: Props) =>
+	serializeChildren(props.children ?? "");
 
 export { jsx as jsxs, jsx as jsxDEV };

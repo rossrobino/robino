@@ -1,6 +1,6 @@
 {
-	"name": "@robino/html",
-	"description": "html helpers",
+	"name": "@robino/jsx",
+	"description": "custom jsx",
 	"version": "0.0.1",
 	"type": "module",
 	"types": "./dist/index.d.ts",
@@ -9,6 +9,14 @@
 		".": {
 			"types": "./dist/index.d.ts",
 			"default": "./dist/index.js"
+		},
+		"./jsx-runtime": {
+			"types": "./dist/jsx-runtime.d.ts",
+			"default": "./dist/jsx-runtime.js"
+		},
+		"./jsx-dev-runtime": {
+			"types": "./dist/jsx-dev-runtime.d.ts",
+			"default": "./dist/jsx-dev-runtime.js"
 		}
 	},
 	"license": "MIT",
@@ -20,5 +28,8 @@
 		"check": "tsc --noEmit",
 		"dev": "tsc --watch",
 		"build": "tsc"
+	},
+	"dependencies": {
+		"@robino/html": "^0.0.1"
 	}
 }

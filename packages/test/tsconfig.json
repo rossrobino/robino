@@ -2,6 +2,6 @@
 	"extends": "@robino/tsconfig/tsc.json",
 	"compilerOptions": {
 		"jsx": "react-jsx",
-		"jsxImportSource": "@robino/html"
+		"jsxImportSource": "@robino/jsx"
 	}
 }
