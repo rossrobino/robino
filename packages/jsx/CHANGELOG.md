@@ -1,5 +1,12 @@
 # @robino/html
 
+## 0.0.3
+
+### Patch Changes
+
+- d25ee54: types for elements
+- c4cffa6: fix: optional props
+
 ## 0.0.2
 
 ### Patch Changes
