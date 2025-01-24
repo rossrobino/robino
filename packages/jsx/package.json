@@ -27,6 +27,7 @@
 	"scripts": {
 		"check": "tsc --noEmit",
 		"dev": "tsc --watch",
+		"dev:nocheck": "tsc --watch --noCheck",
 		"build": "tsc"
 	},
 	"dependencies": {

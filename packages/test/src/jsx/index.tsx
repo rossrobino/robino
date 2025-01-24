@@ -8,6 +8,7 @@ export const P = () => {
 	return (
 		<p>
 			<a href="/link">Anchor</a>
+			<ins></ins>
 		</p>
 	);
 };
