@@ -9,7 +9,7 @@ export type Props = Record<string, unknown> & {
 	children?: Children;
 };
 
-export type FC<P = Props> = (props: P) => Promise<string>;
+export type FC<P = Props> = (props?: P) => Promise<string>;
 
 export namespace JSX {
 	export type IntrinsicElements = Elements;

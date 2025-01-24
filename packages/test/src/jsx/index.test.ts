@@ -3,7 +3,7 @@ import { expect, test } from "vitest";
 
 test("basic", async () => {
 	expect(await comp.H1({ children: "Heading1" })).toBeTypeOf("string");
-	expect(await comp.P({ text: () => "para" })).toBeTypeOf("string");
+	expect(await comp.P()).toBeTypeOf("string");
 });
 
 test("async components with delay - should not waterfall", async () => {

@@ -1,13 +1,13 @@
 import type { FC } from "@robino/jsx";
 
-export const H1: FC = ({ children }) => {
-	return <h1 class="bg-blue">{children}</h1>;
+export const H1: FC = (props) => {
+	return <h1 class="bg-blue">{props?.children}</h1>;
 };
 
-export const P: FC<{ text: () => string }> = async ({ text }) => {
+export const P = () => {
 	return (
 		<p>
-			{text()} <a href="/link">Anchor</a>
+			<a href="/link">Anchor</a>
 		</p>
 	);
 };
