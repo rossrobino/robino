@@ -5,7 +5,12 @@ export namespace JSX {
 	export type Element = Promise<string>;
 }
 
-export type Children = string | boolean | JSX.Element | Array<Children>;
+export type Children =
+	| string
+	| boolean
+	| JSX.Element
+	| Array<Children>
+	| undefined;
 
 export type ElementProps = Record<string, Children>;
 

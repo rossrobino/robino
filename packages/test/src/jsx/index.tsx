@@ -1,10 +1,10 @@
-import type { Children, FC } from "@robino/jsx";
+import type { Children } from "@robino/jsx";
 
-export const H1: FC<{ children: Children }> = (props) => {
+export const H1 = (props: { children?: Children }) => {
 	return <h1 class="bg-blue">{props.children}</h1>;
 };
 
-export const P: FC = () => {
+export const P = () => {
 	return (
 		<p>
 			<a referrerpolicy="origin" href="/link">
