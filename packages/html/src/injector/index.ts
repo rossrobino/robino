@@ -51,8 +51,11 @@ export class Injector {
 		return this.#html;
 	}
 
-	/** Serializes HTML attribute objects into a string. */
-	static #serializeAttrs(attrs: TagDescriptor["attrs"]) {
+	/**
+	 * @param attrs attributes - type is `unknown` because at runtime (jsx package) these could be something else.
+	 * @returns string of attributes
+	 */
+	static #serializeAttrs(attrs?: Record<string, unknown>) {
 		let str = "";
 
 		for (const key in attrs) {
@@ -68,15 +71,18 @@ export class Injector {
 		return str;
 	}
 
-	/** Serializes a TagDescriptor into a string. */
-	static #serializeTag({ name, attrs, children }: TagDescriptor) {
-		if (["link", "meta", "base"].includes(name)) {
-			return `<${name}${this.#serializeAttrs(attrs)}>`;
+	/**
+	 * @param tag `TagDescriptor`
+	 * @returns an HTML string of the tag
+	 */
+	static #serializeTag(tag: TagDescriptor) {
+		if (["link", "meta", "base"].includes(tag.name)) {
+			return `<${tag.name}${this.#serializeAttrs(tag.attrs)}>`;
 		}
 
-		return `<${name}${this.#serializeAttrs(attrs)}>${this.serializeTags(
-			children,
-		)}</${name}>`;
+		return `<${tag.name}${this.#serializeAttrs(tag.attrs)}>${this.serializeTags(
+			tag.children,
+		)}</${tag.name}>`;
 	}
 
 	/** Serializes an array of TagDescriptors into a string. */

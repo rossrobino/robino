@@ -1,21 +1,22 @@
-import type { FC } from "@robino/jsx";
+import type { Children, FC } from "@robino/jsx";
 
-export const H1: FC = (props) => {
-	return <h1 class="bg-blue">{props?.children}</h1>;
+export const H1: FC<{ children: Children }> = (props) => {
+	return <h1 class="bg-blue">{props.children}</h1>;
 };
 
-export const P = () => {
+export const P: FC = () => {
 	return (
 		<p>
-			<a href="/link">Anchor</a>
-			<ins></ins>
+			<a referrerpolicy="origin" href="/link">
+				Anchor
+			</a>
 		</p>
 	);
 };
 
 export const Delay = async (props: { delay: number }) => {
 	await new Promise((res) => setTimeout(res, props.delay));
-	return <p>delay: {props.delay}</p>;
+	return <p>delay: {String(props.delay)}</p>;
 };
 
 export const App = () => {
