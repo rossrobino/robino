@@ -1,5 +1,13 @@
 # @robino/html
 
+## 0.0.4
+
+### Patch Changes
+
+- c6eb4e8: fix: types / generation
+- Updated dependencies [c6eb4e8]
+  - @robino/html@0.0.3
+
 ## 0.0.3
 
 ### Patch Changes

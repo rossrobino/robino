@@ -1,5 +1,11 @@
 # @robino/html
 
+## 0.0.3
+
+### Patch Changes
+
+- c6eb4e8: use unknown for attr types
+
 ## 0.0.2
 
 ### Patch Changes
