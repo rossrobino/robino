@@ -1,5 +1,13 @@
 # @robino/html
 
+## 0.0.5
+
+### Patch Changes
+
+- 168ba26: fix types
+- Updated dependencies [168ba26]
+  - @robino/html@0.0.4
+
 ## 0.0.4
 
 ### Patch Changes

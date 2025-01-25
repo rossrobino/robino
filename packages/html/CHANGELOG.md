@@ -1,5 +1,11 @@
 # @robino/html
 
+## 0.0.4
+
+### Patch Changes
+
+- 168ba26: fix types
+
 ## 0.0.3
 
 ### Patch Changes
