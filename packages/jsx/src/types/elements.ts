@@ -13,7 +13,7 @@ type GlobalHTMLAttributes = Partial<{
 		| "sentences"
 		| "on"
 		| (string & {});
-	autocorrect: string;
+	autocorrect: "on" | "off" | (string & {});
 	autofocus: boolean;
 	class: string;
 	contenteditable: string;
@@ -170,10 +170,6 @@ type BaseHTMLAttributes = HTMLAttributesWithChildren<{
 	target: "_self" | "_blank" | "_parent" | "_top" | (string & {});
 }>;
 
-type BdoHTMLAttributes = HTMLAttributesWithChildren<{
-	dir: string;
-}>;
-
 type BlockquoteHTMLAttributes = HTMLAttributesWithChildren<{
 	cite: string;
 }>;
@@ -205,7 +201,6 @@ type BodyHTMLAttributes = HTMLAttributesWithChildren<{
 }>;
 
 type ButtonHTMLAttributes = ExtendedHTMLAttributes<{
-	autofocus: boolean;
 	command: string;
 	commandfor: string;
 	disabled: boolean;
@@ -254,40 +249,24 @@ type DetailsHTMLAttributes = ExtendedHTMLAttributes<{
 }>;
 
 type DialogHTMLAttributes = ExtendedHTMLAttributes<{
-	/** Boolean to open state of the dialog */
 	open: boolean;
 }>;
 
 type EmbedHTMLAttributes = ExtendedHTMLAttributes<{
-	/** Height of the embedded content */
 	height: string;
-	/** URL of the resource to embed */
 	src: string;
-	/** MIME type of the embedded content */
 	type: string;
-	/** Width of the embedded content */
 	width: string;
 }>;
 
 type FieldsetHTMLAttributes = ExtendedHTMLAttributes<{
-	/** Boolean to disable the fieldset */
 	disabled: boolean;
-	/** Form ID that fieldset belongs to */
 	form: string;
-	/** Name of the fieldset */
 	name: string;
 }>;
 
 type FormHTMLAttributes = ExtendedHTMLAttributes<{
 	["accept-charset"]: string;
-	autocapitalize:
-		| "off"
-		| "none"
-		| "on"
-		| "sentences"
-		| "words"
-		| "characters"
-		| (string & {});
 	autocomplete: "on" | "off" | (string & {});
 	name: string;
 	rel: string;
@@ -357,7 +336,6 @@ type ImgHTMLAttributes = ExtendedHTMLAttributes<{
 type InputHTMLAttributes = ExtendedHTMLAttributes<{
 	accept: string;
 	alt: string;
-	autocapitalize: string;
 	autocomplete: string;
 	capture: string;
 	checked: boolean;
@@ -460,7 +438,6 @@ type LinkHTMLAttributes = ExtendedHTMLAttributes<{
 		| (string & {});
 	rel: string;
 	sizes: string;
-	title: string;
 	type: string;
 }>;
 
@@ -549,7 +526,6 @@ type ScriptHTMLAttributes = ExtendedHTMLAttributes<{
 	fetchpriority: "high" | "low" | "auto";
 	integrity: string;
 	nomodule: boolean;
-	nonce: string;
 	referrerpolicy:
 		| "no-referrer"
 		| "no-referrer-when-downgrade"
@@ -566,7 +542,6 @@ type ScriptHTMLAttributes = ExtendedHTMLAttributes<{
 
 type SelectHTMLAttributes = ExtendedHTMLAttributes<{
 	autocomplete: string;
-	autofocus: boolean;
 	disabled: boolean;
 	form: string;
 	multiple: boolean;
@@ -592,8 +567,6 @@ type SourceHTMLAttributes = ExtendedHTMLAttributes<{
 type StyleHTMLAttributes = ExtendedHTMLAttributes<{
 	blocking: "render" | (string & {});
 	media: string;
-	nonce: string;
-	title: string;
 }>;
 
 type TdHTMLAttributes = ExtendedHTMLAttributes<{
@@ -611,30 +584,17 @@ type TemplateHTMLAttributes = ExtendedHTMLAttributes<{
 
 type TextareaHTMLAttributes = ExtendedHTMLAttributes<{
 	autocomplete: "off" | "on" | (string & {});
-	autocorrect: "on" | "off" | (string & {});
-	/** The visible width of the text control, in average character widths. */
 	cols: string;
-	/** Indicates the text directionality of the element contents. */
 	dirname: string;
-	/** Boolean attribute indicates that the user cannot interact with the control. */
 	disabled: boolean;
-	/** The form element the textarea element is associated with. */
 	form: string;
-	/** The maximum string length that the user can enter. */
 	maxlength: string;
-	/** The minimum string length required that the user should enter. */
 	minlength: string;
-	/** The name of the control. */
 	name: string;
-	/** A hint to the user of what can be entered in the control. */
 	placeholder: string;
-	/** Boolean attribute indicates that the user cannot modify the value of the control. */
 	readonly: boolean;
-	/** Specifies that the user must fill in a value before submitting the form. */
 	required: boolean;
-	/** The number of visible text lines for the control. */
 	rows: string;
-	/** Indicates how the control should wrap the value for form submission. */
 	wrap: "hard" | "soft" | "off";
 }>;
 
@@ -692,7 +652,7 @@ export type Elements = Record<string, GlobalAttributesWithChildren> & {
 	audio: AudioHTMLAttributes;
 	base: BaseHTMLAttributes;
 	bdi: GlobalAttributesWithChildren;
-	bdo: BdoHTMLAttributes;
+	bdo: GlobalAttributesWithChildren;
 	blockquote: BlockquoteHTMLAttributes;
 	body: BodyHTMLAttributes;
 	br: GlobalAttributesWithChildren;
