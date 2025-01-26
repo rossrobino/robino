@@ -25,7 +25,7 @@ export const App = () => {
 			<Delay delay={100} />
 			<Delay delay={150} />
 			<Delay delay={200} />
-			<H1>Heading 1</H1>
+			<H1 children="hello"></H1>
 			<p>
 				<Delay delay={200} />
 				<>
