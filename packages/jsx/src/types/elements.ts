@@ -4,7 +4,7 @@ import type { Children, ElementProps } from "./index.js";
 // cspell: disable
 // https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes
 type GlobalHTMLAttributes = Partial<{
-	/** Specifies a keyboard navigation accelerator for the element. Pressing ALT or a similar key in association with the specified character selects the form control correlated with that key sequence. Page designers are forewarned to avoid key sequences already bound to browsers. This attribute is global since HTML5. */
+	/** Specifies a keyboard navigation accelerator for the element. Pressing ALT or a similar key in association with the specified character selects the form control correlated with that key sequence. */
 	accesskey: string;
 	/** Specifies the anchor */
 	anchor: string;
@@ -54,11 +54,7 @@ type GlobalHTMLAttributes = Partial<{
 	part: string;
 	/** Assigns a popover description */
 	popover: string;
-	/**
-	 * Defines an element's role
-	 *
-	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Roles)
-	 */
+	/** Defines an element's role */
 	role: string;
 	/** Assigns a slot in a shadow DOM */
 	slot: string;
@@ -192,7 +188,7 @@ type AHTMLAttributes = HTMLAttributesWithChildren<{
 type AreaHTMLAttributes = HTMLAttributesWithChildren<{
 	/** Alternative text for the area */
 	alt: string;
-	/** The coords attribute details the coordinates of the shape attribute in size, shape, and placement of an <area>. This attribute must not be used if shape is set to default. */
+	/** The coords attribute details the coordinates of the shape attribute in size, shape, and placement of an <area>. */
 	coords: "rect" | "circle" | "poly" | (string & {});
 	/** Download link or Boolean indicating download */
 	download: string | boolean;
@@ -246,29 +242,19 @@ type AudioHTMLAttributes = HTMLAttributesWithChildren<{
 }>;
 
 type BaseHTMLAttributes = HTMLAttributesWithChildren<{
-	/** The base URL to be used throughout the document for relative URL addresses. If this attribute is specified, this element must come before any other elements with attributes whose values are URLs. Absolute and relative URLs are allowed. */
+	/** The base URL to be used throughout the document for relative URL addresses. */
 	href: string;
-	/** A name or keyword indicating the default location to display the result when hyperlinks or forms cause navigation, for elements that do not have an explicit target reference. It is a name of, or keyword for, a _browsing context_ (for example: tab, window, or inline frame). The following keywords have special meanings:
-
--   `_self`: Load the result into the same browsing context as the current one. This value is the default if the attribute is not specified.
--   `_blank`: Load the result into a new unnamed browsing context.
--   `_parent`: Load the result into the parent browsing context of the current one. If there is no parent, this option behaves the same way as `_self`.
--   `_top`: Load the result into the top-level browsing context (that is, the browsing context that is an ancestor of the current one, and has no parent). If there is no parent, this option behaves the same way as `_self`.
-
-If this attribute is specified, this element must come before any other elements with attributes whose values are URLs. */
+	/** A name or keyword indicating the default location to display the result when hyperlinks or forms cause navigation. */
 	target: "_self" | "_blank" | "_parent" | "_top" | (string & {});
 }>;
 
 type BdoHTMLAttributes = HTMLAttributesWithChildren<{
-	/** The direction in which text should be rendered in this element's contents. Possible values are:
-
--   `ltr`: Indicates that the text should go in a left-to-right direction.
--   `rtl`: Indicates that the text should go in a right-to-left direction. */
+	/** The direction in which text should be rendered in this element's contents. */
 	dir: string;
 }>;
 
 type BlockquoteHTMLAttributes = HTMLAttributesWithChildren<{
-	/** A URL that designates a source document or message for the information quoted. This attribute is intended to point to information explaining the context or the reference for the quote. */
+	/** A URL that designates a source document or message for the information quoted. */
 	cite: string;
 }>;
 
