@@ -1,5 +1,13 @@
 # @robino/html
 
+## 0.0.7
+
+### Patch Changes
+
+- 4039766: serializeTags - better tree shaking
+- Updated dependencies [4039766]
+  - @robino/html@0.0.5
+
 ## 0.0.6
 
 ### Patch Changes
