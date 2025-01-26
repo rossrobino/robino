@@ -1,7 +1,6 @@
 // cspell: disable
 import type { Children, ElementProps } from "./index.js";
 
-// cspell: disable
 // https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes
 type GlobalHTMLAttributes = Partial<{
 	accesskey: string;
@@ -115,13 +114,17 @@ type AHTMLAttributes = HTMLAttributesWithChildren<{
 		| "external"
 		| "help"
 		| "license"
+		| "me"
 		| "next"
 		| "nofollow"
-		| "noreferrer"
 		| "noopener"
+		| "noreferrer"
+		| "opener"
 		| "prev"
+		| "privacy-policy"
 		| "search"
 		| "tag"
+		| "terms-of-service"
 		| (string & {});
 	target: "_self" | "_blank" | "_parent" | "_top" | (string & {});
 	type: string;
@@ -134,21 +137,7 @@ type AreaHTMLAttributes = HTMLAttributesWithChildren<{
 	href: string;
 	ping: string;
 	referrerpolicy: string;
-	rel:
-		| "alternate"
-		| "author"
-		| "bookmark"
-		| "external"
-		| "help"
-		| "license"
-		| "next"
-		| "nofollow"
-		| "noreferrer"
-		| "noopener"
-		| "prev"
-		| "search"
-		| "tag"
-		| (string & {});
+	rel: AHTMLAttributes["rel"];
 	shape: "rect" | "circle" | "poly" | "default" | (string & {});
 	target: "_self" | "_blank" | "_parent" | "_top" | (string & {});
 }>;
@@ -269,7 +258,17 @@ type FormHTMLAttributes = ExtendedHTMLAttributes<{
 	["accept-charset"]: string;
 	autocomplete: "on" | "off" | (string & {});
 	name: string;
-	rel: string;
+	rel:
+		| "external"
+		| "help"
+		| "license"
+		| "next"
+		| "nofollow"
+		| "noopener"
+		| "noreferrer"
+		| "opener"
+		| "prev"
+		| "search";
 	action: string;
 	enctype:
 		| "application/x-www-form-urlencoded"
@@ -436,7 +435,30 @@ type LinkHTMLAttributes = ExtendedHTMLAttributes<{
 		| "origin-when-cross-origin"
 		| "unsafe-url"
 		| (string & {});
-	rel: string;
+	rel:
+		| "alternate"
+		| "author"
+		| "canonical"
+		| "dns-prefetch"
+		| "expect"
+		| "help"
+		| "icon"
+		| "license"
+		| "manifest"
+		| "me"
+		| "modulepreload"
+		| "next"
+		| "pingback"
+		| "preconnect"
+		| "prefetch"
+		| "preload"
+		| "prerender"
+		| "prev"
+		| "privacy-policy"
+		| "search"
+		| "stylesheet"
+		| "terms-of-service"
+		| (string & {});
 	sizes: string;
 	type: string;
 }>;
