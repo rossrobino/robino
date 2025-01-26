@@ -1,4 +1,4 @@
-import { Injector } from "./index.js";
+import { Injector, serializeTags } from "./index.js";
 import { expect, test, describe } from "vitest";
 
 test("init", () => {
@@ -7,7 +7,7 @@ test("init", () => {
 });
 
 test("serializeTags", () => {
-	const tags = Injector.serializeTags({
+	const tags = serializeTags({
 		name: "p",
 		attrs: { class: "text-black" },
 		children: "Paragraph",

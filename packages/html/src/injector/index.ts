@@ -1,6 +1,53 @@
 import type { InjectMethod, TagDescriptor, TagInput } from "../types/index.js";
 
 /**
+ * @param attrs attributes - type is `unknown` because at runtime (jsx package) these could be something else.
+ * @returns string of attributes
+ */
+export const serializeAttrs = (attrs?: Record<string, unknown>) => {
+	let str = "";
+
+	for (const key in attrs) {
+		if (attrs[key] === true) {
+			// if true don't put the value
+			str += ` ${key}`;
+		} else if (typeof attrs[key] === "string") {
+			str += ` ${key}=${JSON.stringify(attrs[key])}`;
+		}
+		// otherwise, don't include the attribute
+	}
+
+	return str;
+};
+
+/**
+ * @param tag `TagDescriptor`
+ * @returns an HTML string of the tag
+ */
+export const serializeTag = (tag: TagDescriptor) => {
+	if (["link", "meta", "base"].includes(tag.name)) {
+		return `<${tag.name}${serializeAttrs(tag.attrs)}>`;
+	}
+
+	return `<${tag.name}${serializeAttrs(tag.attrs)}>${serializeTags(
+		tag.children,
+	)}</${tag.name}>`;
+};
+
+/** Serializes an array of TagDescriptors into a string. */
+export const serializeTags = (tags: TagDescriptor["children"]): string => {
+	if (tags instanceof Array) {
+		return tags.map((tag) => serializeTag(tag)).join("");
+	} else if (typeof tags === "string") {
+		return tags;
+	} else if (tags) {
+		return serializeTag(tags);
+	}
+
+	return "";
+};
+
+/**
  * Inject tags into an HTML string.
  *
  * ```ts
@@ -52,53 +99,6 @@ export class Injector {
 	}
 
 	/**
-	 * @param attrs attributes - type is `unknown` because at runtime (jsx package) these could be something else.
-	 * @returns string of attributes
-	 */
-	static #serializeAttrs(attrs?: Record<string, unknown>) {
-		let str = "";
-
-		for (const key in attrs) {
-			if (attrs[key] === true) {
-				// if true don't put the value
-				str += ` ${key}`;
-			} else if (typeof attrs[key] === "string") {
-				str += ` ${key}=${JSON.stringify(attrs[key])}`;
-			}
-			// otherwise, don't include the attribute
-		}
-
-		return str;
-	}
-
-	/**
-	 * @param tag `TagDescriptor`
-	 * @returns an HTML string of the tag
-	 */
-	static #serializeTag(tag: TagDescriptor) {
-		if (["link", "meta", "base"].includes(tag.name)) {
-			return `<${tag.name}${this.#serializeAttrs(tag.attrs)}>`;
-		}
-
-		return `<${tag.name}${this.#serializeAttrs(tag.attrs)}>${this.serializeTags(
-			tag.children,
-		)}</${tag.name}>`;
-	}
-
-	/** Serializes an array of TagDescriptors into a string. */
-	static serializeTags(tags: TagDescriptor["children"]): string {
-		if (tags instanceof Array) {
-			return tags.map((tag) => this.#serializeTag(tag)).join("");
-		} else if (typeof tags === "string") {
-			return tags;
-		} else if (tags) {
-			return this.#serializeTag(tags);
-		}
-
-		return "";
-	}
-
-	/**
 	 * Inject tags into the HTML string.
 	 *
 	 * @param target Name of the tag that is being targeted.
@@ -122,12 +122,12 @@ export class Injector {
 			// found
 			this.#html = this.#html.replace(regex, (m) => {
 				if (method === "append") {
-					return `${Injector.serializeTags(tags)}${m}`;
+					return `${serializeTags(tags)}${m}`;
 				} else if (method === "prepend") {
-					return `${m}${Injector.serializeTags(tags)}`;
+					return `${m}${serializeTags(tags)}`;
 				} else {
 					// "replace"
-					return `<${target}>${Injector.serializeTags(tags)}</${target}>`;
+					return `<${target}>${serializeTags(tags)}</${target}>`;
 				}
 			});
 
@@ -147,7 +147,7 @@ export class Injector {
 	comment(text: string, tags: TagInput) {
 		this.#html = this.#html.replace(
 			new RegExp(`<!--\\s*${text}\\s*-->`, "gi"),
-			Injector.serializeTags(tags),
+			serializeTags(tags),
 		);
 
 		return this;
@@ -187,7 +187,7 @@ export class Injector {
 					"prepend",
 				);
 			} catch {
-				this.#html += Injector.serializeTags(tags);
+				this.#html += serializeTags(tags);
 				return this;
 			}
 		}
@@ -208,7 +208,7 @@ export class Injector {
 				// append a new body element to html
 				return this.#inject("html", { name: "body", children: tags });
 			} catch {
-				this.#html += Injector.serializeTags(tags);
+				this.#html += serializeTags(tags);
 				return this;
 			}
 		}

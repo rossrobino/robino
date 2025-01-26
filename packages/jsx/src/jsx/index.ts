@@ -1,5 +1,5 @@
 import type { Props, ElementProps, FC, Children, JSX } from "../types/index.js";
-import { Injector, type TagDescriptor } from "@robino/html";
+import { serializeTags, type TagDescriptor } from "@robino/html";
 
 /**
  * The main function of the jsx transform cycle, each time jsx is encountered
@@ -23,8 +23,8 @@ export const jsx: {
 
 	return createElement(
 		tag,
-		// @ts-expect-error - serializeTags will ignore attrs that don't work,
-		// but the type will be correct for Injector users
+		// @ts-expect-error - `serializeTags` will ignore attrs that don't work,
+		// but the type will be correct for `serializeTags` users
 		rest,
 		await resolveChildren(children),
 	);
@@ -42,7 +42,7 @@ export const createElement = (
 	name: string,
 	attrs: TagDescriptor["attrs"],
 	children: string,
-) => Injector.serializeTags({ name, attrs, children });
+) => serializeTags({ name, attrs, children });
 
 /**
  * serializes children into a string
