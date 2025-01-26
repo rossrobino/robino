@@ -1,6 +1,6 @@
 import type { Children } from "@robino/jsx";
 
-export const H1 = (props: { children?: Children }) => {
+export const H1 = (props: { children: Children }) => {
 	return <h1 class="bg-blue">{props.children}</h1>;
 };
 
