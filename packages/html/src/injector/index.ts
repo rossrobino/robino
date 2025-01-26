@@ -38,9 +38,13 @@ export const serializeTag = (tag: TagDescriptor) => {
 export const serializeTags = (tags: TagDescriptor["children"]): string => {
 	if (tags instanceof Array) {
 		return tags.map((tag) => serializeTag(tag)).join("");
-	} else if (typeof tags === "string") {
+	}
+
+	if (typeof tags === "string") {
 		return tags;
-	} else if (tags) {
+	}
+
+	if (tags) {
 		return serializeTag(tags);
 	}
 
