@@ -6,11 +6,11 @@ type GlobalHTMLAttributes = Partial<{
 	accesskey: string;
 	anchor: string;
 	autocapitalize:
+		| "on"
 		| "off"
 		| "characters"
 		| "words"
 		| "sentences"
-		| "on"
 		| (string & {});
 	autocorrect: "on" | "off" | (string & {});
 	autofocus: boolean;
@@ -57,7 +57,6 @@ type ARIAHTMLAttributes = Partial<{
 		| "date"
 		| "time"
 		| "true"
-		| "false"
 		| "false";
 	"aria-describedby": string;
 	"aria-description": string;
@@ -92,11 +91,9 @@ type ExtendedHTMLAttributes<T extends ElementProps> = GlobalHTMLAttributes &
 type HTMLAttributesWithChildren<T extends ElementProps> =
 	ExtendedHTMLAttributes<T> & ElementProps;
 
-type AHTMLAttributes = HTMLAttributesWithChildren<{
-	download: string | boolean;
-	href: string;
-	hreflang: string;
-	ping: string;
+// have lots of values and shared by some elements but not global
+type SharedHTMLAttributes = {
+	crossorigin: "anonymous" | "use-credentials" | (string & {});
 	referrerpolicy:
 		| "no-referrer"
 		| "no-referrer-when-downgrade"
@@ -107,6 +104,30 @@ type AHTMLAttributes = HTMLAttributesWithChildren<{
 		| "strict-origin-when-cross-origin"
 		| "unsafe-url"
 		| (string & {});
+	target: "_self" | "_blank" | "_parent" | "_top" | (string & {});
+	preload: "none" | "metadata" | "auto" | (string & {});
+	controlslist:
+		| "nodownload"
+		| "nofullscreen"
+		| "noremoteplayback"
+		| (string & {});
+	enctype:
+		| "application/x-www-form-urlencoded"
+		| "multipart/form-data"
+		| "text/plain"
+		| (string & {});
+	method: "get" | "post" | "dialog" | (string & {});
+	loading: "eager" | "lazy" | (string & {});
+	fetchpriority: "high" | "low" | "auto" | (string & {});
+	popovertargetaction: "hide" | "show" | "toggle";
+};
+
+type AHTMLAttributes = HTMLAttributesWithChildren<{
+	download: string | boolean;
+	href: string;
+	hreflang: string;
+	ping: string;
+	referrerpolicy: SharedHTMLAttributes["referrerpolicy"];
 	rel:
 		| "alternate"
 		| "author"
@@ -126,7 +147,7 @@ type AHTMLAttributes = HTMLAttributesWithChildren<{
 		| "tag"
 		| "terms-of-service"
 		| (string & {});
-	target: "_self" | "_blank" | "_parent" | "_top" | (string & {});
+	target: SharedHTMLAttributes["target"];
 	type: string;
 }>;
 
@@ -136,27 +157,27 @@ type AreaHTMLAttributes = HTMLAttributesWithChildren<{
 	download: string | boolean;
 	href: string;
 	ping: string;
-	referrerpolicy: string;
+	referrerpolicy: SharedHTMLAttributes["referrerpolicy"];
 	rel: AHTMLAttributes["rel"];
 	shape: "rect" | "circle" | "poly" | "default" | (string & {});
-	target: "_self" | "_blank" | "_parent" | "_top" | (string & {});
+	target: SharedHTMLAttributes["target"];
 }>;
 
 type AudioHTMLAttributes = HTMLAttributesWithChildren<{
 	autoplay: boolean;
 	controls: boolean;
-	controlslist: string;
-	crossorigin: "anonymous" | "use-credentials" | (string & {});
+	controlslist: SharedHTMLAttributes["controlslist"];
+	crossorigin: SharedHTMLAttributes["crossorigin"];
 	disableremoteplayback: boolean;
 	loop: boolean;
 	muted: boolean;
-	preload: "none" | "metadata" | "auto" | (string & {});
+	preload: SharedHTMLAttributes["preload"];
 	src: string;
 }>;
 
 type BaseHTMLAttributes = HTMLAttributesWithChildren<{
 	href: string;
-	target: "_self" | "_blank" | "_parent" | "_top" | (string & {});
+	target: SharedHTMLAttributes["target"];
 }>;
 
 type BlockquoteHTMLAttributes = HTMLAttributesWithChildren<{
@@ -195,17 +216,13 @@ type ButtonHTMLAttributes = ExtendedHTMLAttributes<{
 	disabled: boolean;
 	form: string;
 	formaction: string;
-	formenctype:
-		| "application/x-www-form-urlencoded"
-		| "multipart/form-data"
-		| "text/plain"
-		| (string & {});
-	formmethod: "get" | "post" | "dialog" | (string & {});
+	formenctype: SharedHTMLAttributes["enctype"];
+	formmethod: SharedHTMLAttributes["method"];
 	formnovalidate: boolean;
-	formtarget: "_self" | "_blank" | "_parent" | "_top" | (string & {});
+	formtarget: SharedHTMLAttributes["target"];
 	name: string;
 	popovertarget: string;
-	popovertargetaction: string;
+	popovertargetaction: SharedHTMLAttributes["popovertargetaction"];
 	type: "button" | "submit" | "reset" | (string & {});
 	value: string;
 }>;
@@ -270,14 +287,10 @@ type FormHTMLAttributes = ExtendedHTMLAttributes<{
 		| "prev"
 		| "search";
 	action: string;
-	enctype:
-		| "application/x-www-form-urlencoded"
-		| "multipart/form-data"
-		| "text/plain"
-		| (string & {});
-	method: "get" | "post" | "dialog" | (string & {});
+	enctype: SharedHTMLAttributes["enctype"];
+	method: SharedHTMLAttributes["method"];
 	novalidate: boolean;
-	target: "_self" | "_blank" | "_parent" | "_top" | (string & {});
+	target: SharedHTMLAttributes["target"];
 }>;
 
 type HtmlHTMLAttributes = ExtendedHTMLAttributes<{
@@ -288,18 +301,9 @@ type IframeHTMLAttributes = ExtendedHTMLAttributes<{
 	allow: string;
 	allowfullscreen: boolean;
 	height: string;
-	loading: "eager" | "lazy" | (string & {});
+	loading: SharedHTMLAttributes["loading"];
 	name: string;
-	referrerpolicy:
-		| "no-referrer"
-		| "no-referrer-when-downgrade"
-		| "origin"
-		| "origin-when-cross-origin"
-		| "same-origin"
-		| "strict-origin"
-		| "strict-origin-when-cross-origin"
-		| "unsafe-url"
-		| (string & {});
+	referrerpolicy: SharedHTMLAttributes["referrerpolicy"];
 	sandbox: string;
 	src: string;
 	srcdoc: string;
@@ -308,23 +312,14 @@ type IframeHTMLAttributes = ExtendedHTMLAttributes<{
 
 type ImgHTMLAttributes = ExtendedHTMLAttributes<{
 	alt: string;
-	crossorigin: "anonymous" | "use-credentials" | (string & {});
+	crossorigin: SharedHTMLAttributes["crossorigin"];
 	decoding: "sync" | "async" | "auto" | (string & {});
 	elementtiming: string;
-	fetchpriority: "high" | "low" | "auto" | (string & {});
+	fetchpriority: SharedHTMLAttributes["fetchpriority"];
 	height: string;
 	ismap: boolean;
-	loading: "eager" | "lazy";
-	referrerpolicy:
-		| "no-referrer"
-		| "no-referrer-when-downgrade"
-		| "origin"
-		| "origin-when-cross-origin"
-		| "same-origin"
-		| "strict-origin"
-		| "strict-origin-when-cross-origin"
-		| "unsafe-url"
-		| (string & {});
+	loading: SharedHTMLAttributes["loading"];
+	referrerpolicy: SharedHTMLAttributes["referrerpolicy"];
 	sizes: string;
 	src: string;
 	srcset: string;
@@ -342,10 +337,10 @@ type InputHTMLAttributes = ExtendedHTMLAttributes<{
 	disabled: boolean;
 	form: string;
 	formaction: string;
-	formenctype: string;
-	formmethod: string;
+	formenctype: SharedHTMLAttributes["enctype"];
+	formmethod: SharedHTMLAttributes["method"];
 	formnovalidate: boolean;
-	formtarget: string;
+	formtarget: SharedHTMLAttributes["target"];
 	height: string;
 	list: string;
 	max: string;
@@ -357,7 +352,7 @@ type InputHTMLAttributes = ExtendedHTMLAttributes<{
 	pattern: string;
 	placeholder: string;
 	popovertarget: string;
-	popovertargetaction: "hide" | "show" | "toggle";
+	popovertargetaction: SharedHTMLAttributes["popovertargetaction"];
 	readonly: boolean;
 	required: boolean;
 	size: string;
@@ -419,15 +414,16 @@ type LinkHTMLAttributes = ExtendedHTMLAttributes<{
 		| "worker"
 		| (string & {});
 	blocking: "render" | (string & {});
-	crossorigin: "anonymous" | "use-credentials" | (string & {});
+	crossorigin: SharedHTMLAttributes["crossorigin"];
 	disabled: boolean;
-	fetchpriority: "high" | "low" | "auto" | (string & {});
+	fetchpriority: SharedHTMLAttributes["fetchpriority"];
 	href: string;
 	hreflang: string;
 	imagesizes: string;
 	imagesrcset: string;
 	integrity: string;
 	media: string;
+	// not all the same options as others
 	referrerpolicy:
 		| "no-referrer"
 		| "no-referrer-when-downgrade"
@@ -435,6 +431,7 @@ type LinkHTMLAttributes = ExtendedHTMLAttributes<{
 		| "origin-when-cross-origin"
 		| "unsafe-url"
 		| (string & {});
+	// not all the same options as others
 	rel:
 		| "alternate"
 		| "author"
@@ -543,21 +540,12 @@ type QHTMLAttributes = ExtendedHTMLAttributes<{
 type ScriptHTMLAttributes = ExtendedHTMLAttributes<{
 	async: boolean;
 	blocking: string;
-	crossorigin: "anonymous" | "use-credentials" | (string & {});
+	crossorigin: SharedHTMLAttributes["crossorigin"];
 	defer: boolean;
-	fetchpriority: "high" | "low" | "auto";
+	fetchpriority: SharedHTMLAttributes["fetchpriority"];
 	integrity: string;
 	nomodule: boolean;
-	referrerpolicy:
-		| "no-referrer"
-		| "no-referrer-when-downgrade"
-		| "origin"
-		| "origin-when-cross-origin"
-		| "same-origin"
-		| "strict-origin"
-		| "strict-origin-when-cross-origin"
-		| "unsafe-url"
-		| (string & {});
+	referrerpolicy: SharedHTMLAttributes["referrerpolicy"];
 	src: string;
 	type: "module" | "importmap" | "speculationrules" | (string & {});
 }>;
@@ -643,12 +631,8 @@ type TrackHTMLAttributes = ExtendedHTMLAttributes<{
 type VideoHTMLAttributes = ExtendedHTMLAttributes<{
 	autoplay: boolean;
 	controls: boolean;
-	controlslist:
-		| "nodownload"
-		| "nofullscreen"
-		| "noremoteplayback"
-		| (string & {});
-	crossorigin: "anonymous" | "use-credentials" | (string & {});
+	controlslist: SharedHTMLAttributes["controlslist"];
+	crossorigin: SharedHTMLAttributes["crossorigin"];
 	disablepictureinpicture: boolean;
 	disableremoteplayback: boolean;
 	height: string;
@@ -656,7 +640,7 @@ type VideoHTMLAttributes = ExtendedHTMLAttributes<{
 	muted: boolean;
 	playsinline: boolean;
 	poster: string;
-	preload: "none" | "metadata" | "auto" | (string & {});
+	preload: SharedHTMLAttributes["preload"];
 	src: string;
 	width: string;
 }>;
