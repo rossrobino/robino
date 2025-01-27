@@ -34,7 +34,78 @@ type GlobalHTMLAttributes = Partial<{
 	nonce: string;
 	part: string;
 	popover: string;
-	role: string;
+	// https://www.w3.org/TR/wai-aria-1.1/#role_definitions
+	role:
+		| "alert"
+		| "alertdialog"
+		| "application"
+		| "article"
+		| "banner"
+		| "button"
+		| "cell"
+		| "checkbox"
+		| "columnheader"
+		| "combobox"
+		| "complementary"
+		| "contentinfo"
+		| "definition"
+		| "dialog"
+		| "directory"
+		| "document"
+		| "feed"
+		| "figure"
+		| "form"
+		| "grid"
+		| "gridcell"
+		| "group"
+		| "heading"
+		| "img"
+		| "link"
+		| "list"
+		| "listbox"
+		| "listitem"
+		| "log"
+		| "main"
+		| "marquee"
+		| "math"
+		| "menu"
+		| "menubar"
+		| "menuitem"
+		| "menuitemcheckbox"
+		| "menuitemradio"
+		| "navigation"
+		| "none"
+		| "note"
+		| "option"
+		| "presentation"
+		| "progressbar"
+		| "radio"
+		| "radiogroup"
+		| "region"
+		| "row"
+		| "rowgroup"
+		| "rowheader"
+		| "scrollbar"
+		| "search"
+		| "searchbox"
+		| "separator"
+		| "slider"
+		| "spinbutton"
+		| "status"
+		| "switch"
+		| "tab"
+		| "table"
+		| "tablist"
+		| "tabpanel"
+		| "term"
+		| "textbox"
+		| "timer"
+		| "toolbar"
+		| "tooltip"
+		| "tree"
+		| "treegrid"
+		| "treeitem"
+		| (string & {});
 	slot: string;
 	spellcheck: "true" | "false";
 	style: string;
@@ -43,10 +114,6 @@ type GlobalHTMLAttributes = Partial<{
 	translate: string;
 	virtualkeyboardpolicy: string;
 	writingsuggestions: boolean;
-}> &
-	ARIAHTMLAttributes;
-
-type ARIAHTMLAttributes = Partial<{
 	"aria-atomic": "true" | "false";
 	"aria-busy": "true" | "false";
 	"aria-controls": string;
@@ -232,6 +299,7 @@ type CanvasHTMLAttributes = ExtendedHTMLAttributes<{
 	["moz-opaque"]: boolean;
 	width: string;
 }>;
+
 type ColHTMLAttributes = ExtendedHTMLAttributes<{
 	span: string;
 }>;
