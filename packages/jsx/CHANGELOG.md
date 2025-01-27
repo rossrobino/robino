@@ -1,5 +1,11 @@
 # @robino/html
 
+## 0.0.8
+
+### Patch Changes
+
+- 789bc55: add roles
+
 ## 0.0.7
 
 ### Patch Changes
