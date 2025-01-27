@@ -28,8 +28,6 @@ HTML attributes are of type `boolean` or `string` and are based on the [MDN HTML
 
 ## Usage
 
-### Components
-
 Add props to a component.
 
 ```tsx
@@ -64,6 +62,8 @@ const All = () => {
 };
 ```
 
+Call a component directly to get a string of HTML.
+
 ```tsx
-const html = await All(); // string of html
+const html = await All(); // string of HTML
 ```
