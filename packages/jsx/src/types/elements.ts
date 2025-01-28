@@ -3,6 +3,7 @@ import type { Children, ElementProps } from "./index.js";
 
 // https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes
 type GlobalHTMLAttributes = Partial<{
+	children?: Children;
 	accesskey: string;
 	anchor: string;
 	autocapitalize:
