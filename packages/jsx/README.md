@@ -4,11 +4,13 @@
 npm i @robino/jsx
 ```
 
-A [tiny](https://npmgraph.js.org/?q=%40robino%2Fjsx) jsx to HTML import source, write jsx and output HTML strings. This library was written to be used for server-side templating if you don't want to add a larger UI framework. There are no runtime specific APIs used so this package can be used anywhere.
+A [tiny](https://bundlephobia.com/package/@robino/jsx) jsx to HTML import source. Write async jsx components and output HTML strings.
+
+This library was written to be used for server-side templating if you don't want to add a larger UI framework. There are no JS runtime specific APIs used, so this package can be used anywhere.
 
 > [!WARNING]
 >
-> `@robino/jsx` does not escape any HTML.
+> `@robino/jsx` does not escape HTML.
 
 ## Configuration
 

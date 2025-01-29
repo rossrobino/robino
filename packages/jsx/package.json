@@ -1,6 +1,6 @@
 {
 	"name": "@robino/jsx",
-	"description": "custom jsx",
+	"description": "jsx to html import source",
 	"version": "0.0.8",
 	"type": "module",
 	"types": "./dist/index.d.ts",

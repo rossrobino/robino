@@ -57,11 +57,11 @@ export const serializeTags = (tags: TagDescriptor["children"]): string => {
  * ```ts
  * import { Injector } from "@robino/html";
  *
- * const injector = new Injector(
+ * const page = new Injector(
  * 	`<!doctype html><html><body><!-- comment --></body></html>`,
  * );
  *
- * injector
+ * page
  * 	// Set or change the title
  * 	.title("My Title")
  * 	// pass a TagDescriptor
