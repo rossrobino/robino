@@ -1,5 +1,14 @@
 # @robino/html
 
+## 0.0.9
+
+### Patch Changes
+
+- ef71fa4: simplifies into two functions
+- ef71fa4: fix children for elements
+- Updated dependencies [ef71fa4]
+  - @robino/html@0.1.0
+
 ## 0.0.8
 
 ### Patch Changes

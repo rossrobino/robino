@@ -1,5 +1,11 @@
 # @robino/html
 
+## 0.1.0
+
+### Minor Changes
+
+- ef71fa4: add `escape` function
+
 ## 0.0.5
 
 ### Patch Changes
