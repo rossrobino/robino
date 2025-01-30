@@ -13,13 +13,13 @@ export const jsx: {
 	(tag: FC, props: Props): JSX.Element;
 	(tag: string, props: ElementProps): JSX.Element;
 } = async (tag, props) => {
-	// it's a Fragment
 	if (typeof tag === "function") {
+		// Fragment
 		return tag(props);
 	}
 
-	// it's an element
-	const { children = "", ...attrs } = props as ElementProps;
+	// element
+	const { children, ...attrs } = props as ElementProps;
 
 	// @ts-expect-error - `serializeTags` will ignore attrs that don't work,
 	// but the type will be correct for `serializeTags` users
@@ -41,10 +41,13 @@ export const jsx: {
 export const Fragment = async (props?: { children?: Children }) => {
 	if (Array.isArray(props?.children)) {
 		const resolvedChildren = await Promise.all(props.children);
+		// join takes care of null or undefined here, returns ""
 		return resolvedChildren.join("");
 	}
 
-	return String(await props?.children);
+	const resolvedChild = await props?.children;
+	if (resolvedChild == null) return "";
+	return String(resolvedChild);
 };
 
 export { jsx as jsxs, jsx as jsxDEV };

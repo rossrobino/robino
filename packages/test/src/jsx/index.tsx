@@ -26,30 +26,31 @@ export const Delay = async (props: { delay: number }) => {
 	return <p>delay: {String(props.delay)}</p>;
 };
 
-const XSS = () => {
-	return <p>{"<script>console.log('hello')</script>"}</p>;
-};
-
 export const App = () => {
 	return (
 		<p>
-			<StrComp />
-			<XSS />
 			<Delay delay={100} />
 			<Delay delay={200} />
 			<H1 children="hello"></H1>
 			<p>
 				<Delay delay={200} />
 				<>
-					my name is ross
+					fragment
 					<Delay delay={100} />
-					<a href="mailto:ross">hello</a>
+					<a href="mailto:ross">text</a>
 				</>
 				<P text={() => "paragraph"} />
-				hello
+				text
 			</p>
 		</p>
 	);
 };
 
-export const StrComp = async () => <>string component</>;
+export const UndefinedComp = () => <>{undefined}</>;
+export const NullComp = () => <>{null}</>;
+export const UndefinedNullComp = () => (
+	<>
+		{}
+		{null}
+	</>
+);
