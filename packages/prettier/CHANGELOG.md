@@ -1,5 +1,11 @@
 # @robino/prettier
 
+## 1.0.1
+
+### Patch Changes
+
+- c438c9f: update dependencies
+
 ## 1.0.0
 
 ### Major Changes
