@@ -10,7 +10,7 @@ test("escape content", () => {
 
 test("escape attribute", () => {
 	const escaped = escape(`&<script>console.log("hello")</script>`, true);
-	console.log(escaped);
+
 	expect(escaped.includes("&amp")).toBe(true);
 	expect(escaped.includes("<")).toBe(false);
 	expect(escaped.includes('"')).toBe(false);
