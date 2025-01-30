@@ -1,5 +1,11 @@
 # @robino/html
 
+## 0.0.10
+
+### Patch Changes
+
+- f0ec46b: handle all types of children correctly
+
 ## 0.0.9
 
 ### Patch Changes
