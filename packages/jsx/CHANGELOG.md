@@ -1,5 +1,11 @@
 # @robino/html
 
+## 0.0.11
+
+### Patch Changes
+
+- fbf63fb: fix: allow any additional attrs on elements
+
 ## 0.0.10
 
 ### Patch Changes
