@@ -2,156 +2,170 @@
 import type { Children, ElementProps } from "./index.js";
 
 // https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes
-type GlobalHTMLAttributes = Partial<{
-	children?: Children;
-	accesskey: string;
-	anchor: string;
-	autocapitalize:
-		| "on"
-		| "off"
-		| "characters"
-		| "words"
-		| "sentences"
-		| (string & {});
-	autocorrect: "on" | "off" | (string & {});
-	autofocus: boolean;
-	class: string;
-	contenteditable: string;
-	dir: string;
-	draggable: boolean;
-	enterkeyhint: string;
-	exportparts: string;
-	hidden: boolean;
-	id: string;
-	inert: boolean;
-	inputmode: string;
-	is: string;
-	itemid: string;
-	itemprop: string;
-	itemref: string;
-	itemscope: boolean;
-	itemtype: string;
-	lang: string;
-	nonce: string;
-	part: string;
-	popover: string;
-	// https://www.w3.org/TR/wai-aria-1.1/#role_definitions
-	role:
-		| "alert"
-		| "alertdialog"
-		| "application"
-		| "article"
-		| "banner"
-		| "button"
-		| "cell"
-		| "checkbox"
-		| "columnheader"
-		| "combobox"
-		| "complementary"
-		| "contentinfo"
-		| "definition"
-		| "dialog"
-		| "directory"
-		| "document"
-		| "feed"
-		| "figure"
-		| "form"
-		| "grid"
-		| "gridcell"
-		| "group"
-		| "heading"
-		| "img"
-		| "link"
-		| "list"
-		| "listbox"
-		| "listitem"
-		| "log"
-		| "main"
-		| "marquee"
-		| "math"
-		| "menu"
-		| "menubar"
-		| "menuitem"
-		| "menuitemcheckbox"
-		| "menuitemradio"
-		| "navigation"
-		| "none"
-		| "note"
-		| "option"
-		| "presentation"
-		| "progressbar"
-		| "radio"
-		| "radiogroup"
-		| "region"
-		| "row"
-		| "rowgroup"
-		| "rowheader"
-		| "scrollbar"
-		| "search"
-		| "searchbox"
-		| "separator"
-		| "slider"
-		| "spinbutton"
-		| "status"
-		| "switch"
-		| "tab"
-		| "table"
-		| "tablist"
-		| "tabpanel"
-		| "term"
-		| "textbox"
-		| "timer"
-		| "toolbar"
-		| "tooltip"
-		| "tree"
-		| "treegrid"
-		| "treeitem"
-		| (string & {});
-	slot: string;
-	spellcheck: "true" | "false";
-	style: string;
-	tabindex: number;
-	title: string;
-	translate: string;
-	virtualkeyboardpolicy: string;
-	writingsuggestions: boolean;
-	"aria-atomic": "true" | "false";
-	"aria-busy": "true" | "false";
-	"aria-controls": string;
-	"aria-current":
-		| "page"
-		| "step"
-		| "location"
-		| "date"
-		| "time"
-		| "true"
-		| "false";
-	"aria-describedby": string;
-	"aria-description": string;
-	"aria-details": string;
-	"aria-disabled": "true" | "false";
-	"aria-dropeffect": "none" | "copy" | "execute" | "link" | "move" | "popup";
-	"aria-errormessage": string;
-	"aria-flowto": string;
-	"aria-grabbed": "true" | "false";
-	"aria-haspopup":
-		| "menu"
-		| "listbox"
-		| "tree"
-		| "grid"
-		| "dialog"
-		| "true"
-		| "false";
-	"aria-hidden": "true" | "false";
-	"aria-invalid": "grammar" | "false" | "spelling" | "true";
-	"aria-keyshortcuts": string;
-	"aria-label": string;
-	"aria-labelledby": string;
-	"aria-live": "assertive" | "off" | "polite";
-	"aria-owns": string;
-	"aria-relevant": "additions" | "all" | "removals" | "text" | "additions text";
-	"aria-roledescription": string;
-}>;
+type GlobalHTMLAttributes = Partial<
+	| {
+			children: Children;
+			accesskey: string;
+			anchor: string;
+			autocapitalize:
+				| "on"
+				| "off"
+				| "characters"
+				| "words"
+				| "sentences"
+				| (string & {});
+			autocorrect: "on" | "off" | (string & {});
+			autofocus: boolean;
+			class: string;
+			contenteditable: string;
+			dir: string;
+			draggable: boolean;
+			enterkeyhint: string;
+			exportparts: string;
+			hidden: boolean;
+			id: string;
+			inert: boolean;
+			inputmode: string;
+			is: string;
+			itemid: string;
+			itemprop: string;
+			itemref: string;
+			itemscope: boolean;
+			itemtype: string;
+			lang: string;
+			nonce: string;
+			part: string;
+			popover: string;
+			// https://www.w3.org/TR/wai-aria-1.1/#role_definitions
+			role:
+				| "alert"
+				| "alertdialog"
+				| "application"
+				| "article"
+				| "banner"
+				| "button"
+				| "cell"
+				| "checkbox"
+				| "columnheader"
+				| "combobox"
+				| "complementary"
+				| "contentinfo"
+				| "definition"
+				| "dialog"
+				| "directory"
+				| "document"
+				| "feed"
+				| "figure"
+				| "form"
+				| "grid"
+				| "gridcell"
+				| "group"
+				| "heading"
+				| "img"
+				| "link"
+				| "list"
+				| "listbox"
+				| "listitem"
+				| "log"
+				| "main"
+				| "marquee"
+				| "math"
+				| "menu"
+				| "menubar"
+				| "menuitem"
+				| "menuitemcheckbox"
+				| "menuitemradio"
+				| "navigation"
+				| "none"
+				| "note"
+				| "option"
+				| "presentation"
+				| "progressbar"
+				| "radio"
+				| "radiogroup"
+				| "region"
+				| "row"
+				| "rowgroup"
+				| "rowheader"
+				| "scrollbar"
+				| "search"
+				| "searchbox"
+				| "separator"
+				| "slider"
+				| "spinbutton"
+				| "status"
+				| "switch"
+				| "tab"
+				| "table"
+				| "tablist"
+				| "tabpanel"
+				| "term"
+				| "textbox"
+				| "timer"
+				| "toolbar"
+				| "tooltip"
+				| "tree"
+				| "treegrid"
+				| "treeitem"
+				| (string & {});
+			slot: string;
+			spellcheck: "true" | "false";
+			style: string;
+			tabindex: number;
+			title: string;
+			translate: string;
+			virtualkeyboardpolicy: string;
+			writingsuggestions: boolean;
+			"aria-atomic": "true" | "false";
+			"aria-busy": "true" | "false";
+			"aria-controls": string;
+			"aria-current":
+				| "page"
+				| "step"
+				| "location"
+				| "date"
+				| "time"
+				| "true"
+				| "false";
+			"aria-describedby": string;
+			"aria-description": string;
+			"aria-details": string;
+			"aria-disabled": "true" | "false";
+			"aria-dropeffect":
+				| "none"
+				| "copy"
+				| "execute"
+				| "link"
+				| "move"
+				| "popup";
+			"aria-errormessage": string;
+			"aria-flowto": string;
+			"aria-grabbed": "true" | "false";
+			"aria-haspopup":
+				| "menu"
+				| "listbox"
+				| "tree"
+				| "grid"
+				| "dialog"
+				| "true"
+				| "false";
+			"aria-hidden": "true" | "false";
+			"aria-invalid": "grammar" | "false" | "spelling" | "true";
+			"aria-keyshortcuts": string;
+			"aria-label": string;
+			"aria-labelledby": string;
+			"aria-live": "assertive" | "off" | "polite";
+			"aria-owns": string;
+			"aria-relevant":
+				| "additions"
+				| "all"
+				| "removals"
+				| "text"
+				| "additions text";
+			"aria-roledescription": string;
+	  }
+	| Record<string, string | boolean>
+>;
 
 type ExtendedHTMLAttributes<T extends ElementProps> = GlobalHTMLAttributes &
 	Partial<T>;
