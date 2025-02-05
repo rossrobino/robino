@@ -182,7 +182,9 @@ export class Injector {
 				);
 
 				if (!result?.index)
-					throw new Error(`"${injection.target}" did not match`);
+					throw new Error(
+						`Tag not found: </${injection.target}> did not match in initial HTML, ensure ${injection.target} element exists.\n\n${this.#html}\n`,
+					);
 
 				injection.index = result.index;
 				injection.match = result.at(0);

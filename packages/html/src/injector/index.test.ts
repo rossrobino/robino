@@ -112,3 +112,9 @@ describe("streaming", async () => {
 		);
 	});
 });
+
+test("error", () => {
+	const page = new Injector();
+
+	expect(() => page.title("title").toResponse()).toThrowError();
+});
