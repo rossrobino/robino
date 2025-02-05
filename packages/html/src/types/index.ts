@@ -30,11 +30,34 @@ export type TagDescriptor = {
 	attrs?: Record<string, string | boolean | undefined>;
 
 	/** Children of the tag. Tags or a string of HTML. */
-	children?: TagInput;
+	children?: Tags;
 };
 
 /** Tags can be a `string`, a `TagDescriptor`, or an array of `TagDescriptors`. */
-export type TagInput = string | TagDescriptor | TagDescriptor[];
+export type Tags = string | TagDescriptor | TagDescriptor[];
 
-/** How to inject tags into the HTML string. */
-export type InjectMethod = "append" | "prepend" | "replace";
+/** The expected input into the Injector methods. */
+export type TagInput = Tags | (() => Tags) | (() => Promise<Tags>);
+
+export type Injection = {
+	/**
+	 * The tag name to target the injection to.
+	 *
+	 * @example "custom-element"
+	 */
+	target: string;
+
+	/** The tags to inject. */
+	tagInput: TagInput;
+
+	/** Index of the matched tag.  */
+	index?: number;
+
+	/** Result of the match. */
+	match?: string;
+};
+
+export type MatchedInjection = Required<Injection> & {
+	/** The matched and encoded content. */
+	content?: string;
+};

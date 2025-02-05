@@ -1,10 +1,15 @@
-import type { InjectMethod, TagDescriptor, TagInput } from "../types/index.js";
+import type {
+	Injection,
+	MatchedInjection,
+	TagDescriptor,
+	TagInput,
+} from "../types/index.js";
 
 /**
  * @param attrs attributes - type is `unknown` because at runtime (jsx package) these could be something else.
  * @returns string of attributes
  */
-export const serializeAttrs = (attrs?: Record<string, unknown>) => {
+const serializeAttrs = (attrs?: Record<string, unknown>) => {
 	let str = "";
 
 	for (const key in attrs) {
@@ -24,7 +29,7 @@ export const serializeAttrs = (attrs?: Record<string, unknown>) => {
  * @param tag `TagDescriptor`
  * @returns an HTML string of the tag
  */
-export const serializeTag = (tag: TagDescriptor) => {
+const serializeTag = (tag: TagDescriptor) => {
 	if (["link", "meta", "base"].includes(tag.name)) {
 		return `<${tag.name}${serializeAttrs(tag.attrs)}>`;
 	}
@@ -37,13 +42,11 @@ export const serializeTag = (tag: TagDescriptor) => {
 /** Serializes an array of TagDescriptors into a string. */
 export const serializeTags = (tags: TagDescriptor["children"]): string => {
 	if (tags instanceof Array) {
-		return tags.map((tag) => serializeTag(tag)).join("");
+		return tags.map(serializeTag).join("");
 	}
-
 	if (typeof tags === "string") {
 		return tags;
 	}
-
 	if (tags) {
 		return serializeTag(tags);
 	}
@@ -54,34 +57,42 @@ export const serializeTags = (tags: TagDescriptor["children"]): string => {
 /**
  * Inject tags into an HTML string.
  *
+ * Injector creates a stream of responses based on the order of injections.
+ *
+ * @example
+ *
+ * In this example, the head is sent first containing the script tag.
+ * This allows the browser to start fetching the assets for the page
+ * before the body is streamed in after the async function promise is resolved.
+ *
  * ```ts
  * import { Injector } from "@robino/html";
  *
- * const page = new Injector(
- * 	`<!doctype html><html><body><!-- comment --></body></html>`,
- * );
+ * const page = new Injector();
  *
- * page
- * 	// Set or change the title
- * 	.title("My Title")
- * 	// pass a TagDescriptor
+ * page.
+ * 	// async function
+ * 	body(async () => {
+ * 		// await...
+ * 		// return Tags
+ * 	})
+ * 	// Tags
  * 	.head({ name: "script", attrs: { type: "module", src: "./script.js" } })
- * 	// or a string of text
- * 	.body("Prepended to the body! ", "prepend")
- * 	// replace comments
- * 	.comment("comment", "My comment")
- * 	// stringify HTML
- * 	.toString();
- * ```
- *
- * Produces the following HTML.
- *
- * ```html
- * <!doctype html><html><head><title>My Title</title><script type="module" src="./script.js"></script></head><body>Prepended to the body! My comment</body></html>
+ * 	// string
+ * 	.body("text")
+ * 	// creates an in order stream response
+ * 	.toResponse();
  * ```
  */
 export class Injector {
+	/** The initial HTML string to inject content into. */
 	#html: string;
+
+	/** An array of injections to process when a response is generated. */
+	#injections: Injection[] = [];
+
+	/** A set of tag names that have been used -- to avoid sending the same match multiple times. */
+	#targets: Set<string> = new Set();
 
 	/**
 	 * @param html The HTML string.
@@ -89,147 +100,179 @@ export class Injector {
 	 * @default
 	 *
 	 * ```html
-	 * <!doctype html><html><head></head><body></body></html>
+	 * <!doctype html>
+	 * <html>
+	 * 	<head></head>
+	 * 	<body></body>
+	 * </html>
 	 * ```
 	 */
-	constructor(html?: string) {
-		this.#html =
-			html ?? "<!doctype html><html><head></head><body></body></html>";
-	}
-
-	/** @returns The HTML. */
-	toString() {
-		return this.#html;
+	constructor(
+		html: string = "<!doctype html><html><head></head><body></body></html>",
+	) {
+		this.#html = html;
 	}
 
 	/**
-	 * Inject tags into the HTML string.
-	 *
-	 * @param target Name of the tag that is being targeted.
-	 * @param tags Tags to inject into the target.
-	 * @param method Add tags at the end, beginning, or replace. - defaults to `"append"`
-	 * @returns The Injector instance.
+	 * @param injection to resolve
+	 * @returns the content with the match
 	 */
-	#inject(target: string, tags: TagInput, method: InjectMethod = "append") {
-		let regex: RegExp;
+	async #resolveTagInput(injection: MatchedInjection) {
+		let tagInput: TagInput;
 
-		if (method === "append") {
-			regex = new RegExp(`<\/${target}>`, "i");
-		} else if (method === "prepend") {
-			regex = new RegExp(`<${target}[^>]*>`, "i");
+		if (typeof injection.tagInput === "function") {
+			tagInput = await injection.tagInput();
 		} else {
-			// "replace"
-			regex = new RegExp(`<${target}>(.*?)<\/${target}>`, "i");
+			tagInput = injection.tagInput;
 		}
 
-		if (regex.test(this.#html)) {
-			// found
-			this.#html = this.#html.replace(regex, (m) => {
-				if (method === "append") {
-					return `${serializeTags(tags)}${m}`;
-				} else if (method === "prepend") {
-					return `${m}${serializeTags(tags)}`;
-				} else {
-					// "replace"
-					return `<${target}>${serializeTags(tags)}</${target}>`;
-				}
-			});
-
-			return this;
-		}
-
-		throw new Error(`${target} not found.`);
+		return serializeTags(tagInput) + injection.match;
 	}
 
 	/**
-	 * Replace comments with tags.
-	 *
-	 * @param text Text within comment.
-	 * @param tags Tags to replace the comment with.
-	 * @returns The Injector instance.
+	 * @param target tag to inject into, for example `"custom-element"`
+	 * @param tagInput tags to inject
 	 */
-	comment(text: string, tags: TagInput) {
-		this.#html = this.#html.replace(
-			new RegExp(`<!--\\s*${text}\\s*-->`, "gi"),
-			serializeTags(tags),
-		);
-
+	inject(target: string, tagInput: TagInput) {
+		this.#injections.push({ target, tagInput });
 		return this;
 	}
 
 	/**
-	 * Set or change the document's title element.
-	 *
-	 * @param text Text to set or change the `title` to.
-	 * @returns The Injector instance.
+	 * @param tagInput tags to inject into the `<head>` element
 	 */
-	title(text: string) {
-		try {
-			return this.#inject("title", text, "replace");
-		} catch {
-			return this.head({ name: "title", children: text });
-		}
+	head(tagInput: TagInput) {
+		this.#injections.push({ target: "head", tagInput });
+		return this;
 	}
 
 	/**
-	 * Inject tags into the `head` element.
-	 *
-	 * @param tags Tags to inject.
-	 * @param method Add tags at the end, beginning, or replace. - defaults to `"append"`
-	 * @returns The Injector instance.
+	 * @param tagInput tags to inject into the `<body>` element
 	 */
-	head(tags: TagInput, method: InjectMethod = "append") {
-		try {
-			// try to inject into head
-			return this.#inject("head", tags, method);
-		} catch {
-			try {
-				// try to prepend a new head element to html
-				return this.#inject(
-					"html",
-					{ name: "head", children: tags },
-					"prepend",
+	body(tagInput: TagInput) {
+		this.#injections.push({ target: "body", tagInput });
+		return this;
+	}
+
+	/**
+	 * @param tagInput tags to inject into the `<title>` element
+	 */
+	title(tagInput: TagInput) {
+		this.#injections.push({ target: "title", tagInput });
+		return this;
+	}
+
+	/**
+	 * @param tagInput tags to inject into the `<main>` element
+	 */
+	main(tagInput: TagInput) {
+		this.#injections.push({ target: "main", tagInput });
+		return this;
+	}
+
+	/**
+	 * @returns A web `Response` that streams the HTML in order as each `TagInput` resolves
+	 */
+	toResponse() {
+		const matched: MatchedInjection[] = this.#injections
+			// create a regular expression and run it over the html to determine the order
+			.map((injection) => {
+				const result = this.#html.match(
+					new RegExp(`<\/${injection.target}>`, "i"),
 				);
-			} catch {
-				this.#html += serializeTags(tags);
-				return this;
+
+				if (!result?.index)
+					throw new Error(`"${injection.target}" did not match`);
+
+				injection.index = result.index;
+				injection.match = result.at(0);
+
+				// `as` because index and result are now set
+				return injection as MatchedInjection;
+			})
+			// sort by location of the match -- for example, head might come before body
+			.sort((a, b) => a.index - b.index);
+
+		// If two matches have the same target, the match string does not need to be sent twice.
+		// For example, </body>...</body> if two injections are targeted to body
+		for (let i = matched.length - 1; i >= 0; i--) {
+			const injection = matched.at(i)!;
+
+			if (this.#targets.has(injection.target)) {
+				injection.match = "";
+			} else {
+				this.#targets.add(injection.target);
 			}
 		}
+
+		return new Response(
+			new ReadableStream<string>({
+				start: async (c) => {
+					const first = this.#html.slice(0, matched.at(0)?.index);
+
+					c.enqueue(first);
+
+					// tracks the number of characters of the initial html that have been sent
+					let charsSent = first.length;
+					let queueIndex = 0;
+
+					// resolved injections waiting to be sent in the correct order
+					const queue: MatchedInjection[] = [];
+					const tasks = [];
+
+					for (let i = 0; i < matched.length; i++) {
+						const queuedInjection: MatchedInjection = matched.at(i)!;
+
+						queue.push(queuedInjection);
+
+						const task = (async () => {
+							queuedInjection.content =
+								await this.#resolveTagInput(queuedInjection);
+
+							if (i === queueIndex) {
+								let current: MatchedInjection | undefined = queuedInjection;
+
+								while (current?.content) {
+									// send the content
+									c.enqueue(current.content);
+									charsSent += current.match.length;
+
+									// set to next injection in the queue
+									current = queue.at(++queueIndex);
+
+									if (current) {
+										// send chunk immediately, even if current hasn't resolved yet
+										const chunk = this.#html.slice(charsSent, current.index);
+										if (chunk) c.enqueue(chunk);
+										charsSent = current.index;
+									}
+								}
+							}
+						})();
+
+						tasks.push(task);
+					}
+
+					await Promise.all(tasks);
+
+					// last
+					c.enqueue(this.#html.slice(charsSent));
+
+					c.close();
+				},
+			}).pipeThrough(new TextEncoderStream()),
+			{ headers: { "content-type": "text/html; charset=utf-8" } },
+		);
 	}
 
 	/**
-	 * Inject tags into the `body` element.
+	 * WARNING - This method will negate the streaming benefits of the Injector.
+	 * All promises will be resolved to generate the result. It's better to use
+	 * `toResponse` when possible.
 	 *
-	 * @param tags Tags to inject.
-	 * @param method Add tags at the end, beginning, or replace. - defaults to `"append"`
-	 * @returns The Injector instance.
+	 * @returns a string of HTML from the response stream.
 	 */
-	body(tags: TagInput, method: InjectMethod = "append") {
-		try {
-			return this.#inject("body", tags, method);
-		} catch {
-			try {
-				// append a new body element to html
-				return this.#inject("html", { name: "body", children: tags });
-			} catch {
-				this.#html += serializeTags(tags);
-				return this;
-			}
-		}
-	}
-
-	/**
-	 * Inject tags into the `main` element, appends `main` + tags to `body` if not found.
-	 *
-	 * @param tags Tags to inject.
-	 * @param method Add tags at the end, beginning, or replace. - defaults to `"append"`
-	 * @returns The Injector instance.
-	 */
-	main(tags: TagInput, method: InjectMethod = "append") {
-		try {
-			return this.#inject("main", tags, method);
-		} catch {
-			return this.body({ name: "main", children: tags }, "append");
-		}
+	async toString() {
+		return this.toResponse().text();
 	}
 }

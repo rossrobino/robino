@@ -9,6 +9,10 @@
 		"build": "tsc"
 	},
 	"dependencies": {
+		"@robino/html": "*",
 		"@robino/jsx": "*"
+	},
+	"devDependencies": {
+		"mitata": "^1.0.34"
 	}
 }
