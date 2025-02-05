@@ -1,5 +1,11 @@
 # @robino/html
 
+## 0.2.1
+
+### Patch Changes
+
+- c31ce2e: better error messaging
+
 ## 0.2.0
 
 ### Minor Changes
