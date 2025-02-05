@@ -1,5 +1,11 @@
 # @robino/html
 
+## 0.0.13
+
+### Patch Changes
+
+- 5ae0be4: fix: resolve nested children
+
 ## 0.0.12
 
 ### Patch Changes
