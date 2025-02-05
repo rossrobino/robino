@@ -1,5 +1,11 @@
 # @robino/html
 
+## 0.2.2
+
+### Patch Changes
+
+- df6d737: fix: TagInput should also accept Promise<Tags>
+
 ## 0.2.1
 
 ### Patch Changes
