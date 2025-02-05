@@ -67,8 +67,8 @@ end
 \`\`\`
 `;
 
-test("process", () => {
-	const { article, headings, html, frontmatter } = processor.process(md);
+test("process", async () => {
+	const { article, headings, html, frontmatter } = await processor.process(md);
 
 	expect(article).toBeTypeOf("string");
 	expect(article.at(0)).toBe("-");
@@ -81,7 +81,7 @@ test("process", () => {
 });
 
 test("with frontmatter", async () => {
-	const { frontmatter, html } = processor.process(md, frontmatterSchema);
+	const { frontmatter, html } = await processor.process(md, frontmatterSchema);
 
 	await fs.writeFile(path.join(import.meta.dirname, "test.html"), html);
 
@@ -91,7 +91,7 @@ test("with frontmatter", async () => {
 });
 
 test("check Lua language support", async () => {
-	const { html } = processor.process(md);
+	const { html } = await processor.process(md);
 
 	// Verify that the Lua code block was properly highlighted in the output HTML
 	expect(html).toContain('<pre class="shiki');

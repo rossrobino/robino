@@ -1,5 +1,6 @@
 import { fromHighlighter } from "@shikijs/markdown-it/core";
 import { transformerMetaHighlight } from "@shikijs/transformers";
+import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { load } from "js-yaml";
 import MarkdownIt from "markdown-it";
 import type { Options as MarkdownItOptions } from "markdown-it";
@@ -11,7 +12,6 @@ import {
 	type HighlighterCoreOptions,
 } from "shiki/core";
 import { createJavaScriptRegexEngine } from "shiki/engine-javascript.mjs";
-import type { z } from "zod";
 
 export interface MdHeading {
 	/** The heading's `id` (lowercase name separated by dashes). */
@@ -24,7 +24,7 @@ export interface MdHeading {
 	name: string;
 }
 
-export interface MdData<T extends z.ZodTypeAny> {
+export interface MdData<T extends StandardSchemaV1> {
 	/** The markdown content, without the frontmatter if it is parsed. */
 	article: string;
 
@@ -35,7 +35,7 @@ export interface MdData<T extends z.ZodTypeAny> {
 	html: string;
 
 	/** The parsed frontmatter inferred from the passed in schema. */
-	frontmatter: z.infer<T>;
+	frontmatter: StandardSchemaV1.InferOutput<T>;
 }
 
 export type MarkdownProcessorOptions = {
@@ -133,13 +133,13 @@ export class MarkdownProcessor {
 
 	/**
 	 * @param md Markdown string to process.
-	 * @param frontmatterSchema Optional Zod frontmatter schema
+	 * @param frontmatterSchema Optional frontmatter [Standard Schema](https://github.com/standard-schema/standard-schema)
 	 * @returns headings, article, frontmatter, html
 	 */
-	process<T extends z.ZodTypeAny>(
+	async process<T extends StandardSchemaV1>(
 		md: string,
 		frontmatterSchema?: T,
-	): MdData<T> {
+	): Promise<MdData<T>> {
 		const split = md.split("---");
 
 		const yaml = split.at(1);
@@ -149,7 +149,7 @@ export class MarkdownProcessor {
 
 		// Process frontmatter based on option
 		const frontmatter = shouldProcessFrontmatter
-			? this.getFrontmatter(yaml, frontmatterSchema)
+			? await this.getFrontmatter(yaml, frontmatterSchema)
 			: {};
 
 		const headings = this.getHeadings(article);
@@ -201,22 +201,30 @@ export class MarkdownProcessor {
 	}
 
 	/**
-	 * Extracts and validates frontmatter using the provided Zod schema.
+	 * Extracts and validates frontmatter using the provided schema.
 	 * If frontmatter is invalid, throws an error.
+	 *
+	 * @param yaml the frontmatter
+	 * @param frontmatterSchema
+	 * @returns parsed frontmatter object
 	 */
-	getFrontmatter(yaml: string, frontmatterSchema: z.ZodSchema) {
-		const parsed = frontmatterSchema.safeParse(load(yaml));
+	async getFrontmatter<T extends StandardSchemaV1>(
+		yaml: string,
+		frontmatterSchema: T,
+	) {
+		let result = frontmatterSchema["~standard"].validate(load(yaml));
+		if (result instanceof Promise) result = await result;
 
-		if (!parsed.success) {
+		if (result.issues) {
 			throw new Error(
 				`Invalid frontmatter, please correct or update schema:\n\n${JSON.stringify(
-					parsed.error.issues[0],
+					result.issues,
 					null,
 					4,
 				)}`,
 			);
 		}
 
-		return parsed.data;
+		return result.value;
 	}
 }
