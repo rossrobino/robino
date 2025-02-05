@@ -37,7 +37,11 @@ export type TagDescriptor = {
 export type Tags = string | TagDescriptor | TagDescriptor[];
 
 /** The expected input into the Injector methods. */
-export type TagInput = Tags | (() => Tags) | (() => Promise<Tags>);
+export type TagInput =
+	| Tags
+	| Promise<Tags>
+	| (() => Tags)
+	| (() => Promise<Tags>);
 
 export type Injection = {
 	/**

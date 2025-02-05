@@ -118,12 +118,14 @@ export class Injector {
 	 * @returns the content with the match
 	 */
 	async #resolveTagInput(injection: MatchedInjection) {
-		let tagInput: TagInput;
+		let tagInput = injection.tagInput;
 
-		if (typeof injection.tagInput === "function") {
-			tagInput = await injection.tagInput();
-		} else {
-			tagInput = injection.tagInput;
+		if (typeof tagInput === "function") {
+			tagInput = tagInput();
+		}
+
+		if (tagInput instanceof Promise) {
+			tagInput = await tagInput;
 		}
 
 		return serializeTags(tagInput) + injection.match;
