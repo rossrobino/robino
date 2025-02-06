@@ -11,41 +11,64 @@ test("serializeTags", () => {
 	expect(tags).toBe(`<p class="text-black" open>Paragraph</p>`);
 });
 
-test("toResponse should create a response", () => {
-	const injector = new Injector();
-	expect(injector.toResponse()).toBeInstanceOf(Response);
+describe("toResponse", () => {
+	const page = new Injector()
+		.body(async () => {
+			await new Promise((res) => setTimeout(res, 50));
+			return "delay body";
+		})
+		.head("head");
+
+	const res = page.toResponse();
+	test("should create Response", () => {
+		expect(res).toBeInstanceOf(Response);
+	});
+
+	test("verify result", async () => {
+		const html = await res.text();
+		expect(html).toBe(
+			"<!doctype html><html><head>head</head><body>delay body</body></html>",
+		);
+	});
+});
+
+describe("toStream", () => {
+	const page = new Injector();
+	test("should create ReadableStream", () => {
+		expect(page.toStream()).toBeInstanceOf(ReadableStream);
+	});
 });
 
 test("head", async () => {
-	const injector = new Injector().head({ name: "append-head" });
+	const page = new Injector().head({ name: "append-head" });
 
-	expect(await injector.toString()).toBe(
+	expect(await page.toString()).toBe(
 		`<!doctype html><html><head><append-head></append-head></head><body></body></html>`,
 	);
 });
 
 test("body", async () => {
-	const injector = new Injector().body([{ name: "append-body" }]);
+	const page = new Injector().body([{ name: "append-body" }]);
 
-	expect(await injector.toString()).toBe(
+	expect(await page.toString()).toBe(
 		`<!doctype html><html><head></head><body><append-body></append-body></body></html>`,
 	);
 });
 
 test("title", async () => {
-	const injector = new Injector(
+	const page = new Injector(
 		"<!doctype html><html><head><title></title></head><body></body></html>",
 	).title("title");
 
-	expect(await injector.toString()).toBe(
+	expect(await page.toString()).toBe(
 		`<!doctype html><html><head><title>title</title></head><body></body></html>`,
 	);
 });
 
 test("multiple", async () => {
-	const injector = new Injector();
+	const page = new Injector();
 
-	const html = await injector
+	const html = await page
 		.body(async () => {
 			await new Promise((res) => setTimeout(res, 50));
 			return "delay body";
@@ -63,11 +86,11 @@ test("multiple", async () => {
 describe("streaming", async () => {
 	const start = performance.now();
 
-	const injector = new Injector(
+	const page = new Injector(
 		"<!doctype html><html><head><title></title></head><body><main><custom-element></custom-element></main></body></html>",
 	);
 
-	const res = injector
+	const res = page
 		.inject("custom-element", "custom content")
 		.main("1. main")
 		.main("2. main")
@@ -106,7 +129,7 @@ describe("streaming", async () => {
 		expect(total).toBeLessThan(400);
 	});
 
-	test("result", () => {
+	test("verify result", () => {
 		expect(html).toBe(
 			"<!doctype html><html><head><title>title</title>head</head><body><main><custom-element>custom content</custom-element>1. main2. main</main>delay body 2delay body 1bodydelay body 3</body></html>",
 		);
@@ -117,4 +140,17 @@ test("error", () => {
 	const page = new Injector();
 
 	expect(() => page.title("title").toResponse()).toThrowError();
+});
+
+describe("empty", () => {
+	const page = new Injector();
+
+	test("should be empty", () => {
+		expect(page.empty).toBe(true);
+	});
+
+	test("should not be empty", () => {
+		page.body("not empty");
+		expect(page.empty).toBe(false);
+	});
 });
