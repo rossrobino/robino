@@ -1,5 +1,12 @@
 # @robino/html
 
+## 0.0.14
+
+### Patch Changes
+
+- Updated dependencies [f53e473]
+  - @robino/html@0.3.0
+
 ## 0.0.13
 
 ### Patch Changes
