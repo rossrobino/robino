@@ -1,7 +1,7 @@
 {
 	"name": "@robino/jsx",
 	"description": "jsx to html import source",
-	"version": "0.0.13",
+	"version": "0.0.14",
 	"type": "module",
 	"types": "./dist/index.d.ts",
 	"main": "./dist/index.js",
@@ -31,6 +31,6 @@
 		"build": "tsc"
 	},
 	"dependencies": {
-		"@robino/html": "^0.2.0"
+		"@robino/html": "^0.3.0"
 	}
 }

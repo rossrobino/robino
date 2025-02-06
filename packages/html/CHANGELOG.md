@@ -1,5 +1,14 @@
 # @robino/html
 
+## 0.3.0
+
+### Minor Changes
+
+- f53e473: feat: adds two new methods to `Injector`
+
+  - `toStream()` - returns a ReadableStream of strings for the page.
+  - `empty` - returns `true` if there are no injections, `false` otherwise.
+
 ## 0.2.2
 
 ### Patch Changes
