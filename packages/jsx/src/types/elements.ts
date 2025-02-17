@@ -6,14 +6,8 @@ type Attributes<T extends ElementProps = ElementProps> = Partial<{
 	children: Children;
 	accesskey: string;
 	anchor: string;
-	autocapitalize:
-		| "on"
-		| "off"
-		| "characters"
-		| "words"
-		| "sentences"
-		| (string & {});
-	autocorrect: "on" | "off" | (string & {});
+	autocapitalize: "on" | "off" | "characters" | "words" | "sentences";
+	autocorrect: "on" | "off";
 	autofocus: boolean;
 	class: string;
 	contenteditable: string;
@@ -105,8 +99,7 @@ type Attributes<T extends ElementProps = ElementProps> = Partial<{
 		| "tooltip"
 		| "tree"
 		| "treegrid"
-		| "treeitem"
-		| (string & {});
+		| "treeitem";
 	slot: string;
 	spellcheck: "true" | "false";
 	style: string;
@@ -162,7 +155,13 @@ type VoidAttributes<T extends ElementProps = ElementProps> = Omit<
 
 // have lots of values and shared by some elements but not global
 type SharedAttributes = {
-	crossorigin: "anonymous" | "use-credentials" | (string & {});
+	autocomplete:
+		| "on"
+		| "off"
+		// https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/autocomplete#token-list
+		| (string & {});
+	blocking: "render";
+	crossorigin: "anonymous" | "use-credentials";
 	referrerpolicy:
 		| "no-referrer"
 		| "no-referrer-when-downgrade"
@@ -171,23 +170,22 @@ type SharedAttributes = {
 		| "same-origin"
 		| "strict-origin"
 		| "strict-origin-when-cross-origin"
-		| "unsafe-url"
-		| (string & {});
-	target: "_self" | "_blank" | "_parent" | "_top" | (string & {});
-	preload: "none" | "metadata" | "auto" | (string & {});
+		| "unsafe-url";
+	target: "_self" | "_blank" | "_parent" | "_top";
+	preload: "none" | "metadata" | "auto";
 	controlslist:
 		| "nodownload"
 		| "nofullscreen"
 		| "noremoteplayback"
+		// allows multiple
 		| (string & {});
 	enctype:
 		| "application/x-www-form-urlencoded"
 		| "multipart/form-data"
-		| "text/plain"
-		| (string & {});
-	method: "get" | "post" | "dialog" | (string & {});
-	loading: "eager" | "lazy" | (string & {});
-	fetchpriority: "high" | "low" | "auto" | (string & {});
+		| "text/plain";
+	method: "get" | "post" | "dialog";
+	loading: "eager" | "lazy";
+	fetchpriority: "high" | "low" | "auto";
 	popovertargetaction: "hide" | "show" | "toggle";
 };
 
@@ -215,6 +213,7 @@ type AAttributes = Attributes<{
 		| "search"
 		| "tag"
 		| "terms-of-service"
+		// allows multiple
 		| (string & {});
 	target: SharedAttributes["target"];
 	type: string;
@@ -222,13 +221,13 @@ type AAttributes = Attributes<{
 
 type AreaAttributes = VoidAttributes<{
 	alt: string;
-	coords: "rect" | "circle" | "poly" | (string & {});
+	coords: "rect" | "circle" | "poly";
 	download: string | boolean;
 	href: string;
 	ping: string;
 	referrerpolicy: SharedAttributes["referrerpolicy"];
 	rel: AAttributes["rel"];
-	shape: "rect" | "circle" | "poly" | "default" | (string & {});
+	shape: "rect" | "circle" | "poly" | "default";
 	target: SharedAttributes["target"];
 }>;
 
@@ -292,7 +291,7 @@ type ButtonAttributes = Attributes<{
 	name: string;
 	popovertarget: string;
 	popovertargetaction: SharedAttributes["popovertargetaction"];
-	type: "button" | "submit" | "reset" | (string & {});
+	type: "button" | "submit" | "reset";
 	value: string;
 }>;
 
@@ -343,7 +342,7 @@ type FieldsetAttributes = Attributes<{
 
 type FormAttributes = Attributes<{
 	["accept-charset"]: string;
-	autocomplete: "on" | "off" | (string & {});
+	autocomplete: SharedAttributes["autocomplete"];
 	name: string;
 	rel:
 		| "external"
@@ -383,7 +382,7 @@ type IframeAttributes = Attributes<{
 type ImgAttributes = VoidAttributes<{
 	alt: string;
 	crossorigin: SharedAttributes["crossorigin"];
-	decoding: "sync" | "async" | "auto" | (string & {});
+	decoding: "sync" | "async" | "auto";
 	elementtiming: string;
 	fetchpriority: SharedAttributes["fetchpriority"];
 	height: string;
@@ -400,7 +399,7 @@ type ImgAttributes = VoidAttributes<{
 type InputAttributes = VoidAttributes<{
 	accept: string;
 	alt: string;
-	autocomplete: string;
+	autocomplete: SharedAttributes["autocomplete"];
 	capture: string;
 	checked: boolean;
 	dirname: string;
@@ -481,9 +480,8 @@ type LinkAttributes = VoidAttributes<{
 		| "style"
 		| "track"
 		| "video"
-		| "worker"
-		| (string & {});
-	blocking: "render" | (string & {});
+		| "worker";
+	blocking: SharedAttributes["blocking"];
 	crossorigin: SharedAttributes["crossorigin"];
 	disabled: boolean;
 	fetchpriority: SharedAttributes["fetchpriority"];
@@ -499,8 +497,7 @@ type LinkAttributes = VoidAttributes<{
 		| "no-referrer-when-downgrade"
 		| "origin"
 		| "origin-when-cross-origin"
-		| "unsafe-url"
-		| (string & {});
+		| "unsafe-url";
 	// not all the same options as others
 	rel:
 		| "alternate"
@@ -525,6 +522,7 @@ type LinkAttributes = VoidAttributes<{
 		| "search"
 		| "stylesheet"
 		| "terms-of-service"
+		// allows multiple
 		| (string & {});
 	sizes: string;
 	type: string;
@@ -542,8 +540,7 @@ type MetaAttributes = VoidAttributes<{
 		| "content-type"
 		| "default-style"
 		| "x-ua-compatible"
-		| "refresh"
-		| (string & {});
+		| "refresh";
 	media: string;
 	name:
 		| "application-name"
@@ -553,6 +550,7 @@ type MetaAttributes = VoidAttributes<{
 		| "keywords"
 		| "theme-color"
 		| "viewport"
+		// allow non-standard meta names
 		| (string & {});
 }>;
 
@@ -578,7 +576,7 @@ type ObjectAttributes = Attributes<{
 type OlAttributes = Attributes<{
 	reversed: boolean;
 	start: string;
-	type: "a" | "A" | "i" | "I" | "1" | (string & {});
+	type: "a" | "A" | "i" | "I" | "1";
 }>;
 
 type OptgroupAttributes = Attributes<{
@@ -610,7 +608,7 @@ type QAttributes = Attributes<{
 
 type ScriptAttributes = Attributes<{
 	async: boolean;
-	blocking: string;
+	blocking: SharedAttributes["blocking"];
 	crossorigin: SharedAttributes["crossorigin"];
 	defer: boolean;
 	fetchpriority: SharedAttributes["fetchpriority"];
@@ -618,11 +616,11 @@ type ScriptAttributes = Attributes<{
 	nomodule: boolean;
 	referrerpolicy: SharedAttributes["referrerpolicy"];
 	src: string;
-	type: "module" | "importmap" | "speculationrules" | (string & {});
+	type: "module" | "importmap" | "speculationrules";
 }>;
 
 type SelectAttributes = Attributes<{
-	autocomplete: string;
+	autocomplete: SharedAttributes["autocomplete"];
 	disabled: boolean;
 	form: string;
 	multiple: boolean;
@@ -646,7 +644,7 @@ type SourceAttributes = VoidAttributes<{
 }>;
 
 type StyleAttributes = Attributes<{
-	blocking: "render" | (string & {});
+	blocking: SharedAttributes["blocking"];
 	media: string;
 }>;
 
@@ -657,14 +655,14 @@ type TdAttributes = Attributes<{
 }>;
 
 type TemplateAttributes = Attributes<{
-	shadowrootmode: "open" | "closed" | (string & {});
+	shadowrootmode: "open" | "closed";
 	shadowrootclonable: boolean;
 	shadowrootdelegatesfocus: boolean;
 	shadowrootserializable: boolean;
 }>;
 
 type TextareaAttributes = Attributes<{
-	autocomplete: "off" | "on" | (string & {});
+	autocomplete: SharedAttributes["autocomplete"];
 	cols: string;
 	dirname: string;
 	disabled: boolean;
@@ -693,7 +691,7 @@ type TimeAttributes = Attributes<{
 
 type TrackAttributes = VoidAttributes<{
 	default: boolean;
-	kind: "subtitles" | "captions" | "chapters" | "metadata" | (string & {});
+	kind: "subtitles" | "captions" | "chapters" | "metadata";
 	label: string;
 	src: string;
 	srclang: string;
