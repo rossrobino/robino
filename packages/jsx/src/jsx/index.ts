@@ -1,5 +1,5 @@
 import type { Props, ElementProps, FC, Children, JSX } from "../types/index.js";
-import { serializeTags } from "@robino/html";
+import { serialize } from "@robino/html";
 
 /**
  * The main function of the jsx transform cycle, each time jsx is encountered
@@ -21,9 +21,9 @@ export const jsx: {
 	// element
 	const { children, ...attrs } = props as ElementProps;
 
-	// @ts-expect-error - `serializeTags` will ignore attrs that don't work,
-	// but the type will be correct for `serializeTags` users
-	return serializeTags({
+	// @ts-expect-error - `serialize` will ignore attrs that don't work,
+	// but the type will be correct for `serialize` users
+	return serialize({
 		name: tag,
 		attrs,
 		children: await Fragment({ children }),

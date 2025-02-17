@@ -1,15 +1,5 @@
-import { serializeTags, Injector } from "./index.js";
+import { Injector } from "./index.js";
 import { describe, expect, test } from "vitest";
-
-test("serializeTags", () => {
-	const tags = serializeTags({
-		name: "p",
-		attrs: { class: "text-black", open: true, nope: false },
-		children: "Paragraph",
-	});
-
-	expect(tags).toBe(`<p class="text-black" open>Paragraph</p>`);
-});
 
 describe("toResponse", () => {
 	const page = new Injector()

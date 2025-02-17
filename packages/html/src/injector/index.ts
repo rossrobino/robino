@@ -1,58 +1,5 @@
-import type {
-	Injection,
-	MatchedInjection,
-	TagDescriptor,
-	TagInput,
-} from "../types/index.js";
-
-/**
- * @param attrs attributes - type is `unknown` because at runtime (jsx package) these could be something else.
- * @returns string of attributes
- */
-const serializeAttrs = (attrs?: Record<string, unknown>) => {
-	let str = "";
-
-	for (const key in attrs) {
-		if (attrs[key] === true) {
-			// if true don't put the value
-			str += ` ${key}`;
-		} else if (typeof attrs[key] === "string") {
-			str += ` ${key}=${JSON.stringify(attrs[key])}`;
-		}
-		// otherwise, don't include the attribute
-	}
-
-	return str;
-};
-
-/**
- * @param tag `TagDescriptor`
- * @returns an HTML string of the tag
- */
-const serializeTag = (tag: TagDescriptor) => {
-	if (["link", "meta", "base"].includes(tag.name)) {
-		return `<${tag.name}${serializeAttrs(tag.attrs)}>`;
-	}
-
-	return `<${tag.name}${serializeAttrs(tag.attrs)}>${serializeTags(
-		tag.children,
-	)}</${tag.name}>`;
-};
-
-/** Serializes an array of TagDescriptors into a string. */
-export const serializeTags = (tags: TagDescriptor["children"]): string => {
-	if (tags instanceof Array) {
-		return tags.map(serializeTag).join("");
-	}
-	if (typeof tags === "string") {
-		return tags;
-	}
-	if (tags) {
-		return serializeTag(tags);
-	}
-
-	return "";
-};
+import { serialize } from "../serialize/index.js";
+import type { Injection, MatchedInjection, TagInput } from "../types/index.js";
 
 /**
  * Inject tags into an HTML string.
@@ -128,7 +75,7 @@ export class Injector {
 			tagInput = await tagInput;
 		}
 
-		return serializeTags(tagInput) + injection.match;
+		return serialize(tagInput) + injection.match;
 	}
 
 	/**
