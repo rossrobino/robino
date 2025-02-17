@@ -1,5 +1,11 @@
 # @robino/html
 
+## 0.4.1
+
+### Patch Changes
+
+- abc8cba: fix: adds all void elements to avoid closing tags that should not be closed
+
 ## 0.4.0
 
 ### Minor Changes

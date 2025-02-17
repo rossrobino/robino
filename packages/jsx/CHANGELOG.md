@@ -1,5 +1,16 @@
 # @robino/html
 
+## 0.2.0
+
+### Minor Changes
+
+- 27ab93f: fix: more strict attr types for attrs that expect specific string values
+
+### Patch Changes
+
+- Updated dependencies [abc8cba]
+  - @robino/html@0.4.1
+
 ## 0.1.0
 
 ### Minor Changes
