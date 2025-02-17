@@ -1,5 +1,17 @@
 # @robino/html
 
+## 0.1.0
+
+### Minor Changes
+
+- b410bd4: fix: better autocomplete for element attributes, don't allow boolean | string for defined
+
+### Patch Changes
+
+- 65e0bf6: fix: render "" for `false`, don't await unless children is a promise within Fragment
+- Updated dependencies [9e4c725]
+  - @robino/html@0.4.0
+
 ## 0.0.14
 
 ### Patch Changes

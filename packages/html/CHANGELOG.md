@@ -1,5 +1,11 @@
 # @robino/html
 
+## 0.4.0
+
+### Minor Changes
+
+- 9e4c725: rename `serializeTags` to `serialize`
+
 ## 0.3.0
 
 ### Minor Changes
