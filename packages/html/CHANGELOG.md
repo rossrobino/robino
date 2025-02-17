@@ -1,5 +1,11 @@
 # @robino/html
 
+## 0.4.2
+
+### Patch Changes
+
+- 4351deb: perf: use a set for void elements
+
 ## 0.4.1
 
 ### Patch Changes
