@@ -21,7 +21,7 @@ const serializeAttrs = (attrs?: Record<string, unknown>) => {
 };
 
 // https://developer.mozilla.org/en-US/docs/Glossary/Void_element#self-closing_tags
-const voidElements = [
+const voidElements = new Set([
 	"area",
 	"base",
 	"br",
@@ -35,14 +35,14 @@ const voidElements = [
 	"source",
 	"track",
 	"wbr",
-];
+]);
 
 /**
  * @param tag `TagDescriptor`
  * @returns an HTML string of the tag
  */
 const serializeTag = (tag: TagDescriptor) => {
-	if (voidElements.includes(tag.name)) {
+	if (voidElements.has(tag.name)) {
 		return `<${tag.name}${serializeAttrs(tag.attrs)}>`;
 	}
 
