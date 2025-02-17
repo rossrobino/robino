@@ -38,21 +38,29 @@ export const jsx: {
  * @param props containing children to render
  * @returns string of concatenated children
  */
-export const Fragment = async (props?: {
-	children?: Children;
-}): Promise<string> => {
-	if (Array.isArray(props?.children)) {
-		const resolved = await Promise.all(
-			props.children.map((children) => Fragment({ children })),
-		);
-
-		// join takes care of `null` or `undefined` here, returns ""
-		return resolved.join("");
+export const Fragment = async (
+	props: {
+		children?: Children;
+	} = {},
+): Promise<string> => {
+	if (props.children instanceof Array) {
+		return (
+			await Promise.all(
+				props.children.map((children) => Fragment({ children })),
+			)
+		).join("");
 	}
 
-	const resolved = await props?.children;
-	if (resolved == null) return "";
-	return String(resolved);
+	if (props.children instanceof Promise) {
+		props.children = await props.children;
+	}
+
+	if (props.children == null || props.children === false) {
+		// undefined, null, or false should render ""
+		return "";
+	}
+
+	return String(props.children);
 };
 
 export { jsx as jsxs, jsx as jsxDEV };
