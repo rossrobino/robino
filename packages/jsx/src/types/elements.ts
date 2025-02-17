@@ -2,176 +2,158 @@
 import type { Children, ElementProps } from "./index.js";
 
 // https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes
-type GlobalHTMLAttributes = Partial<
-	| {
-			children: Children;
-			accesskey: string;
-			anchor: string;
-			autocapitalize:
-				| "on"
-				| "off"
-				| "characters"
-				| "words"
-				| "sentences"
-				| (string & {});
-			autocorrect: "on" | "off" | (string & {});
-			autofocus: boolean;
-			class: string;
-			contenteditable: string;
-			dir: string;
-			draggable: boolean;
-			enterkeyhint: string;
-			exportparts: string;
-			hidden: boolean;
-			id: string;
-			inert: boolean;
-			inputmode: string;
-			is: string;
-			itemid: string;
-			itemprop: string;
-			itemref: string;
-			itemscope: boolean;
-			itemtype: string;
-			lang: string;
-			nonce: string;
-			part: string;
-			popover: string;
-			// https://www.w3.org/TR/wai-aria-1.1/#role_definitions
-			role:
-				| "alert"
-				| "alertdialog"
-				| "application"
-				| "article"
-				| "banner"
-				| "button"
-				| "cell"
-				| "checkbox"
-				| "columnheader"
-				| "combobox"
-				| "complementary"
-				| "contentinfo"
-				| "definition"
-				| "dialog"
-				| "directory"
-				| "document"
-				| "feed"
-				| "figure"
-				| "form"
-				| "grid"
-				| "gridcell"
-				| "group"
-				| "heading"
-				| "img"
-				| "link"
-				| "list"
-				| "listbox"
-				| "listitem"
-				| "log"
-				| "main"
-				| "marquee"
-				| "math"
-				| "menu"
-				| "menubar"
-				| "menuitem"
-				| "menuitemcheckbox"
-				| "menuitemradio"
-				| "navigation"
-				| "none"
-				| "note"
-				| "option"
-				| "presentation"
-				| "progressbar"
-				| "radio"
-				| "radiogroup"
-				| "region"
-				| "row"
-				| "rowgroup"
-				| "rowheader"
-				| "scrollbar"
-				| "search"
-				| "searchbox"
-				| "separator"
-				| "slider"
-				| "spinbutton"
-				| "status"
-				| "switch"
-				| "tab"
-				| "table"
-				| "tablist"
-				| "tabpanel"
-				| "term"
-				| "textbox"
-				| "timer"
-				| "toolbar"
-				| "tooltip"
-				| "tree"
-				| "treegrid"
-				| "treeitem"
-				| (string & {});
-			slot: string;
-			spellcheck: "true" | "false";
-			style: string;
-			tabindex: number;
-			title: string;
-			translate: string;
-			virtualkeyboardpolicy: string;
-			writingsuggestions: boolean;
-			"aria-atomic": "true" | "false";
-			"aria-busy": "true" | "false";
-			"aria-controls": string;
-			"aria-current":
-				| "page"
-				| "step"
-				| "location"
-				| "date"
-				| "time"
-				| "true"
-				| "false";
-			"aria-describedby": string;
-			"aria-description": string;
-			"aria-details": string;
-			"aria-disabled": "true" | "false";
-			"aria-dropeffect":
-				| "none"
-				| "copy"
-				| "execute"
-				| "link"
-				| "move"
-				| "popup";
-			"aria-errormessage": string;
-			"aria-flowto": string;
-			"aria-grabbed": "true" | "false";
-			"aria-haspopup":
-				| "menu"
-				| "listbox"
-				| "tree"
-				| "grid"
-				| "dialog"
-				| "true"
-				| "false";
-			"aria-hidden": "true" | "false";
-			"aria-invalid": "grammar" | "false" | "spelling" | "true";
-			"aria-keyshortcuts": string;
-			"aria-label": string;
-			"aria-labelledby": string;
-			"aria-live": "assertive" | "off" | "polite";
-			"aria-owns": string;
-			"aria-relevant":
-				| "additions"
-				| "all"
-				| "removals"
-				| "text"
-				| "additions text";
-			"aria-roledescription": string;
-	  }
-	| Record<string, string | boolean>
->;
-
-type ExtendedHTMLAttributes<T extends ElementProps> = GlobalHTMLAttributes &
+type HTMLAttributes<T extends ElementProps = ElementProps> = Partial<{
+	children: Children;
+	accesskey: string;
+	anchor: string;
+	autocapitalize:
+		| "on"
+		| "off"
+		| "characters"
+		| "words"
+		| "sentences"
+		| (string & {});
+	autocorrect: "on" | "off" | (string & {});
+	autofocus: boolean;
+	class: string;
+	contenteditable: string;
+	dir: string;
+	draggable: boolean;
+	enterkeyhint: string;
+	exportparts: string;
+	hidden: boolean;
+	id: string;
+	inert: boolean;
+	inputmode: string;
+	is: string;
+	itemid: string;
+	itemprop: string;
+	itemref: string;
+	itemscope: boolean;
+	itemtype: string;
+	lang: string;
+	nonce: string;
+	part: string;
+	popover: string;
+	// https://www.w3.org/TR/wai-aria-1.1/#role_definitions
+	role:
+		| "alert"
+		| "alertdialog"
+		| "application"
+		| "article"
+		| "banner"
+		| "button"
+		| "cell"
+		| "checkbox"
+		| "columnheader"
+		| "combobox"
+		| "complementary"
+		| "contentinfo"
+		| "definition"
+		| "dialog"
+		| "directory"
+		| "document"
+		| "feed"
+		| "figure"
+		| "form"
+		| "grid"
+		| "gridcell"
+		| "group"
+		| "heading"
+		| "img"
+		| "link"
+		| "list"
+		| "listbox"
+		| "listitem"
+		| "log"
+		| "main"
+		| "marquee"
+		| "math"
+		| "menu"
+		| "menubar"
+		| "menuitem"
+		| "menuitemcheckbox"
+		| "menuitemradio"
+		| "navigation"
+		| "none"
+		| "note"
+		| "option"
+		| "presentation"
+		| "progressbar"
+		| "radio"
+		| "radiogroup"
+		| "region"
+		| "row"
+		| "rowgroup"
+		| "rowheader"
+		| "scrollbar"
+		| "search"
+		| "searchbox"
+		| "separator"
+		| "slider"
+		| "spinbutton"
+		| "status"
+		| "switch"
+		| "tab"
+		| "table"
+		| "tablist"
+		| "tabpanel"
+		| "term"
+		| "textbox"
+		| "timer"
+		| "toolbar"
+		| "tooltip"
+		| "tree"
+		| "treegrid"
+		| "treeitem"
+		| (string & {});
+	slot: string;
+	spellcheck: "true" | "false";
+	style: string;
+	tabindex: number;
+	title: string;
+	translate: string;
+	virtualkeyboardpolicy: string;
+	writingsuggestions: boolean;
+	"aria-atomic": "true" | "false";
+	"aria-busy": "true" | "false";
+	"aria-controls": string;
+	"aria-current":
+		| "page"
+		| "step"
+		| "location"
+		| "date"
+		| "time"
+		| "true"
+		| "false";
+	"aria-describedby": string;
+	"aria-description": string;
+	"aria-details": string;
+	"aria-disabled": "true" | "false";
+	"aria-dropeffect": "none" | "copy" | "execute" | "link" | "move" | "popup";
+	"aria-errormessage": string;
+	"aria-flowto": string;
+	"aria-grabbed": "true" | "false";
+	"aria-haspopup":
+		| "menu"
+		| "listbox"
+		| "tree"
+		| "grid"
+		| "dialog"
+		| "true"
+		| "false";
+	"aria-hidden": "true" | "false";
+	"aria-invalid": "grammar" | "false" | "spelling" | "true";
+	"aria-keyshortcuts": string;
+	"aria-label": string;
+	"aria-labelledby": string;
+	"aria-live": "assertive" | "off" | "polite";
+	"aria-owns": string;
+	"aria-relevant": "additions" | "all" | "removals" | "text" | "additions text";
+	"aria-roledescription": string;
+}> &
+	ElementProps &
 	Partial<T>;
-
-type HTMLAttributesWithChildren<T extends ElementProps> =
-	ExtendedHTMLAttributes<T> & ElementProps;
 
 // have lots of values and shared by some elements but not global
 type SharedHTMLAttributes = {
@@ -204,7 +186,7 @@ type SharedHTMLAttributes = {
 	popovertargetaction: "hide" | "show" | "toggle";
 };
 
-type AHTMLAttributes = HTMLAttributesWithChildren<{
+type AHTMLAttributes = HTMLAttributes<{
 	download: string | boolean;
 	href: string;
 	hreflang: string;
@@ -233,7 +215,7 @@ type AHTMLAttributes = HTMLAttributesWithChildren<{
 	type: string;
 }>;
 
-type AreaHTMLAttributes = HTMLAttributesWithChildren<{
+type AreaHTMLAttributes = HTMLAttributes<{
 	alt: string;
 	coords: "rect" | "circle" | "poly" | (string & {});
 	download: string | boolean;
@@ -245,7 +227,7 @@ type AreaHTMLAttributes = HTMLAttributesWithChildren<{
 	target: SharedHTMLAttributes["target"];
 }>;
 
-type AudioHTMLAttributes = HTMLAttributesWithChildren<{
+type AudioHTMLAttributes = HTMLAttributes<{
 	autoplay: boolean;
 	controls: boolean;
 	controlslist: SharedHTMLAttributes["controlslist"];
@@ -257,16 +239,16 @@ type AudioHTMLAttributes = HTMLAttributesWithChildren<{
 	src: string;
 }>;
 
-type BaseHTMLAttributes = HTMLAttributesWithChildren<{
+type BaseHTMLAttributes = HTMLAttributes<{
 	href: string;
 	target: SharedHTMLAttributes["target"];
 }>;
 
-type BlockquoteHTMLAttributes = HTMLAttributesWithChildren<{
+type BlockquoteHTMLAttributes = HTMLAttributes<{
 	cite: string;
 }>;
 
-type BodyHTMLAttributes = HTMLAttributesWithChildren<{
+type BodyHTMLAttributes = HTMLAttributes<{
 	onafterprint: string;
 	onbeforeprint: string;
 	onbeforeunload: string;
@@ -292,7 +274,7 @@ type BodyHTMLAttributes = HTMLAttributesWithChildren<{
 	onunload: string;
 }>;
 
-type ButtonHTMLAttributes = ExtendedHTMLAttributes<{
+type ButtonHTMLAttributes = HTMLAttributes<{
 	command: string;
 	commandfor: string;
 	disabled: boolean;
@@ -309,52 +291,52 @@ type ButtonHTMLAttributes = ExtendedHTMLAttributes<{
 	value: string;
 }>;
 
-type CanvasHTMLAttributes = ExtendedHTMLAttributes<{
+type CanvasHTMLAttributes = HTMLAttributes<{
 	height: string;
 	["moz-opaque"]: boolean;
 	width: string;
 }>;
 
-type ColHTMLAttributes = ExtendedHTMLAttributes<{
+type ColHTMLAttributes = HTMLAttributes<{
 	span: string;
 }>;
 
-type ColgroupHTMLAttributes = ExtendedHTMLAttributes<{
+type ColgroupHTMLAttributes = HTMLAttributes<{
 	span: string;
 }>;
 
-type DataHTMLAttributes = ExtendedHTMLAttributes<{
+type DataHTMLAttributes = HTMLAttributes<{
 	value: string;
 }>;
 
-type DelHTMLAttributes = ExtendedHTMLAttributes<{
+type DelHTMLAttributes = HTMLAttributes<{
 	cite: string;
 	datetime: string;
 }>;
 
-type DetailsHTMLAttributes = ExtendedHTMLAttributes<{
+type DetailsHTMLAttributes = HTMLAttributes<{
 	open: boolean;
 	name: string;
 }>;
 
-type DialogHTMLAttributes = ExtendedHTMLAttributes<{
+type DialogHTMLAttributes = HTMLAttributes<{
 	open: boolean;
 }>;
 
-type EmbedHTMLAttributes = ExtendedHTMLAttributes<{
+type EmbedHTMLAttributes = HTMLAttributes<{
 	height: string;
 	src: string;
 	type: string;
 	width: string;
 }>;
 
-type FieldsetHTMLAttributes = ExtendedHTMLAttributes<{
+type FieldsetHTMLAttributes = HTMLAttributes<{
 	disabled: boolean;
 	form: string;
 	name: string;
 }>;
 
-type FormHTMLAttributes = ExtendedHTMLAttributes<{
+type FormHTMLAttributes = HTMLAttributes<{
 	["accept-charset"]: string;
 	autocomplete: "on" | "off" | (string & {});
 	name: string;
@@ -376,11 +358,11 @@ type FormHTMLAttributes = ExtendedHTMLAttributes<{
 	target: SharedHTMLAttributes["target"];
 }>;
 
-type HtmlHTMLAttributes = ExtendedHTMLAttributes<{
+type HtmlHTMLAttributes = HTMLAttributes<{
 	xmlns: string;
 }>;
 
-type IframeHTMLAttributes = ExtendedHTMLAttributes<{
+type IframeHTMLAttributes = HTMLAttributes<{
 	allow: string;
 	allowfullscreen: boolean;
 	height: string;
@@ -393,7 +375,7 @@ type IframeHTMLAttributes = ExtendedHTMLAttributes<{
 	width: string;
 }>;
 
-type ImgHTMLAttributes = ExtendedHTMLAttributes<{
+type ImgHTMLAttributes = HTMLAttributes<{
 	alt: string;
 	crossorigin: SharedHTMLAttributes["crossorigin"];
 	decoding: "sync" | "async" | "auto" | (string & {});
@@ -410,7 +392,7 @@ type ImgHTMLAttributes = ExtendedHTMLAttributes<{
 	usemap: string;
 }>;
 
-type InputHTMLAttributes = ExtendedHTMLAttributes<{
+type InputHTMLAttributes = HTMLAttributes<{
 	accept: string;
 	alt: string;
 	autocomplete: string;
@@ -468,20 +450,20 @@ type InputHTMLAttributes = ExtendedHTMLAttributes<{
 	width: string;
 }>;
 
-type InsHTMLAttributes = ExtendedHTMLAttributes<{
+type InsHTMLAttributes = HTMLAttributes<{
 	cite: string;
 	datetime: string;
 }>;
 
-type LabelHTMLAttributes = ExtendedHTMLAttributes<{
+type LabelHTMLAttributes = HTMLAttributes<{
 	for: string;
 }>;
 
-type LiHTMLAttributes = ExtendedHTMLAttributes<{
+type LiHTMLAttributes = HTMLAttributes<{
 	value: string;
 }>;
 
-type LinkHTMLAttributes = ExtendedHTMLAttributes<{
+type LinkHTMLAttributes = HTMLAttributes<{
 	as:
 		| "audio"
 		| "document"
@@ -543,11 +525,11 @@ type LinkHTMLAttributes = ExtendedHTMLAttributes<{
 	type: string;
 }>;
 
-type MapHTMLAttributes = ExtendedHTMLAttributes<{
+type MapHTMLAttributes = HTMLAttributes<{
 	name: string;
 }>;
 
-type MetaHTMLAttributes = ExtendedHTMLAttributes<{
+type MetaHTMLAttributes = HTMLAttributes<{
 	charset: "utf-8";
 	content: string;
 	"http-equiv":
@@ -569,7 +551,7 @@ type MetaHTMLAttributes = ExtendedHTMLAttributes<{
 		| (string & {});
 }>;
 
-type MeterHTMLAttributes = ExtendedHTMLAttributes<{
+type MeterHTMLAttributes = HTMLAttributes<{
 	value: string;
 	min: string;
 	max: string;
@@ -579,7 +561,7 @@ type MeterHTMLAttributes = ExtendedHTMLAttributes<{
 	form: string;
 }>;
 
-type ObjectHTMLAttributes = ExtendedHTMLAttributes<{
+type ObjectHTMLAttributes = HTMLAttributes<{
 	data: string;
 	form: string;
 	height: string;
@@ -588,40 +570,40 @@ type ObjectHTMLAttributes = ExtendedHTMLAttributes<{
 	width: string;
 }>;
 
-type OlHTMLAttributes = ExtendedHTMLAttributes<{
+type OlHTMLAttributes = HTMLAttributes<{
 	reversed: boolean;
 	start: string;
 	type: "a" | "A" | "i" | "I" | "1" | (string & {});
 }>;
 
-type OptgroupHTMLAttributes = ExtendedHTMLAttributes<{
+type OptgroupHTMLAttributes = HTMLAttributes<{
 	disabled: boolean;
 	label: string;
 }>;
 
-type OptionHTMLAttributes = ExtendedHTMLAttributes<{
+type OptionHTMLAttributes = HTMLAttributes<{
 	disabled: boolean;
 	label: string;
 	selected: boolean;
 	value: string;
 }>;
 
-type OutputHTMLAttributes = ExtendedHTMLAttributes<{
+type OutputHTMLAttributes = HTMLAttributes<{
 	for: string;
 	form: string;
 	name: string;
 }>;
 
-type ProgressHTMLAttributes = ExtendedHTMLAttributes<{
+type ProgressHTMLAttributes = HTMLAttributes<{
 	max: string;
 	value: string;
 }>;
 
-type QHTMLAttributes = ExtendedHTMLAttributes<{
+type QHTMLAttributes = HTMLAttributes<{
 	cite: string;
 }>;
 
-type ScriptHTMLAttributes = ExtendedHTMLAttributes<{
+type ScriptHTMLAttributes = HTMLAttributes<{
 	async: boolean;
 	blocking: string;
 	crossorigin: SharedHTMLAttributes["crossorigin"];
@@ -634,7 +616,7 @@ type ScriptHTMLAttributes = ExtendedHTMLAttributes<{
 	type: "module" | "importmap" | "speculationrules" | (string & {});
 }>;
 
-type SelectHTMLAttributes = ExtendedHTMLAttributes<{
+type SelectHTMLAttributes = HTMLAttributes<{
 	autocomplete: string;
 	disabled: boolean;
 	form: string;
@@ -644,11 +626,11 @@ type SelectHTMLAttributes = ExtendedHTMLAttributes<{
 	size: string;
 }>;
 
-type SlotHTMLAttributes = ExtendedHTMLAttributes<{
+type SlotHTMLAttributes = HTMLAttributes<{
 	name: string;
 }>;
 
-type SourceHTMLAttributes = ExtendedHTMLAttributes<{
+type SourceHTMLAttributes = HTMLAttributes<{
 	type: string;
 	src: string;
 	srcset: string;
@@ -658,25 +640,25 @@ type SourceHTMLAttributes = ExtendedHTMLAttributes<{
 	width: string;
 }>;
 
-type StyleHTMLAttributes = ExtendedHTMLAttributes<{
+type StyleHTMLAttributes = HTMLAttributes<{
 	blocking: "render" | (string & {});
 	media: string;
 }>;
 
-type TdHTMLAttributes = ExtendedHTMLAttributes<{
+type TdHTMLAttributes = HTMLAttributes<{
 	colspan: string;
 	headers: string;
 	rowspan: string;
 }>;
 
-type TemplateHTMLAttributes = ExtendedHTMLAttributes<{
+type TemplateHTMLAttributes = HTMLAttributes<{
 	shadowrootmode: "open" | "closed" | (string & {});
 	shadowrootclonable: boolean;
 	shadowrootdelegatesfocus: boolean;
 	shadowrootserializable: boolean;
 }>;
 
-type TextareaHTMLAttributes = ExtendedHTMLAttributes<{
+type TextareaHTMLAttributes = HTMLAttributes<{
 	autocomplete: "off" | "on" | (string & {});
 	cols: string;
 	dirname: string;
@@ -692,7 +674,7 @@ type TextareaHTMLAttributes = ExtendedHTMLAttributes<{
 	wrap: "hard" | "soft" | "off";
 }>;
 
-type ThHTMLAttributes = ExtendedHTMLAttributes<{
+type ThHTMLAttributes = HTMLAttributes<{
 	abbr: string;
 	colspan: string;
 	headers: string;
@@ -700,11 +682,11 @@ type ThHTMLAttributes = ExtendedHTMLAttributes<{
 	scope: "row" | "col" | "rowgroup" | "colgroup" | (string & {});
 }>;
 
-type TimeHTMLAttributes = ExtendedHTMLAttributes<{
+type TimeHTMLAttributes = HTMLAttributes<{
 	datetime: string;
 }>;
 
-type TrackHTMLAttributes = ExtendedHTMLAttributes<{
+type TrackHTMLAttributes = HTMLAttributes<{
 	default: boolean;
 	kind: "subtitles" | "captions" | "chapters" | "metadata" | (string & {});
 	label: string;
@@ -712,7 +694,7 @@ type TrackHTMLAttributes = ExtendedHTMLAttributes<{
 	srclang: string;
 }>;
 
-type VideoHTMLAttributes = ExtendedHTMLAttributes<{
+type VideoHTMLAttributes = HTMLAttributes<{
 	autoplay: boolean;
 	controls: boolean;
 	controlslist: SharedHTMLAttributes["controlslist"];
@@ -729,116 +711,116 @@ type VideoHTMLAttributes = ExtendedHTMLAttributes<{
 	width: string;
 }>;
 
-export type Elements = Record<string, GlobalHTMLAttributes> & {
+export type Elements = Record<string, HTMLAttributes> & {
 	a: AHTMLAttributes;
-	abbr: GlobalHTMLAttributes;
-	address: GlobalHTMLAttributes;
+	abbr: HTMLAttributes;
+	address: HTMLAttributes;
 	area: AreaHTMLAttributes;
-	article: GlobalHTMLAttributes;
-	aside: GlobalHTMLAttributes;
+	article: HTMLAttributes;
+	aside: HTMLAttributes;
 	audio: AudioHTMLAttributes;
 	base: BaseHTMLAttributes;
-	bdi: GlobalHTMLAttributes;
-	bdo: GlobalHTMLAttributes;
+	bdi: HTMLAttributes;
+	bdo: HTMLAttributes;
 	blockquote: BlockquoteHTMLAttributes;
 	body: BodyHTMLAttributes;
-	br: GlobalHTMLAttributes;
+	br: HTMLAttributes;
 	button: ButtonHTMLAttributes;
 	canvas: CanvasHTMLAttributes;
-	caption: GlobalHTMLAttributes;
-	cite: GlobalHTMLAttributes;
-	code: GlobalHTMLAttributes;
+	caption: HTMLAttributes;
+	cite: HTMLAttributes;
+	code: HTMLAttributes;
 	col: ColHTMLAttributes;
 	colgroup: ColgroupHTMLAttributes;
 	data: DataHTMLAttributes;
-	datalist: GlobalHTMLAttributes;
-	dd: GlobalHTMLAttributes;
+	datalist: HTMLAttributes;
+	dd: HTMLAttributes;
 	del: DelHTMLAttributes;
 	details: DetailsHTMLAttributes;
-	dfn: GlobalHTMLAttributes;
+	dfn: HTMLAttributes;
 	dialog: DialogHTMLAttributes;
-	div: GlobalHTMLAttributes;
-	dl: GlobalHTMLAttributes;
-	dt: GlobalHTMLAttributes;
-	em: GlobalHTMLAttributes;
+	div: HTMLAttributes;
+	dl: HTMLAttributes;
+	dt: HTMLAttributes;
+	em: HTMLAttributes;
 	embed: EmbedHTMLAttributes;
 	fieldset: FieldsetHTMLAttributes;
-	figcaption: GlobalHTMLAttributes;
-	figure: GlobalHTMLAttributes;
-	footer: GlobalHTMLAttributes;
+	figcaption: HTMLAttributes;
+	figure: HTMLAttributes;
+	footer: HTMLAttributes;
 	form: FormHTMLAttributes;
-	h1: GlobalHTMLAttributes;
-	h2: GlobalHTMLAttributes;
-	h3: GlobalHTMLAttributes;
-	h4: GlobalHTMLAttributes;
-	h5: GlobalHTMLAttributes;
-	h6: GlobalHTMLAttributes;
-	head: GlobalHTMLAttributes;
-	header: GlobalHTMLAttributes;
-	hgroup: GlobalHTMLAttributes;
-	hr: GlobalHTMLAttributes;
+	h1: HTMLAttributes;
+	h2: HTMLAttributes;
+	h3: HTMLAttributes;
+	h4: HTMLAttributes;
+	h5: HTMLAttributes;
+	h6: HTMLAttributes;
+	head: HTMLAttributes;
+	header: HTMLAttributes;
+	hgroup: HTMLAttributes;
+	hr: HTMLAttributes;
 	html: HtmlHTMLAttributes;
 	iframe: IframeHTMLAttributes;
-	i: GlobalHTMLAttributes;
+	i: HTMLAttributes;
 	img: ImgHTMLAttributes;
 	input: InputHTMLAttributes;
 	ins: InsHTMLAttributes;
-	kbd: GlobalHTMLAttributes;
+	kbd: HTMLAttributes;
 	label: LabelHTMLAttributes;
-	legend: GlobalHTMLAttributes;
+	legend: HTMLAttributes;
 	li: LiHTMLAttributes;
 	link: LinkHTMLAttributes;
-	main: GlobalHTMLAttributes;
+	main: HTMLAttributes;
 	map: MapHTMLAttributes;
-	mark: GlobalHTMLAttributes;
-	menu: GlobalHTMLAttributes;
+	mark: HTMLAttributes;
+	menu: HTMLAttributes;
 	meta: MetaHTMLAttributes;
 	meter: MeterHTMLAttributes;
-	nav: GlobalHTMLAttributes;
-	noscript: GlobalHTMLAttributes;
+	nav: HTMLAttributes;
+	noscript: HTMLAttributes;
 	object: ObjectHTMLAttributes;
 	ol: OlHTMLAttributes;
 	optgroup: OptgroupHTMLAttributes;
 	option: OptionHTMLAttributes;
 	output: OutputHTMLAttributes;
-	p: GlobalHTMLAttributes;
-	picture: GlobalHTMLAttributes;
-	pre: GlobalHTMLAttributes;
+	p: HTMLAttributes;
+	picture: HTMLAttributes;
+	pre: HTMLAttributes;
 	progress: ProgressHTMLAttributes;
 	q: QHTMLAttributes;
-	rp: GlobalHTMLAttributes;
-	rt: GlobalHTMLAttributes;
-	ruby: GlobalHTMLAttributes;
-	s: GlobalHTMLAttributes;
-	samp: GlobalHTMLAttributes;
+	rp: HTMLAttributes;
+	rt: HTMLAttributes;
+	ruby: HTMLAttributes;
+	s: HTMLAttributes;
+	samp: HTMLAttributes;
 	script: ScriptHTMLAttributes;
-	search: GlobalHTMLAttributes;
-	section: GlobalHTMLAttributes;
+	search: HTMLAttributes;
+	section: HTMLAttributes;
 	select: SelectHTMLAttributes;
 	slot: SlotHTMLAttributes;
-	small: GlobalHTMLAttributes;
+	small: HTMLAttributes;
 	source: SourceHTMLAttributes;
-	span: GlobalHTMLAttributes;
-	strong: GlobalHTMLAttributes;
+	span: HTMLAttributes;
+	strong: HTMLAttributes;
 	style: StyleHTMLAttributes;
-	sub: GlobalHTMLAttributes;
-	summary: GlobalHTMLAttributes;
-	sup: GlobalHTMLAttributes;
-	table: GlobalHTMLAttributes;
-	tbody: GlobalHTMLAttributes;
+	sub: HTMLAttributes;
+	summary: HTMLAttributes;
+	sup: HTMLAttributes;
+	table: HTMLAttributes;
+	tbody: HTMLAttributes;
 	td: TdHTMLAttributes;
 	template: TemplateHTMLAttributes;
 	textarea: TextareaHTMLAttributes;
-	tfoot: GlobalHTMLAttributes;
+	tfoot: HTMLAttributes;
 	th: ThHTMLAttributes;
-	thead: GlobalHTMLAttributes;
+	thead: HTMLAttributes;
 	time: TimeHTMLAttributes;
-	title: GlobalHTMLAttributes;
-	tr: GlobalHTMLAttributes;
+	title: HTMLAttributes;
+	tr: HTMLAttributes;
 	track: TrackHTMLAttributes;
-	u: GlobalHTMLAttributes;
-	ul: GlobalHTMLAttributes;
-	var: GlobalHTMLAttributes;
+	u: HTMLAttributes;
+	ul: HTMLAttributes;
+	var: HTMLAttributes;
 	video: VideoHTMLAttributes;
-	wbr: GlobalHTMLAttributes;
+	wbr: HTMLAttributes;
 };

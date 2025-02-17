@@ -3,33 +3,36 @@ import type { Children } from "@robino/jsx";
 export const App = () => {
 	return (
 		<div
-			className="container"
+			class="container"
 			data-test="main-container"
 			role="main"
 			aria-labelledby="main-title"
 		>
 			<Div text="hello" />
-			<h1 id="main-title">Main Title</h1>
-			<section className="content" data-test="content-section">
-				<article className="post" data-post-id="1">
+			<drab-share value="hello">test</drab-share>
+			<h1 id="main-title" hx-get="/hello">
+				Main Title
+			</h1>
+			<section class="content" data-test="content-section">
+				<article class="post" data-post-id="1">
 					<h2>Post Title 1</h2>
 					<p data-test="post-content">
 						This is the content of the first post. It has several interesting
 						points.
 					</p>
-					<footer className="post-footer">
+					<footer class="post-footer">
 						<a href="/post/1" rel="noopener noreferrer" target="_blank">
 							Read more
 						</a>
 					</footer>
 				</article>
-				<article className="post" data-post-id="2">
+				<article class="post" data-post-id="2">
 					<h2>Post Title 2</h2>
 					<p>
 						This post contains even more exciting information than the first
 						one.
 					</p>
-					<footer className="post-footer">
+					<footer class="post-footer">
 						<a href="/post/2" rel="noopener noreferrer" target="_blank">
 							Continue reading
 						</a>
@@ -37,7 +40,7 @@ export const App = () => {
 					<Div text="hello" />
 				</article>
 			</section>
-			<footer className="footer" data-test="footer" role="contentinfo">
+			<footer class="footer" data-test="footer" role="contentinfo">
 				<p>
 					Contact us: <a href="mailto:info@example.com">info@example.com</a>
 				</p>
