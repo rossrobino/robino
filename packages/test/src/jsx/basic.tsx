@@ -46,7 +46,7 @@ export const App = () => {
 				</p>
 				<nav>
 					<ul role="list">
-						<li>
+						<li hx-test>
 							<a href="/about">About Us</a>
 						</li>
 						<li>
