@@ -13,6 +13,7 @@ export const App = () => {
 			<h1 id="main-title" hx-get="/hello">
 				Main Title
 			</h1>
+			<input type="text" />
 			<section class="content" data-test="content-section">
 				<article class="post" data-post-id="1">
 					<h2>Post Title 1</h2>

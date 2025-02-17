@@ -20,12 +20,29 @@ const serializeAttrs = (attrs?: Record<string, unknown>) => {
 	return str;
 };
 
+// https://developer.mozilla.org/en-US/docs/Glossary/Void_element#self-closing_tags
+const voidElements = [
+	"area",
+	"base",
+	"br",
+	"col",
+	"embed",
+	"hr",
+	"img",
+	"input",
+	"link",
+	"meta",
+	"source",
+	"track",
+	"wbr",
+];
+
 /**
  * @param tag `TagDescriptor`
  * @returns an HTML string of the tag
  */
 const serializeTag = (tag: TagDescriptor) => {
-	if (["link", "meta", "base"].includes(tag.name)) {
+	if (voidElements.includes(tag.name)) {
 		return `<${tag.name}${serializeAttrs(tag.attrs)}>`;
 	}
 
@@ -39,9 +56,11 @@ export const serialize = (tags: TagDescriptor["children"]): string => {
 	if (tags instanceof Array) {
 		return tags.map(serializeTag).join("");
 	}
+
 	if (typeof tags === "string") {
 		return tags;
 	}
+
 	if (tags) {
 		return serializeTag(tags);
 	}

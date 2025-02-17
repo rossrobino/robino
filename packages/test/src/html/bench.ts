@@ -1,5 +1,5 @@
 // WIP
-import { Injector } from "@robino/html";
+import { Injector, serialize } from "@robino/html";
 import { run, bench } from "mitata";
 
 const main = async () => {
@@ -19,6 +19,27 @@ const main = async () => {
 	await res.text();
 };
 
-bench("Injector", () => main()).gc("inner");
+const serializeTags = () => {
+	serialize([
+		{
+			name: "div",
+			attrs: {
+				class: "bg-black text-white",
+				"data-attr": "foo",
+			},
+			children: {
+				name: "custom-element",
+				attrs: {
+					foo: "bar",
+					food: "bard",
+				},
+				children: "hello",
+			},
+		},
+	]);
+};
+
+bench("Injector", async () => await main()).gc("inner");
+bench("serialize", serializeTags).gc("inner");
 
 await run();

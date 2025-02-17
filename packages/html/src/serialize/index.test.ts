@@ -10,3 +10,13 @@ test("serializeTags", () => {
 
 	expect(tags).toBe(`<p class="text-black" open>Paragraph</p>`);
 });
+
+test("should not close void elements", () => {
+	const input = serialize({
+		name: "input",
+		attrs: { class: "border" },
+		children: "this should not appear",
+	});
+
+	expect(input).toBe('<input class="border">');
+});
