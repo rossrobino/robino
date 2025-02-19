@@ -9,42 +9,45 @@ import type {
 } from "../types/index.js";
 
 export class Router {
-	#routes = {
+	#routes: Record<
+		Method,
+		{ static: Map<string, RouteHandler>; params: Map<string, RouteHandler> }
+	> = {
 		GET: {
-			static: new Map<string, RouteHandler>(),
-			params: new Map<string, RouteHandler>(),
+			static: new Map(),
+			params: new Map(),
 		},
 		HEAD: {
-			static: new Map<string, RouteHandler>(),
-			params: new Map<string, RouteHandler>(),
+			static: new Map(),
+			params: new Map(),
 		},
 		POST: {
-			static: new Map<string, RouteHandler>(),
-			params: new Map<string, RouteHandler>(),
+			static: new Map(),
+			params: new Map(),
 		},
 		PUT: {
-			static: new Map<string, RouteHandler>(),
-			params: new Map<string, RouteHandler>(),
+			static: new Map(),
+			params: new Map(),
 		},
 		DELETE: {
-			static: new Map<string, RouteHandler>(),
-			params: new Map<string, RouteHandler>(),
+			static: new Map(),
+			params: new Map(),
 		},
 		CONNECT: {
-			static: new Map<string, RouteHandler>(),
-			params: new Map<string, RouteHandler>(),
+			static: new Map(),
+			params: new Map(),
 		},
 		OPTIONS: {
-			static: new Map<string, RouteHandler>(),
-			params: new Map<string, RouteHandler>(),
+			static: new Map(),
+			params: new Map(),
 		},
 		TRACE: {
-			static: new Map<string, RouteHandler>(),
-			params: new Map<string, RouteHandler>(),
+			static: new Map(),
+			params: new Map(),
 		},
 		PATCH: {
-			static: new Map<string, RouteHandler>(),
-			params: new Map<string, RouteHandler>(),
+			static: new Map(),
+			params: new Map(),
 		},
 	} as const;
 
