@@ -13,6 +13,7 @@
 		"@robino/jsx": "*"
 	},
 	"devDependencies": {
+		"hono": "^4.7.2",
 		"mitata": "^1.0.34"
 	}
 }

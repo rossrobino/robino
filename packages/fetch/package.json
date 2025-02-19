@@ -1,0 +1,24 @@
+{
+	"name": "@robino/fetch",
+	"description": "Fetch API utilities",
+	"version": "0.0.0",
+	"type": "module",
+	"types": "./dist/index.d.ts",
+	"main": "./dist/index.js",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		}
+	},
+	"license": "MIT",
+	"files": [
+		"dist",
+		"README.md"
+	],
+	"scripts": {
+		"check": "tsc --noEmit",
+		"dev": "tsc --watch",
+		"build": "tsc"
+	}
+}
