@@ -1,21 +1,21 @@
 type Params = Record<string, string | null>;
 
-type ExtractParams<RoutePattern extends string> =
-	RoutePattern extends `${infer _Start}:${infer Param}/${infer Rest}`
+type ExtractParams<Pattern extends string> =
+	Pattern extends `${infer _Start}:${infer Param}/${infer Rest}`
 		? { [k in Param | keyof ExtractParams<Rest>]: string }
-		: RoutePattern extends `${infer _Start}:${infer Param}`
+		: Pattern extends `${infer _Start}:${infer Param}`
 			? { [k in Param]: string }
 			: {};
 
-type RouteHandler<P extends Params = any> = (
+export type Handler<P extends Params = any> = (
 	context: Context<P>,
 ) => Response | Promise<Response>;
 
-type NotFoundHandler = (
+export type NotFoundHandler = (
 	context?: Partial<Omit<Context, "params" | "route">>,
 ) => Response | Promise<Response>;
 
-type ErrorHandler = (
+export type ErrorHandler = (
 	context: Partial<Omit<Context, "params" | "route">> & { error: Error },
 ) => Response | Promise<Response>;
 
@@ -62,7 +62,7 @@ export class Route {
 	pattern: RegExp;
 
 	/** request handler */
-	handler: RouteHandler;
+	handler: Handler;
 
 	#keys: string[] = [];
 
@@ -70,7 +70,7 @@ export class Route {
 	 * @param pattern route pattern to match
 	 * @param handler request handler
 	 */
-	constructor(pattern: string, handler: RouteHandler) {
+	constructor(pattern: string, handler: Handler) {
 		this.handler = handler;
 
 		const segments = pattern.split("/");
@@ -185,10 +185,10 @@ export class Router {
 	 * @param handler request handler
 	 * @returns the router instance
 	 */
-	on<RoutePattern extends string>(
+	on<Pattern extends string>(
 		method: Method | (string & {}),
-		pattern: RoutePattern,
-		handler: RouteHandler<ExtractParams<RoutePattern>>,
+		pattern: Pattern,
+		handler: Handler<ExtractParams<Pattern>>,
 	) {
 		this.#routes[method] ??= [];
 		this.#routes[method].push(new Route(pattern, handler));
@@ -201,9 +201,9 @@ export class Router {
 	 * @param handler request handler
 	 * @returns the router instance
 	 */
-	get<RoutePattern extends string>(
-		pattern: RoutePattern,
-		handler: RouteHandler<ExtractParams<RoutePattern>>,
+	get<Pattern extends string>(
+		pattern: Pattern,
+		handler: Handler<ExtractParams<Pattern>>,
 	) {
 		return this.on("GET", pattern, handler);
 	}
@@ -213,9 +213,9 @@ export class Router {
 	 * @param handler request handler
 	 * @returns the router instance
 	 */
-	post<RoutePattern extends string>(
-		pattern: RoutePattern,
-		handler: RouteHandler<ExtractParams<RoutePattern>>,
+	post<Pattern extends string>(
+		pattern: Pattern,
+		handler: Handler<ExtractParams<Pattern>>,
 	) {
 		return this.on("POST", pattern, handler);
 	}
