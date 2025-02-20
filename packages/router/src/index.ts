@@ -12,11 +12,11 @@ type RouteHandler<P extends Params = any> = (
 ) => Response | Promise<Response>;
 
 type NotFoundHandler = (
-	context: Omit<Context, "params" | "route">,
+	context?: Partial<Omit<Context, "params" | "route">>,
 ) => Response | Promise<Response>;
 
 type ErrorHandler = (
-	context: Omit<Context, "params" | "route"> & { error: Error },
+	context: Partial<Omit<Context, "params" | "route">> & { error: Error },
 ) => Response | Promise<Response>;
 
 type Context<P extends Params = any> = {
