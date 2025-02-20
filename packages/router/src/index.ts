@@ -20,9 +20,27 @@ export type ErrorHandler = (
 ) => Response | Promise<Response>;
 
 export type Context<P extends Params = any> = {
+	/** [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/API/Request) */
 	req: Request;
-	params: P;
+
+	/**
+	 * URL created from `req.url`
+	 *
+	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/API/URL)
+	 */
 	url: URL;
+
+	/**
+	 * Route pattern parameters
+	 *
+	 * Given the route pattern `/posts/:slug` is added, a request made to
+	 * `/posts/my-post` would create a `params` object `{ slug: "my-post" }`.
+	 *
+	 * @example { slug: "my-post" }
+	 */
+	params: P;
+
+	/** The matched route instance */
 	route: Route;
 };
 
