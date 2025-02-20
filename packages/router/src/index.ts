@@ -1,25 +1,25 @@
-export type Params = Record<string, string | null>;
+type Params = Record<string, string | null>;
 
-export type ExtractParams<RoutePattern extends string> =
+type ExtractParams<RoutePattern extends string> =
 	RoutePattern extends `${infer _Start}:${infer Param}/${infer Rest}`
 		? { [k in Param | keyof ExtractParams<Rest>]: string }
 		: RoutePattern extends `${infer _Start}:${infer Param}`
 			? { [k in Param]: string }
 			: {};
 
-export type RouteHandler<P extends Params = any> = (
+type RouteHandler<P extends Params = any> = (
 	context: Context<P>,
 ) => Response | Promise<Response>;
 
-export type NotFoundHandler = (
+type NotFoundHandler = (
 	context: Omit<Context, "params" | "route">,
 ) => Response | Promise<Response>;
 
-export type ErrorHandler = (
+type ErrorHandler = (
 	context: Omit<Context, "params" | "route"> & { error: Error },
 ) => Response | Promise<Response>;
 
-export type Context<P extends Params = any> = {
+type Context<P extends Params = any> = {
 	/** [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/API/Request) */
 	req: Request;
 
@@ -44,7 +44,7 @@ export type Context<P extends Params = any> = {
 	route: Route;
 };
 
-export type Method =
+type Method =
 	| "GET"
 	| "HEAD"
 	| "POST"
@@ -55,7 +55,7 @@ export type Method =
 	| "TRACE"
 	| "PATCH";
 
-export type TrailingSlash = "always" | "never" | null;
+type TrailingSlash = "always" | "never" | null;
 
 export class Route {
 	/** constructed regular expression to execute */
