@@ -1,74 +1,69 @@
-# @robino/fetch
+# @robino/router
 
 ```bash
-npm i @robino/fetch
+npm i @robino/router
 ```
-
-Fetch API utilities
-
-- [Router](#router)
-
-## Router
 
 A lightweight HTTP router built on the Fetch API.
 
-### Routing
+## Routing
 
-1. The router will first check to see if there is an exact match for route/HTTP method
-   - Time complexity: `O(1)`
-   - This makes the router very fast for exact matches, regardless of the number of segments in the route
-2. Then the router iterates through routes with parameters (`/:param`) in the order they are added until a match is found.
-   - Time complexity: `O(m * n)`, where `m` is the number of parameterized routes with the same method, and `n` is the number of segments
+- A regular expression is created for each route based on the pattern provided.
+- Upon request, the router iterates through routes within the method in the order they were added until a match is found.
+- Performance
+  - Aims to strike a balance between startup and run time.
+  - `Router.fetch` time complexity: `O(n)`, where `n` is the number of routes with the same method.
+- Parameters
+  - Supports type safe parameters starting with `:`.
 
-### Basic
+## Basic
 
 ```ts
-import { Router } from "@robino/fetch";
+import { Router } from "@robino/router";
 
 const router = new Router();
 
 router.get("/", (c) => new Response("Hello world"));
 ```
 
-### Configuration
+## Configuration
 
 ```ts
 const router = new Router({
 	// optional configuration
 
-	// redirect trailing slash
+	// redirect trailing slash preference
 	trailingSlash: "always",
 
-	// custom not found response
+	// customize the not found response
 	notFound: ({ req, url }) => new Response("custom", { status: 404 }),
 
-	// error handler
+	// add an error handler
 	error: ({ error }) => new Response(error.message, { status: 500 }),
 });
 ```
 
-### Add routes
+## Add routes
 
 - `Context` contains helpers for the current route
-- Supports type safe `/:params` within the route id
+- Supports type safe `/:params` within the route pattern
 - Methods return an instance of the router so they can be chained
 
 ```ts
 router
 	.get("/", () => new Response("Hello world"))
-	// context
 	.post("/api/:slug", (c) => {
+		// context
 		c.req; // the web Request
 		c.url; // new URL(req.url)
 		c.params; // type safe params: "/api/123" => { slug: "123" }
-		c.route; // route info
-		// ...
+		c.route; // the matched Route
 	})
 	// other http methods
-	.on("METHOD", "/id", () => new Response("handler"));
+	.on("METHOD", "/pattern", () => new Response("handler"));
 ```
 
-### fetch
+## fetch
 
 Use the `fetch` method to create a response,
 

@@ -9,7 +9,7 @@ test("context", () => {
 			expect(c.url).toBeInstanceOf(URL);
 			expect(c.req).toBeInstanceOf(Request);
 			expect(c.route.handler).toBeTypeOf("function");
-			expect(c.route.id).toBe("/");
+			expect(c.route.pattern).toBeInstanceOf(RegExp);
 
 			return new Response("hello world");
 		})

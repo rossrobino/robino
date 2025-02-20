@@ -1,5 +1,5 @@
 ---
-"@robino/fetch": patch
+"@robino/router": patch
 ---
 
-create `@robino/fetch` package with Fetch API based router
+create `@robino/router` package with Fetch API based HTTP router

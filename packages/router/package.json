@@ -1,6 +1,6 @@
 {
-	"name": "@robino/fetch",
-	"description": "Fetch API utilities",
+	"name": "@robino/router",
+	"description": "HTTP router built on the Fetch API",
 	"version": "0.0.0",
 	"type": "module",
 	"types": "./dist/index.d.ts",
