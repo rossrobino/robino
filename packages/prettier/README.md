@@ -19,9 +19,7 @@ npm i -D @robino/prettier
 ```js
 import config from "@robino/prettier";
 
-/** @type {import("prettier").Config} */
-export default {
-	...config,
-	// other options
-};
+config.plugins.push("...");
+
+export default config;
 ```
