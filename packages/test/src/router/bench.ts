@@ -6,8 +6,8 @@ import { Trouter } from "trouter";
 const r = async (_c: any) => new Response();
 
 const router = new Router({
-	notFound: ({ url }) => {
-		throw new Error(url.pathname + " not found");
+	notFound: (c) => {
+		throw new Error(c?.url?.pathname + " not found");
 	},
 	trailingSlash: null,
 });
