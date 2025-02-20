@@ -4,7 +4,7 @@
 npm i @robino/router
 ```
 
-A lightweight HTTP router built on the Fetch API.
+A [lightweight](https://bundlephobia.com/package/@robino/router) HTTP router built on the Fetch API.
 
 ## Routing
 
