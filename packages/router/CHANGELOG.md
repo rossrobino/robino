@@ -1,5 +1,11 @@
 # @robino/router
 
+## 0.0.3
+
+### Patch Changes
+
+- 4fbe14c: fix ci
+
 ## 0.0.2
 
 ### Patch Changes
