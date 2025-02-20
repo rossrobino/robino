@@ -1,5 +1,11 @@
 # @robino/router
 
+## 0.0.4
+
+### Patch Changes
+
+- aacbce1: export types
+
 ## 0.0.3
 
 ### Patch Changes
