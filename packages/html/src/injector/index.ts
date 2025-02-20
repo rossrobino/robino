@@ -1,36 +1,6 @@
 import { serialize } from "../serialize/index.js";
 import type { Injection, MatchedInjection, TagInput } from "../types/index.js";
 
-/**
- * Inject tags into an HTML string.
- *
- * Injector creates a stream of responses based on the order of injections.
- *
- * @example
- *
- * In this example, the head is sent first containing the script tag.
- * This allows the browser to start fetching the assets for the page
- * before the body is streamed in after the async function promise is resolved.
- *
- * ```ts
- * import { Injector } from "@robino/html";
- *
- * const page = new Injector();
- *
- * page.
- * 	// async function
- * 	body(async () => {
- * 		// await...
- * 		// return Tags
- * 	})
- * 	// Tags
- * 	.head({ name: "script", attrs: { type: "module", src: "./script.js" } })
- * 	// string
- * 	.body("text")
- * 	// creates an in order stream response
- * 	.toResponse();
- * ```
- */
 export class Injector {
 	/** The initial HTML string to inject content into. */
 	#html: string;
