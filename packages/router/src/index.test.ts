@@ -3,6 +3,9 @@ import { expect, test } from "vitest";
 
 const router = new Router({ trailingSlash: "always" });
 
+const get = (pathname: string) =>
+	router.fetch(new Request("http://localhost:5173" + pathname));
+
 test("context", () => {
 	router
 		.get("/", (c) => {
@@ -21,14 +24,14 @@ test("context", () => {
 });
 
 test("GET /", async () => {
-	const res = await router.fetch(new Request("http://localhost:5173/"));
+	const res = await get("/");
 	const text = await res.text();
 
 	expect(text).toBe("hello world");
 });
 
 test("GET /api/:id/", async () => {
-	const res = await router.fetch(new Request("http://localhost:5173/api/123/"));
+	const res = await get("/api/123/");
 	const json = await res.json();
 
 	expect(json.id).toBe("123");
@@ -56,9 +59,7 @@ test("POST /post/", async () => {
 });
 
 test("GET /not-found/", async () => {
-	const res = await router.fetch(
-		new Request("http://localhost:5173/not-found/"),
-	);
+	const res = await get("/not-found/");
 	const text = await res.text();
 
 	expect(text).toBe("Not found");
@@ -70,9 +71,7 @@ test("GET /not-found/ (custom)", async () => {
 		return new Response(c?.url?.pathname, { status: 404 });
 	};
 
-	const res = await router.fetch(
-		new Request("http://localhost:5173/not-found/"),
-	);
+	const res = await get("/not-found/");
 	const text = await res.text();
 
 	expect(text).toBe("/not-found/");
@@ -84,9 +83,7 @@ test("GET /error/", async () => {
 		throw new Error("An error occurred");
 	});
 
-	await expect(() =>
-		router.fetch(new Request("http://localhost:5173/error/")),
-	).rejects.toThrowError();
+	await expect(() => get("/error/")).rejects.toThrowError();
 });
 
 test("GET /error/ (custom)", async () => {
@@ -96,13 +93,12 @@ test("GET /error/ (custom)", async () => {
 		return new Response(error.message, { status: 500 });
 	};
 
-	const res = await router.fetch(new Request("http://localhost:5173/error/"));
-
+	const res = await get("/error/");
 	expect(await res.text()).toBe("An error occurred");
 });
 
 test("trailing slash - always", async () => {
-	const res = await router.fetch(new Request("http://localhost:5173/api/123"));
+	const res = await get("/api/123");
 
 	expect(res.status).toBe(308);
 	expect(res.headers.get("location")).toBe("http://localhost:5173/api/123/");
