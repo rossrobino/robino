@@ -1,7 +1,7 @@
 import { serialize } from "../serialize/index.js";
 import type { Injection, MatchedInjection, TagInput } from "../types/index.js";
 
-export class Injector {
+export class Page {
 	/** The initial HTML string to inject content into. */
 	#html: string;
 
@@ -49,19 +49,19 @@ export class Injector {
 	}
 
 	/**
-	 * @param target tag to inject into, for example `"custom-element"`
+	 * @returns `true` if there are no injections, `false` otherwise
+	 */
+	get empty() {
+		return this.#injections.length === 0;
+	}
+
+	/**
+	 * @param target tag to inject into, for example `"main"`
 	 * @param tagInput tags to inject
 	 */
 	inject(target: string, tagInput: TagInput) {
 		this.#injections.push({ target, tagInput });
 		return this;
-	}
-
-	/**
-	 * @returns `true` if there are no injections, `false` otherwise
-	 */
-	get empty() {
-		return this.#injections.length === 0;
 	}
 
 	/**
@@ -77,22 +77,6 @@ export class Injector {
 	 */
 	body(tagInput: TagInput) {
 		this.#injections.push({ target: "body", tagInput });
-		return this;
-	}
-
-	/**
-	 * @param tagInput tags to inject into the `<title>` element
-	 */
-	title(tagInput: TagInput) {
-		this.#injections.push({ target: "title", tagInput });
-		return this;
-	}
-
-	/**
-	 * @param tagInput tags to inject into the `<main>` element
-	 */
-	main(tagInput: TagInput) {
-		this.#injections.push({ target: "main", tagInput });
 		return this;
 	}
 
@@ -200,7 +184,7 @@ export class Injector {
 	}
 
 	/**
-	 * WARNING - This method will negate the streaming benefits of the Injector.
+	 * WARNING - This method will negate the streaming benefits of the Page.
 	 * All promises will be resolved to generate the result. It's better to use
 	 * `toResponse` or `toStream` when possible.
 	 *

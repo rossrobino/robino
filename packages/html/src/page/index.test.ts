@@ -1,8 +1,8 @@
-import { Injector } from "./index.js";
+import { Page } from "./index.js";
 import { describe, expect, test } from "vitest";
 
 describe("toResponse", () => {
-	const page = new Injector()
+	const page = new Page()
 		.body(async () => {
 			await new Promise((res) => setTimeout(res, 50));
 			return "delay body";
@@ -23,14 +23,14 @@ describe("toResponse", () => {
 });
 
 describe("toStream", () => {
-	const page = new Injector();
+	const page = new Page();
 	test("should create ReadableStream", () => {
 		expect(page.toStream()).toBeInstanceOf(ReadableStream);
 	});
 });
 
 test("head", async () => {
-	const page = new Injector().head({ name: "append-head" });
+	const page = new Page().head({ name: "append-head" });
 
 	expect(await page.toString()).toBe(
 		`<!doctype html><html><head><append-head></append-head></head><body></body></html>`,
@@ -38,25 +38,15 @@ test("head", async () => {
 });
 
 test("body", async () => {
-	const page = new Injector().body([{ name: "append-body" }]);
+	const page = new Page().body([{ name: "append-body" }]);
 
 	expect(await page.toString()).toBe(
 		`<!doctype html><html><head></head><body><append-body></append-body></body></html>`,
 	);
 });
 
-test("title", async () => {
-	const page = new Injector(
-		"<!doctype html><html><head><title></title></head><body></body></html>",
-	).title("title");
-
-	expect(await page.toString()).toBe(
-		`<!doctype html><html><head><title>title</title></head><body></body></html>`,
-	);
-});
-
 test("multiple", async () => {
-	const page = new Injector();
+	const page = new Page();
 
 	const html = await page
 		.body(async () => {
@@ -76,14 +66,12 @@ test("multiple", async () => {
 describe("streaming", async () => {
 	const start = performance.now();
 
-	const page = new Injector(
-		"<!doctype html><html><head><title></title></head><body><main><custom-element></custom-element></main></body></html>",
+	const page = new Page(
+		"<!doctype html><html><head></head><body><main><custom-element></custom-element></main></body></html>",
 	);
 
 	const res = page
 		.inject("custom-element", "custom content")
-		.main("1. main")
-		.main("2. main")
 		.body(async () => {
 			await new Promise((res) => setTimeout(res, 200));
 			return "delay body 2";
@@ -97,7 +85,6 @@ describe("streaming", async () => {
 			await new Promise((res) => setTimeout(res, 300));
 			return "delay body 3";
 		})
-		.title("title")
 		.head("head")
 		.toResponse();
 
@@ -121,19 +108,19 @@ describe("streaming", async () => {
 
 	test("verify result", () => {
 		expect(html).toBe(
-			"<!doctype html><html><head><title>title</title>head</head><body><main><custom-element>custom content</custom-element>1. main2. main</main>delay body 2delay body 1bodydelay body 3</body></html>",
+			"<!doctype html><html><head>head</head><body><main><custom-element>custom content</custom-element></main>delay body 2delay body 1bodydelay body 3</body></html>",
 		);
 	});
 });
 
 test("error", () => {
-	const page = new Injector();
+	const page = new Page();
 
-	expect(() => page.title("title").toResponse()).toThrowError();
+	expect(() => page.inject("title", "title").toResponse()).toThrowError();
 });
 
 describe("empty", () => {
-	const page = new Injector();
+	const page = new Page();
 
 	test("should be empty", () => {
 		expect(page.empty).toBe(true);

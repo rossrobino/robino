@@ -36,7 +36,7 @@ export type TagDescriptor = {
 /** Tags can be a `string`, a `TagDescriptor`, or an array of `TagDescriptors`. */
 export type Tags = string | TagDescriptor | TagDescriptor[];
 
-/** The expected input into the Injector methods. */
+/** The expected input into the Page methods. */
 export type TagInput =
 	| Tags
 	| Promise<Tags>

@@ -1,18 +1,15 @@
 // WIP
-import { Injector, serialize } from "@robino/html";
+import { Page, serialize } from "@robino/html";
 import { run, bench } from "mitata";
 
 const main = async () => {
-	const injector = new Injector(
+	const page = new Page(
 		"<!doctype html><html><head><title></title></head><body><main><custom-element></custom-element></main></body></html>",
 	);
 
-	const res = injector
+	const res = page
 		.inject("custom-element", "custom content")
-		.main("1. main")
-		.main("2. main")
 		.body("body")
-		.title("title")
 		.head("head")
 		.toResponse();
 
@@ -39,7 +36,7 @@ const serializeTags = () => {
 	]);
 };
 
-bench("Injector", async () => await main()).gc("inner");
+bench("Page", async () => await main()).gc("inner");
 bench("serialize", serializeTags).gc("inner");
 
 await run();
