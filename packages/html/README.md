@@ -13,7 +13,7 @@ npm i @robino/html
 
 Inject tags into an HTML string.
 
-Injector creates a stream of responses based on the order of injections within the initial HTML provided.
+Injector creates a `Response` stream based on the order of injections within the initial HTML provided.
 
 ### Basic
 
