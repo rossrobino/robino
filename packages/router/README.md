@@ -14,7 +14,7 @@ A [lightweight](https://bundlephobia.com/package/@robino/router) HTTP router bui
   - Aims to strike a balance between startup and run time.
   - `Router.fetch` time complexity: `O(n)`, where `n` is the number of routes with the same method.
 - Parameters
-  - Supports type safe parameters starting with `:`.
+  - Supports type safe parameters starting with `:` - adapted from [regexparam](https://github.com/lukeed/regexparam)
 
 ## Basic
 
