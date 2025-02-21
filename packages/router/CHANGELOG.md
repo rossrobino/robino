@@ -1,5 +1,11 @@
 # @robino/router
 
+## 0.0.5
+
+### Patch Changes
+
+- f1feeb6: trailing slash only redirect on not found
+
 ## 0.0.4
 
 ### Patch Changes

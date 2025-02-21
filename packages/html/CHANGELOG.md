@@ -1,5 +1,14 @@
 # @robino/html
 
+## 0.5.0
+
+### Minor Changes
+
+- ee5828c: Clean up
+
+  - Renames `Injector` to `Page`
+  - Removes `title` and `main` methods - just use `inject`, `head`, or `body`
+
 ## 0.4.2
 
 ### Patch Changes
