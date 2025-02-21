@@ -66,8 +66,8 @@ test("GET /not-found/", async () => {
 });
 
 test("GET /not-found/ (custom)", async () => {
-	router.notFound = ({ url }) => {
-		return new Response(url.pathname, { status: 404 });
+	router.notFound = (c) => {
+		return new Response(c?.url?.pathname, { status: 404 });
 	};
 
 	const res = await router.fetch(

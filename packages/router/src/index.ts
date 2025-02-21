@@ -12,11 +12,13 @@ export type Handler<P extends Params = any> = (
 ) => Response | Promise<Response>;
 
 export type NotFoundHandler = (
-	context?: Partial<Omit<Context, "params" | "route">>,
+	context?: Partial<Pick<Context, "req" | "url">>,
 ) => Response | Promise<Response>;
 
 export type ErrorHandler = (
-	context: Partial<Omit<Context, "params" | "route">> & { error: Error },
+	context: Partial<Pick<Context, "req">> & {
+		error: Error;
+	},
 ) => Response | Promise<Response>;
 
 type Context<P extends Params = any> = {
@@ -128,8 +130,8 @@ export class Router {
 	constructor(
 		config: {
 			/**
-			 * - `"never"` - requests with a trailing slash will be redirected to the same path without a trailing slash
-			 * - `"always"` - requests without a trailing slash will be redirected to the same path with a trailing slash
+			 * - `"never"` - Not found requests with a trailing slash will be redirected to the same path without a trailing slash
+			 * - `"always"` - Not found requests without a trailing slash will be redirected to the same path with a trailing slash
 			 * - `null` - no redirects (not recommended, bad for SEO)
 			 *
 			 * [Trailing Slash for Frameworks by Bjorn Lu](https://bjornlu.com/blog/trailing-slash-for-frameworks)
@@ -225,11 +227,16 @@ export class Router {
 	 * @returns [Response](https://developer.mozilla.org/en-US/docs/Web/API/Response)
 	 */
 	async fetch(req: Request): Promise<Response> {
-		const url = new URL(req.url);
-
 		try {
+			const url = new URL(req.url);
+
+			for (const route of this.#routes[req.method] ?? []) {
+				const params = route.exec(url.pathname);
+				if (params) return route.handler({ req, url, params, route });
+			}
+
 			if (this.#trailingSlash) {
-				const last = url.pathname[url.pathname.length - 1];
+				const last = url.pathname.at(-1);
 
 				if (this.#trailingSlash === "always" && last !== "/") {
 					url.pathname += "/";
@@ -246,15 +253,10 @@ export class Router {
 				}
 			}
 
-			for (const route of this.#routes[req.method] ?? []) {
-				const params = route.exec(url.pathname);
-				if (params) return route.handler({ req, url, params, route });
-			}
-
 			return this.notFound({ req, url });
 		} catch (error) {
 			if (this.error && error instanceof Error) {
-				return this.error({ req, url, error });
+				return this.error({ req, error });
 			}
 
 			throw error;
