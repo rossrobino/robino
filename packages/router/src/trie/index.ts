@@ -13,7 +13,7 @@ class ParamNode<T> {
 	}
 }
 
-class Node<T> {
+export class Node<T> {
 	/** unique segment of the pattern trie */
 	segment: string;
 
@@ -33,7 +33,7 @@ class Node<T> {
 	 * @param segment pattern segment
 	 * @param staticChildren static children nodes to add to staticMap
 	 */
-	constructor(segment: string, staticChildren?: Node<T>[]) {
+	constructor(segment = "/", staticChildren?: Node<T>[]) {
 		this.segment = segment;
 
 		if (staticChildren?.length) {
@@ -99,10 +99,6 @@ class Node<T> {
 
 		return (this.paramChild ??= new ParamNode<T>(name));
 	}
-}
-
-export class Router<T> {
-	#root = new Node<T>("/");
 
 	add(pattern: string, store: T) {
 		if (pattern[0] !== "/") {
@@ -123,7 +119,7 @@ export class Router<T> {
 			staticSegments.pop();
 		}
 
-		let node = this.#root;
+		let node: Node<T> = this;
 		let paramIndex = 0;
 
 		// add static segments, if there are no static segments, this is skipped
@@ -228,7 +224,7 @@ export class Router<T> {
 
 	find(
 		path: string,
-		node = this.#root,
+		node: Node<T> = this,
 		startIndex = 0,
 	): {
 		store: T;

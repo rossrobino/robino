@@ -1,4 +1,4 @@
-import { Router } from "../router/index.js";
+import { Node } from "../trie/index.js";
 
 type Params = Record<string, string>;
 
@@ -62,7 +62,7 @@ type Method =
 
 type TrailingSlash = "always" | "never" | null;
 
-export class FetchRouter extends Router<Handler> {
+export class FetchRouter extends Node<Handler> {
 	#trailingSlash: TrailingSlash;
 
 	/** Handler to run when route is not found. */
