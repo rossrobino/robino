@@ -13,8 +13,8 @@ type ExtractParams<Pattern extends string = string> =
 				? { "*": string }
 				: {};
 
-export type Handler<P extends Params = any> = (
-	context: Context<P>,
+export type Handler<P extends Params = any, S = undefined> = (
+	context: Context<P, S>,
 ) => MaybePromise<Response | void>;
 
 export type NotFoundHandler = (
@@ -27,7 +27,7 @@ export type ErrorHandler = (
 	},
 ) => MaybePromise<Response>;
 
-type Context<P extends Params = ExtractParams<string>> = {
+type Context<P extends Params = ExtractParams<string>, S = undefined> = {
 	/** [Request reference](https://developer.mozilla.org/en-US/docs/Web/API/Request) */
 	req: Request;
 
@@ -56,7 +56,9 @@ type Context<P extends Params = ExtractParams<string>> = {
 	params: P;
 
 	/** The matched route instance */
-	route: Route<Handler[]>;
+	route: Route<Handler<any, S>[]>;
+
+	state: S;
 };
 
 type Method =
@@ -73,8 +75,10 @@ type Method =
 
 type TrailingSlash = "always" | "never" | null;
 
-export class FetchRouter {
-	#trieMap = new Map<Method, Node<Handler[]>>();
+export class FetchRouter<S = undefined> {
+	#trieMap = new Map<Method, Node<Handler<any, S>[]>>();
+
+	#state: any;
 
 	#trailingSlash: TrailingSlash;
 
@@ -123,6 +127,8 @@ export class FetchRouter {
 			 * @default null
 			 */
 			error?: ErrorHandler;
+
+			state?: S;
 		} = {},
 	) {
 		const {
@@ -133,11 +139,13 @@ export class FetchRouter {
 					status: 404,
 					headers: { "content-type": "text/html" },
 				}),
+			state,
 		} = config;
 
 		this.#trailingSlash = trailingSlash;
 		this.error = error;
 		this.notFound = notFound;
+		this.#state = state;
 
 		this.fetch = this.fetch.bind(this);
 	}
@@ -151,7 +159,7 @@ export class FetchRouter {
 	on<Pattern extends string>(
 		method: Method,
 		pattern: Pattern,
-		...handlers: Handler<ExtractParams<Pattern>>[]
+		...handlers: Handler<ExtractParams<Pattern>, S>[]
 	) {
 		const route = new Route(pattern, handlers);
 		const existing = this.#trieMap.get(method);
@@ -159,7 +167,7 @@ export class FetchRouter {
 		if (existing) {
 			existing.add(route);
 		} else {
-			const trie = new Node<Handler[]>();
+			const trie = new Node<Handler<any, S>[]>();
 			this.#trieMap.set(method, trie);
 			trie.add(route);
 		}
@@ -174,7 +182,7 @@ export class FetchRouter {
 	 */
 	get<Pattern extends string>(
 		pattern: Pattern,
-		...handlers: Handler<ExtractParams<Pattern>>[]
+		...handlers: Handler<ExtractParams<Pattern>, S>[]
 	) {
 		return this.on("GET", pattern, ...handlers);
 	}
@@ -186,7 +194,7 @@ export class FetchRouter {
 	 */
 	post<Pattern extends string>(
 		pattern: Pattern,
-		...handlers: Handler<ExtractParams<Pattern>>[]
+		...handlers: Handler<ExtractParams<Pattern>, S>[]
 	) {
 		return this.on("POST", pattern, ...handlers);
 	}
@@ -202,12 +210,13 @@ export class FetchRouter {
 			const match = this.#trieMap.get(req.method)?.find(url.pathname);
 
 			if (match) {
-				const context: Context = {
+				const context: Context<any, S> = {
 					req,
 					res: null,
 					url,
 					params: match.params,
 					route: match.route,
+					state: this.#state,
 				};
 
 				for (const handler of match.route.store) {

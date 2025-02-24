@@ -1,7 +1,10 @@
 import { FetchRouter } from "./index.js";
 import { expect, test } from "vitest";
 
-const router = new FetchRouter({ trailingSlash: "always" });
+const router = new FetchRouter({
+	trailingSlash: "always",
+	state: { foo: "bar" },
+});
 
 const get = (pathname: string) =>
 	router.fetch(new Request("http://localhost:5173" + pathname));
@@ -11,9 +14,12 @@ test("context", () => {
 		.get(
 			"/",
 			(c) => {
+				expect(c.state.foo).toBe("bar");
+				c.state.foo = "baz";
 				c.req.headers.set("hello", "world");
 			},
 			(c) => {
+				expect(c.state.foo).toBe("baz");
 				expect(c.url).toBeInstanceOf(URL);
 				expect(c.req).toBeInstanceOf(Request);
 				expect(c.req.headers.get("hello")).toBe("world");
