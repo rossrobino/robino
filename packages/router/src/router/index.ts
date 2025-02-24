@@ -17,7 +17,7 @@ class Node<T> {
 	/** unique segment of the pattern trie */
 	segment: string;
 
-	/** static child nodes */
+	/** static child node map */
 	inert: Record<number, Node<T>> | null = null;
 
 	/** parametric child node */
@@ -59,31 +59,31 @@ export class Router<T> {
 		const endsWithWildcard = pattern.endsWith("*");
 		if (endsWithWildcard) pattern = pattern.slice(0, -1);
 
-		const inertParts = pattern.split(/:.+?(?=\/|$)/);
-		const paramParts = pattern.match(/:.+?(?=\/|$)/g) ?? [];
+		const inertSegments = pattern.split(/:.+?(?=\/|$)/);
+		const paramSegments = pattern.match(/:.+?(?=\/|$)/g) ?? [];
 
-		if (inertParts.at(-1) === "") {
-			// if the last part was a param then there will
+		if (inertSegments.at(-1) === "") {
+			// if the last segment was a param then there will
 			// be an empty string - remove
-			inertParts.pop();
+			inertSegments.pop();
 		}
 
 		// set to root, create if not there
 		let node = this.#root;
 		let paramIndex = 0;
 
-		for (let inertIndex = 0; inertIndex < inertParts.length; inertIndex++) {
-			let part = inertParts[inertIndex]!;
+		for (let inertIndex = 0; inertIndex < inertSegments.length; inertIndex++) {
+			let segment = inertSegments[inertIndex]!;
 
 			if (inertIndex > 0) {
 				// if we get to here, it means there is an param in between
-				// two inert parts: ".../inert/:param/inert..."
+				// two inert segments: ".../inert/:param/inert..."
 
 				// param without the ":" (only increment after the first loop)
-				const name = paramParts[paramIndex++]!.slice(1);
+				const name = paramSegments[paramIndex++]!.slice(1);
 
 				if (!node.params) {
-					// there isn't another route with params already
+					// there isn't another pattern with params already
 					node.params = new ParamNode<T>(name);
 				} else if (node.params.name !== name) {
 					throw new Error(
@@ -92,8 +92,8 @@ export class Router<T> {
 				}
 
 				if (!node.params.inert) {
-					// create node with the next inert part
-					node = node.params.inert = new Node<T>(part);
+					// create node with the next inert segment
+					node = node.params.inert = new Node<T>(segment);
 					continue;
 				}
 
@@ -101,50 +101,50 @@ export class Router<T> {
 			}
 
 			for (let charIndex = 0; ; ) {
-				if (charIndex === part.length) {
-					// passed the end of the part
+				if (charIndex === segment.length) {
+					// passed the end of the segment
 					if (charIndex < node.segment.length) {
 						// move current node down
 						Object.assign(
 							node,
-							new Node(part, [node.clone(node.segment.slice(charIndex))]),
+							new Node(segment, [node.clone(node.segment.slice(charIndex))]),
 						);
 					}
 					break;
 				}
 
 				if (charIndex === node.segment.length) {
-					// at the end of the part
+					// at the end of the segment
 					if (!node.inert) {
 						node.inert = {};
 					} else {
-						const inert = node.inert[part.charCodeAt(charIndex)];
+						const inert = node.inert[segment.charCodeAt(charIndex)];
 
 						if (inert) {
 							// re-run loop with existing inert node
 							node = inert;
-							part = part.slice(charIndex);
+							segment = segment.slice(charIndex);
 							charIndex = 0;
 							continue;
 						}
 					}
 
 					// add new inert child
-					node = node.inert[part.charCodeAt(charIndex)] = new Node<T>(
-						part.slice(charIndex),
+					node = node.inert[segment.charCodeAt(charIndex)] = new Node<T>(
+						segment.slice(charIndex),
 					);
 
 					break;
 				}
 
-				if (part[charIndex] !== node.segment[charIndex]) {
+				if (segment[charIndex] !== node.segment[charIndex]) {
 					// in this case if you had two patterns
 					// "api/posts" and "api/movies"
-					// part[charIndex] "m", while node.part[charIndex] "p"
+					// segment[charIndex] "m", while node.segment[charIndex] "p"
 
 					// split the node
 					const existingChild = node.clone(node.segment.slice(charIndex)); // "posts/"
-					const newChild = new Node<T>(part.slice(charIndex)); // "movies/"
+					const newChild = new Node<T>(segment.slice(charIndex)); // "movies/"
 
 					Object.assign(
 						node,
@@ -165,9 +165,9 @@ export class Router<T> {
 			}
 		}
 
-		if (paramIndex < paramParts.length) {
-			// final part is a param
-			const name = paramParts[paramIndex++]!.slice(1);
+		if (paramIndex < paramSegments.length) {
+			// final segment is a param
+			const name = paramSegments[paramIndex++]!.slice(1);
 
 			if (!node.params) {
 				// nothing, assign child
@@ -185,13 +185,13 @@ export class Router<T> {
 		}
 
 		if (endsWithWildcard) {
-			// final part is a wildcard
+			// final segment is a wildcard
 			node.wildcardStore ??= store;
 
 			return this;
 		}
 
-		// final part is inert
+		// final segment is inert
 		node.store ??= store;
 
 		return this;
@@ -208,7 +208,7 @@ export class Router<T> {
 		const endIndex = startIndex + node.segment.length;
 
 		if (path.slice(startIndex, endIndex) !== node.segment) {
-			// part does not match current node part
+			// segment does not match current node segment
 			return null;
 		}
 
