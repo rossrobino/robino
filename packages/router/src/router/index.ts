@@ -6,7 +6,7 @@ class ParamNode<T> {
 	store: T | null = null;
 
 	/** static child node */
-	inert: Node<T> | null = null;
+	staticChild: Node<T> | null = null;
 
 	constructor(name: string) {
 		this.name = name;
@@ -17,23 +17,23 @@ class Node<T> {
 	/** unique segment of the pattern trie */
 	segment: string;
 
-	/** static child node map */
-	inert: Record<number, Node<T>> | null = null;
+	/** Static child node map, key is the first character in the segment */
+	staticMap: Map<number, Node<T>> | null = null;
 
 	/** parametric child node */
-	params: ParamNode<T> | null = null;
+	paramChild: ParamNode<T> | null = null;
 
 	/** value store */
 	store: T | null = null;
 	wildcardStore: T | null = null;
 
-	constructor(segment: string, inertChildren?: Node<T>[]) {
+	constructor(segment: string, staticChildren?: Node<T>[]) {
 		this.segment = segment;
 
-		if (inertChildren?.length) {
-			this.inert = {};
-			for (const child of inertChildren) {
-				this.inert[child.segment.charCodeAt(0)] = child;
+		if (staticChildren?.length) {
+			this.staticMap = new Map();
+			for (const child of staticChildren) {
+				this.staticMap.set(child.segment.charCodeAt(0), child);
 			}
 		}
 	}
@@ -59,45 +59,49 @@ export class Router<T> {
 		const endsWithWildcard = pattern.endsWith("*");
 		if (endsWithWildcard) pattern = pattern.slice(0, -1);
 
-		const inertSegments = pattern.split(/:.+?(?=\/|$)/);
+		const staticSegments = pattern.split(/:.+?(?=\/|$)/);
 		const paramSegments = pattern.match(/:.+?(?=\/|$)/g) ?? [];
 
-		if (inertSegments.at(-1) === "") {
+		if (staticSegments.at(-1) === "") {
 			// if the last segment was a param then there will
 			// be an empty string - remove
-			inertSegments.pop();
+			staticSegments.pop();
 		}
 
 		// set to root, create if not there
 		let node = this.#root;
 		let paramIndex = 0;
 
-		for (let inertIndex = 0; inertIndex < inertSegments.length; inertIndex++) {
-			let segment = inertSegments[inertIndex]!;
+		for (
+			let staticIndex = 0;
+			staticIndex < staticSegments.length;
+			staticIndex++
+		) {
+			let segment = staticSegments[staticIndex]!;
 
-			if (inertIndex > 0) {
+			if (staticIndex > 0) {
 				// if we get to here, it means there is an param in between
-				// two inert segments: ".../inert/:param/inert..."
+				// two static segments: ".../static/:param/static..."
 
 				// param without the ":" (only increment after the first loop)
 				const name = paramSegments[paramIndex++]!.slice(1);
 
-				if (!node.params) {
+				if (!node.paramChild) {
 					// there isn't another pattern with params already
-					node.params = new ParamNode<T>(name);
-				} else if (node.params.name !== name) {
+					node.paramChild = new ParamNode<T>(name);
+				} else if (node.paramChild.name !== name) {
 					throw new Error(
-						`Cannot create route "${pattern}" with parameter "${name}" - route exists with a different parameter ("${node.params.name}") in the same location.`,
+						`Cannot create route "${pattern}" with parameter "${name}" - route exists with a different parameter ("${node.paramChild.name}") in the same location.`,
 					);
 				}
 
-				if (!node.params.inert) {
-					// create node with the next inert segment
-					node = node.params.inert = new Node<T>(segment);
+				if (!node.paramChild.staticChild) {
+					// create node with the next static segment
+					node = node.paramChild.staticChild = new Node<T>(segment);
 					continue;
 				}
 
-				node = node.params.inert;
+				node = node.paramChild.staticChild;
 			}
 
 			for (let charIndex = 0; ; ) {
@@ -115,24 +119,29 @@ export class Router<T> {
 
 				if (charIndex === node.segment.length) {
 					// at the end of the segment
-					if (!node.inert) {
-						node.inert = {};
+					if (!node.staticMap) {
+						node.staticMap = new Map();
 					} else {
-						const inert = node.inert[segment.charCodeAt(charIndex)];
+						const staticChild = node.staticMap.get(
+							segment.charCodeAt(charIndex),
+						);
 
-						if (inert) {
-							// re-run loop with existing inert node
-							node = inert;
+						if (staticChild) {
+							// re-run loop with existing static child
+							node = staticChild;
 							segment = segment.slice(charIndex);
 							charIndex = 0;
 							continue;
 						}
 					}
 
-					// add new inert child
-					node = node.inert[segment.charCodeAt(charIndex)] = new Node<T>(
-						segment.slice(charIndex),
+					// add new static child
+					node.staticMap.set(
+						segment.charCodeAt(charIndex),
+						new Node<T>(segment.slice(charIndex)),
 					);
+
+					node = node.staticMap.get(segment.charCodeAt(charIndex))!;
 
 					break;
 				}
@@ -169,17 +178,17 @@ export class Router<T> {
 			// final segment is a param
 			const name = paramSegments[paramIndex++]!.slice(1);
 
-			if (!node.params) {
+			if (!node.paramChild) {
 				// nothing, assign child
-				node.params = new ParamNode<T>(name);
-			} else if (node.params.name !== name) {
+				node.paramChild = new ParamNode<T>(name);
+			} else if (node.paramChild.name !== name) {
 				// param with a different name
 				throw new Error(
-					`Cannot create route "${pattern}" with parameter "${name}" - route exists with a different parameter ("${node.params.name}") in the same location.`,
+					`Cannot create route "${pattern}" with parameter "${name}" - route exists with a different parameter ("${node.paramChild.name}") in the same location.`,
 				);
 			}
 
-			node.params.store ??= store;
+			node.paramChild.store ??= store;
 
 			return this;
 		}
@@ -191,7 +200,7 @@ export class Router<T> {
 			return this;
 		}
 
-		// final segment is inert
+		// final segment is static
 		node.store ??= store;
 
 		return this;
@@ -235,34 +244,43 @@ export class Router<T> {
 		}
 
 		// check for a static leaf that starts with the next character
-		if (node.inert) {
-			const inert = node.inert[path.charCodeAt(endIndex)];
+		if (node.staticMap) {
+			const staticChild = node.staticMap.get(path.charCodeAt(endIndex));
 
-			if (inert) {
-				const route = this.find(path, inert, endIndex);
+			if (staticChild) {
+				const route = this.find(path, staticChild, endIndex);
 				if (route) return route;
 			}
 		}
 
 		// check for param leaf
-		if (node.params) {
+		if (node.paramChild) {
 			const slashIndex = path.indexOf("/", endIndex);
 
 			if (slashIndex !== endIndex) {
 				// params cannot be empty
 				if (slashIndex === -1 || slashIndex >= path.length) {
-					if (node.params.store !== null) {
+					if (node.paramChild.store !== null) {
 						return {
-							store: node.params.store,
-							params: { [node.params.name]: path.slice(endIndex, path.length) },
+							store: node.paramChild.store,
+							params: {
+								[node.paramChild.name]: path.slice(endIndex, path.length),
+							},
 						};
 					}
-				} else if (node.params.inert) {
-					// there's a inert node after the param
-					const route = this.find(path, node.params.inert, slashIndex);
+				} else if (node.paramChild.staticChild) {
+					// there's a static node after the param
+					const route = this.find(
+						path,
+						node.paramChild.staticChild,
+						slashIndex,
+					);
 
 					if (route) {
-						route.params[node.params.name] = path.slice(endIndex, slashIndex);
+						route.params[node.paramChild.name] = path.slice(
+							endIndex,
+							slashIndex,
+						);
 						return route;
 					}
 				}
