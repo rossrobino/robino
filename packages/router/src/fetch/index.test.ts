@@ -18,6 +18,11 @@ test("context", () => {
 			expect(params.id).toBeDefined();
 
 			return Response.json(params);
+		})
+		.get("/wild/*", ({ params }) => {
+			expect(params["*"]).toBeDefined();
+
+			return Response.json(params);
 		});
 });
 
@@ -33,6 +38,13 @@ test("GET /api/:id/", async () => {
 	const json = await res.json();
 
 	expect(json.id).toBe("123");
+});
+
+test("GET /wild/*", async () => {
+	const res = await get("/wild/hello");
+	const json = await res.json();
+
+	expect(json["*"]).toBe("hello");
 });
 
 test("POST /post/", async () => {

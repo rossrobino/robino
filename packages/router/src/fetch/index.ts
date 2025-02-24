@@ -7,7 +7,9 @@ type ExtractParams<Pattern extends string = string> =
 		? { [k in Param | keyof ExtractParams<Rest>]: string }
 		: Pattern extends `${infer _Start}:${infer Param}`
 			? { [k in Param]: string }
-			: {};
+			: Pattern extends `${infer _Rest}*`
+				? { "*": string }
+				: {};
 
 export type Handler<P extends Params = any> = (
 	context: Context<P>,
