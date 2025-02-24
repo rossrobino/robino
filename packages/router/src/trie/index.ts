@@ -1,43 +1,51 @@
+class Segments {
+	/** pattern segments */
+	segments: string[];
+	index = 0;
+
+	constructor(pattern: string, param = false) {
+		if (param) {
+			this.segments = pattern.match(/:.+?(?=\/|$)/g) ?? []; // match the params
+		} else {
+			// static
+			this.segments = pattern.split(/:.+?(?=\/|$)/); // split on the params
+
+			// if the last segment is a param without a trailing slash
+			// then there will be an empty string, remove
+			if (this.segments.at(-1) === "") this.segments.pop();
+		}
+	}
+}
+
+export class Route<T> {
+	/** value store returned when route is found */
+	store: T;
+	/** pattern ends with a wildcard */
+	wildcard: boolean;
+	static: Segments;
+	param: Segments;
+
+	constructor(pattern: string, store: T) {
+		this.store = store;
+
+		this.wildcard = pattern.endsWith("*");
+		if (this.wildcard) pattern = pattern.slice(0, -1);
+
+		this.static = new Segments(pattern);
+		this.param = new Segments(pattern, true);
+	}
+}
+
 class ParamNode<T> {
 	/** name of the parameter (without the colon ":") */
 	name: string;
-	/** value store when path matches the node */
-	store: T | null = null;
+	/** matched route */
+	route: Route<T> | null = null;
 	/** static child node */
 	staticChild: Node<T> | null = null;
 
 	constructor(name: string) {
 		this.name = name;
-	}
-}
-
-class Pattern {
-	/** pattern ends with a wildcard */
-	wildcard: boolean;
-	static: {
-		/** static pattern segments (without params) */
-		segments: string[];
-		index: number;
-	};
-	param: {
-		/** parametric pattern segments (/:param) */
-		segments: string[];
-		index: number;
-	};
-
-	constructor(pattern: string) {
-		this.wildcard = pattern.endsWith("*");
-		if (this.wildcard) pattern = pattern.slice(0, -1);
-
-		this.static = { segments: pattern.split(/:.+?(?=\/|$)/), index: 0 }; // split on the params
-		// if the last segment is a param without a trailing slash
-		// then there will be an empty string, remove
-		if (this.static.segments.at(-1) === "") this.static.segments.pop();
-
-		this.param = {
-			segments: pattern.match(/:.+?(?=\/|$)/g) ?? [], // match the params
-			index: 0,
-		};
 	}
 }
 
@@ -48,10 +56,10 @@ export class Node<T> {
 	staticMap: Map<number, Node<T>> | null = null;
 	/** parametric child node */
 	paramChild: ParamNode<T> | null = null;
-	/** value store */
-	store: T | null = null;
-	/** wildcard value store */
-	wildcardStore: T | null = null;
+	/** matched route */
+	route: Route<T> | null = null;
+	/** matched wildcard route */
+	wildcardRoute: Route<T> | null = null;
 
 	/**
 	 * @param segment pattern segment
@@ -129,26 +137,27 @@ export class Node<T> {
 	}
 
 	/**
-	 * @param pattern pattern to match
-	 * @param store value to return when pattern is matched
+	 * @param route route return when pattern is matched
 	 * @returns this - the Node
 	 */
-	add(pattern: string, store: T) {
-		const p = new Pattern(pattern);
-
+	add(route: Route<T>) {
 		let current: Node<T> = this;
 
 		// for each static segment, if there are no static segments, this is skipped
-		for (; p.static.index < p.static.segments.length; p.static.index++) {
-			let staticSegment = p.static.segments[p.static.index]!;
+		for (
+			;
+			route.static.index < route.static.segments.length;
+			route.static.index++
+		) {
+			let staticSegment = route.static.segments[route.static.index]!;
 
-			if (p.static.index > 0) {
+			if (route.static.index > 0) {
 				// there is only a second static segment (could just be "/")
 				// if there is a param to split them, so there must be a param here
 
 				const paramChild = current.setParamChild(
 					// param without the ":" (only increment when this is reached)
-					p.param.segments[p.param.index++]!.slice(1),
+					route.param.segments[route.param.index++]!.slice(1),
 				);
 
 				if (paramChild.staticChild) {
@@ -215,50 +224,51 @@ export class Node<T> {
 			}
 		}
 
-		if (p.param.index < p.param.segments.length) {
+		if (route.param.index < route.param.segments.length) {
 			// final segment is a param
-			current.setParamChild(p.param.segments[p.param.index]!.slice(1)).store ??=
-				store;
-		} else if (p.wildcard) {
+			current.setParamChild(
+				route.param.segments[route.param.index]!.slice(1),
+			).route ??= route;
+		} else if (route.wildcard) {
 			// final segment is a wildcard
-			current.wildcardStore ??= store;
+			current.wildcardRoute ??= route;
 		} else {
 			// final segment is static
-			current.store ??= store;
+			current.route ??= route;
 		}
 
 		return this;
 	}
 
 	find(
-		path: string,
+		pathname: string,
 		node: Node<T> = this,
 		startIndex = 0,
 	): {
-		store: T;
+		route: Route<T>;
 		params: Record<string, string>;
 	} | null {
 		const endIndex = startIndex + node.segment.length;
 
-		if (path.slice(startIndex, endIndex) !== node.segment) {
+		if (pathname.slice(startIndex, endIndex) !== node.segment) {
 			// segment does not match current node segment
 			return null;
 		}
 
 		// reached the end of the path
-		if (endIndex === path.length) {
-			if (node.store !== null) {
+		if (endIndex === pathname.length) {
+			if (node.route !== null) {
 				// there is a store
 				return {
-					store: node.store,
+					route: node.route,
 					params: {},
 				};
 			}
 
-			if (node.wildcardStore !== null) {
+			if (node.wildcardRoute !== null) {
 				// there is a wildcard store
 				return {
-					store: node.wildcardStore,
+					route: node.wildcardRoute,
 					params: { "*": "" },
 				};
 			}
@@ -269,39 +279,42 @@ export class Node<T> {
 
 		// check for a static leaf that starts with the next character
 		if (node.staticMap) {
-			const staticChild = node.staticMap.get(path.charCodeAt(endIndex));
+			const staticChild = node.staticMap.get(pathname.charCodeAt(endIndex));
 
 			if (staticChild) {
-				const route = this.find(path, staticChild, endIndex);
+				const route = this.find(pathname, staticChild, endIndex);
 				if (route) return route;
 			}
 		}
 
 		// check for param leaf
 		if (node.paramChild) {
-			const slashIndex = path.indexOf("/", endIndex);
+			const slashIndex = pathname.indexOf("/", endIndex);
 
 			if (slashIndex !== endIndex) {
 				// params cannot be empty
-				if (slashIndex === -1 || slashIndex >= path.length) {
-					if (node.paramChild.store !== null) {
+				if (slashIndex === -1 || slashIndex >= pathname.length) {
+					if (node.paramChild.route !== null) {
 						return {
-							store: node.paramChild.store,
+							route: node.paramChild.route,
 							params: {
-								[node.paramChild.name]: path.slice(endIndex, path.length),
+								[node.paramChild.name]: pathname.slice(
+									endIndex,
+									pathname.length,
+								),
 							},
 						};
 					}
 				} else if (node.paramChild.staticChild) {
 					// there's a static node after the param
 					const route = this.find(
-						path,
+						pathname,
 						node.paramChild.staticChild,
 						slashIndex,
 					);
 
 					if (route) {
-						route.params[node.paramChild.name] = path.slice(
+						route.params[node.paramChild.name] = pathname.slice(
 							endIndex,
 							slashIndex,
 						);
@@ -312,10 +325,10 @@ export class Node<T> {
 		}
 
 		// check for wildcard leaf
-		if (node.wildcardStore !== null) {
+		if (node.wildcardRoute !== null) {
 			return {
-				store: node.wildcardStore,
-				params: { "*": path.slice(endIndex, path.length) },
+				route: node.wildcardRoute,
+				params: { "*": pathname.slice(endIndex, pathname.length) },
 			};
 		}
 

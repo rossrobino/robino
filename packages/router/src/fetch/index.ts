@@ -1,4 +1,4 @@
-import { Node } from "../trie/index.js";
+import { Node, Route } from "../trie/index.js";
 
 type Params = Record<string, string>;
 
@@ -148,7 +148,7 @@ export class FetchRouter extends Node<Handler> {
 			);
 		}
 
-		this.add("/" + method + pattern, handler);
+		this.add(new Route("/" + method + pattern, handler));
 
 		return this;
 	}
@@ -186,7 +186,8 @@ export class FetchRouter extends Node<Handler> {
 			const url = new URL(req.url);
 
 			const result = this.find("/" + req.method + url.pathname);
-			if (result) return result.store({ req, url, params: result.params });
+			if (result)
+				return result.route.store({ req, url, params: result.params });
 
 			if (this.#trailingSlash) {
 				const last = url.pathname.at(-1);
