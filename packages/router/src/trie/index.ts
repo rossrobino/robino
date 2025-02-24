@@ -96,7 +96,7 @@ export class Node<T> {
 	 * @param segment new segment to use
 	 * @returns the new child produced from the new segment
 	 */
-	forkStatic(charIndex: number, segment: string) {
+	fork(charIndex: number, segment: string) {
 		const existingChild = this.clone(this.segment.slice(charIndex)); // "posts/"
 		const newChild = new Node<T>(segment.slice(charIndex)); // "movies/"
 
@@ -116,7 +116,7 @@ export class Node<T> {
 	 *
 	 * @param segment
 	 */
-	splitStatic(segment: string) {
+	split(segment: string) {
 		const secondHalf = this.clone(this.segment.slice(segment.length));
 
 		Object.assign(this, new Node(segment, [secondHalf]));
@@ -174,7 +174,7 @@ export class Node<T> {
 				if (charIndex === staticSegment.length) {
 					// finished iterating through the staticSegment
 					if (charIndex < current.segment.length) {
-						current.splitStatic(staticSegment);
+						current.split(staticSegment);
 					}
 
 					break; // next segment
@@ -214,7 +214,7 @@ export class Node<T> {
 
 				if (staticSegment[charIndex] !== current.segment[charIndex]) {
 					// split
-					current = current.forkStatic(charIndex, staticSegment);
+					current = current.fork(charIndex, staticSegment);
 
 					break; // next segment
 				}
