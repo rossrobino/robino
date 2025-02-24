@@ -65,16 +65,20 @@ export class Node<T> {
 	 * @param segment pattern segment
 	 * @param staticChildren static children nodes to add to staticMap
 	 */
-	constructor(segment = "/", staticChildren?: Node<T>[]) {
+	constructor(segment = "/", staticChildren: Node<T>[] = [], clone?: Node<T>) {
 		this.segment = segment;
 
-		if (staticChildren?.length) {
-			this.staticMap = new Map();
+		if (clone) {
+			this.paramChild = clone.paramChild;
+			this.staticMap = clone.staticMap;
+			this.route = clone.route;
+			this.wildcardRoute = clone.wildcardRoute;
+		}
+
+		if (staticChildren.length) {
+			this.staticMap ??= new Map();
+
 			for (const child of staticChildren) {
-				if (!(child instanceof Node)) {
-					throw new Error("Invalid Node object in staticChildren");
-					console.log(child);
-				}
 				this.staticMap.set(child.segment.charCodeAt(0), child);
 			}
 		}
@@ -85,11 +89,7 @@ export class Node<T> {
 	 * @returns a clone of the Node with a new segment
 	 */
 	clone(segment: string) {
-		const cloned = new Node();
-		Object.assign(cloned, this);
-		cloned.segment = segment;
-
-		return cloned;
+		return new Node(segment, [], this);
 	}
 
 	/**
