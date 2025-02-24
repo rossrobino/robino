@@ -1,6 +1,8 @@
 class Segments {
 	/** pattern segments */
 	segments: string[];
+
+	/** current index  */
 	index = 0;
 
 	constructor(pattern: string, param = false) {
@@ -20,11 +22,15 @@ class Segments {
 export class Route<T> {
 	/** the route pattern */
 	pattern: string;
+
 	/** value store returned when route is found */
 	store: T;
+
 	/** pattern ends with a wildcard */
 	wildcard: boolean;
+
 	static: Segments;
+
 	param: Segments;
 
 	constructor(pattern: string, store: T) {
@@ -42,8 +48,10 @@ export class Route<T> {
 class ParamNode<T> {
 	/** name of the parameter (without the colon ":") */
 	name: string;
+
 	/** matched route */
 	route: Route<T> | null = null;
+
 	/** static child node */
 	staticChild: Node<T> | null = null;
 
@@ -55,12 +63,16 @@ class ParamNode<T> {
 export class Node<T> {
 	/** unique segment of the pattern trie */
 	segment: string;
+
 	/** static child node map, key is the first character in the segment */
 	staticMap: Map<number, Node<T>> | null = null;
+
 	/** parametric child node */
 	paramChild: ParamNode<T> | null = null;
+
 	/** matched route */
 	route: Route<T> | null = null;
+
 	/** matched wildcard route */
 	wildcardRoute: Route<T> | null = null;
 
@@ -314,7 +326,6 @@ export class Node<T> {
 						};
 					}
 				} else if (this.paramChild.staticChild) {
-					console.log(this.paramChild.staticChild);
 					// there's a static node after the param
 					const route = this.paramChild.staticChild.find(pathname, slashIndex);
 
