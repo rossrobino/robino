@@ -1,47 +1,20 @@
-class Segments {
-	static: string[];
-	param: string[];
-
-	constructor(pattern: string) {
-		this.param = pattern.match(/:.+?(?=\/|$)/g) ?? []; // match the params
-		this.static = pattern.split(/:.+?(?=\/|$)/); // split on the params
-
-		// if the last segment is a param without a trailing slash
-		// then there will be an empty string, remove
-		if (this.static.at(-1) === "") this.static.pop();
-	}
-}
-
 export class Route<T> {
 	/** the route pattern */
 	pattern: string;
-
 	/** value store returned when route is found */
 	store: T;
-
-	/** ends with wildcard */
-	wildcard: boolean;
-
-	segments: Segments;
 
 	constructor(pattern: string, store: T) {
 		this.pattern = pattern;
 		this.store = store;
-
-		this.wildcard = pattern.endsWith("*");
-		if (this.wildcard) pattern = pattern.slice(0, -1);
-
-		this.segments = new Segments(pattern);
 	}
 }
 
 class ParamNode<T> {
 	/** name of the parameter (without the colon ":") */
 	name: string;
-
 	/** matched route */
 	route: Route<T> | null = null;
-
 	/** static child node */
 	staticChild: Node<T> | null = null;
 
@@ -53,16 +26,12 @@ class ParamNode<T> {
 export class Node<T> {
 	/** unique segment of the pattern trie */
 	segment: string;
-
 	/** static child node map, key is the first character in the segment */
 	staticMap: Map<number, Node<T>> | null = null;
-
 	/** parametric child node */
 	paramChild: ParamNode<T> | null = null;
-
 	/** matched route */
 	route: Route<T> | null = null;
-
 	/** matched wildcard route */
 	wildcardRoute: Route<T> | null = null;
 
@@ -153,15 +122,26 @@ export class Node<T> {
 	 */
 	add(route: Route<T>) {
 		let current: Node<T> = this;
+		let pattern = route.pattern; // created to not modify the original
+
+		const endsWithWildcard = pattern.endsWith("*");
+		if (endsWithWildcard) pattern = pattern.slice(0, -1);
+
+		const paramSegments = pattern.match(/:.+?(?=\/|$)/g) ?? []; // match the params
+		const staticSegments = pattern.split(/:.+?(?=\/|$)/); // split on the params
+
+		// if the last segment is a param without a trailing slash
+		// then there will be an empty string, remove
+		if (staticSegments.at(-1) === "") staticSegments.pop();
 
 		let paramIndex = 0;
 		// for each static segment, if there are no static segments, this is skipped
 		for (
 			let staticIndex = 0;
-			staticIndex < route.segments.static.length;
+			staticIndex < staticSegments.length;
 			staticIndex++
 		) {
-			let staticSegment = route.segments.static[staticIndex]!;
+			let staticSegment = staticSegments[staticIndex]!;
 
 			if (staticIndex > 0) {
 				// there is only a second static segment (could just be "/")
@@ -169,7 +149,7 @@ export class Node<T> {
 
 				const paramChild = current.setParamChild(
 					// param without the ":" (only increment when this is reached)
-					route.segments.param[paramIndex++]!.slice(1),
+					paramSegments[paramIndex++]!.slice(1),
 				);
 
 				if (paramChild.staticChild) {
@@ -236,12 +216,11 @@ export class Node<T> {
 			}
 		}
 
-		if (paramIndex < route.segments.param.length) {
+		if (paramIndex < paramSegments.length) {
 			// final segment is a param
-			current.setParamChild(
-				route.segments.param[paramIndex]!.slice(1),
-			).route ??= route;
-		} else if (route.wildcard) {
+			current.setParamChild(paramSegments[paramIndex]!.slice(1)).route ??=
+				route;
+		} else if (endsWithWildcard) {
 			// final segment is a wildcard
 			current.wildcardRoute ??= route;
 		} else {
