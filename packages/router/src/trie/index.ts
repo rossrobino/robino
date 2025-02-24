@@ -71,6 +71,10 @@ export class Node<T> {
 		if (staticChildren?.length) {
 			this.staticMap = new Map();
 			for (const child of staticChildren) {
+				if (!(child instanceof Node)) {
+					throw new Error("Invalid Node object in staticChildren");
+					console.log(child);
+				}
 				this.staticMap.set(child.segment.charCodeAt(0), child);
 			}
 		}
@@ -80,11 +84,14 @@ export class Node<T> {
 	 * @param segment new segment
 	 * @returns a clone of the Node with a new segment
 	 */
-	clone(segment: string): Node<T> {
-		return {
-			...this,
-			segment,
-		};
+	clone(segment: string) {
+		const cloned = Object.assign(
+			Object.create(Object.getPrototypeOf(this)).segment,
+			this,
+		);
+		cloned.segment = segment;
+
+		return cloned;
 	}
 
 	/**
@@ -242,33 +249,32 @@ export class Node<T> {
 
 	find(
 		pathname: string,
-		node: Node<T> = this,
 		startIndex = 0,
 	): {
 		route: Route<T>;
 		params: Record<string, string>;
 	} | null {
-		const endIndex = startIndex + node.segment.length;
+		const endIndex = startIndex + this.segment.length;
 
-		if (pathname.slice(startIndex, endIndex) !== node.segment) {
+		if (pathname.slice(startIndex, endIndex) !== this.segment) {
 			// segment does not match current node segment
 			return null;
 		}
 
 		// reached the end of the path
 		if (endIndex === pathname.length) {
-			if (node.route !== null) {
+			if (this.route !== null) {
 				// there is a store
 				return {
-					route: node.route,
+					route: this.route,
 					params: {},
 				};
 			}
 
-			if (node.wildcardRoute !== null) {
+			if (this.wildcardRoute !== null) {
 				// there is a wildcard store
 				return {
-					route: node.wildcardRoute,
+					route: this.wildcardRoute,
 					params: { "*": "" },
 				};
 			}
@@ -278,43 +284,40 @@ export class Node<T> {
 		}
 
 		// check for a static leaf that starts with the next character
-		if (node.staticMap) {
-			const staticChild = node.staticMap.get(pathname.charCodeAt(endIndex));
+		if (this.staticMap) {
+			const staticChild = this.staticMap.get(pathname.charCodeAt(endIndex));
 
 			if (staticChild) {
-				const route = this.find(pathname, staticChild, endIndex);
+				const route = staticChild.find(pathname, endIndex);
 				if (route) return route;
 			}
 		}
 
 		// check for param leaf
-		if (node.paramChild) {
+		if (this.paramChild) {
 			const slashIndex = pathname.indexOf("/", endIndex);
 
 			if (slashIndex !== endIndex) {
 				// params cannot be empty
 				if (slashIndex === -1 || slashIndex >= pathname.length) {
-					if (node.paramChild.route !== null) {
+					if (this.paramChild.route !== null) {
 						return {
-							route: node.paramChild.route,
+							route: this.paramChild.route,
 							params: {
-								[node.paramChild.name]: pathname.slice(
+								[this.paramChild.name]: pathname.slice(
 									endIndex,
 									pathname.length,
 								),
 							},
 						};
 					}
-				} else if (node.paramChild.staticChild) {
+				} else if (this.paramChild.staticChild) {
+					console.log(this.paramChild.staticChild);
 					// there's a static node after the param
-					const route = this.find(
-						pathname,
-						node.paramChild.staticChild,
-						slashIndex,
-					);
+					const route = this.paramChild.staticChild.find(pathname, slashIndex);
 
 					if (route) {
-						route.params[node.paramChild.name] = pathname.slice(
+						route.params[this.paramChild.name] = pathname.slice(
 							endIndex,
 							slashIndex,
 						);
@@ -325,9 +328,9 @@ export class Node<T> {
 		}
 
 		// check for wildcard leaf
-		if (node.wildcardRoute !== null) {
+		if (this.wildcardRoute !== null) {
 			return {
-				route: node.wildcardRoute,
+				route: this.wildcardRoute,
 				params: { "*": pathname.slice(endIndex, pathname.length) },
 			};
 		}
