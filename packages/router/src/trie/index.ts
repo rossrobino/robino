@@ -1,10 +1,8 @@
 class ParamNode<T> {
 	/** name of the parameter (without the colon ":") */
 	name: string;
-
 	/** value store when path matches the node */
 	store: T | null = null;
-
 	/** static child node */
 	staticChild: Node<T> | null = null;
 
@@ -14,28 +12,31 @@ class ParamNode<T> {
 }
 
 class Pattern {
-	segments: {
-		/** static pattern segments (without params) */
-		static: string[];
-		/** parametric pattern segments (/:param) */
-		param: string[];
-	};
-
 	/** pattern ends with a wildcard */
 	wildcard: boolean;
+	static: {
+		/** static pattern segments (without params) */
+		segments: string[];
+		index: number;
+	};
+	param: {
+		/** parametric pattern segments (/:param) */
+		segments: string[];
+		index: number;
+	};
 
 	constructor(pattern: string) {
 		this.wildcard = pattern.endsWith("*");
 		if (this.wildcard) pattern = pattern.slice(0, -1);
 
-		const staticSegments = pattern.split(/:.+?(?=\/|$)/); // split on the params
+		this.static = { segments: pattern.split(/:.+?(?=\/|$)/), index: 0 }; // split on the params
 		// if the last segment is a param without a trailing slash
 		// then there will be an empty string, remove
-		if (staticSegments.at(-1) === "") staticSegments.pop();
+		if (this.static.segments.at(-1) === "") this.static.segments.pop();
 
-		this.segments = {
-			static: staticSegments,
-			param: pattern.match(/:.+?(?=\/|$)/g) ?? [], // match the params
+		this.param = {
+			segments: pattern.match(/:.+?(?=\/|$)/g) ?? [], // match the params
+			index: 0,
 		};
 	}
 }
@@ -43,16 +44,12 @@ class Pattern {
 export class Node<T> {
 	/** unique segment of the pattern trie */
 	segment: string;
-
 	/** static child node map, key is the first character in the segment */
 	staticMap: Map<number, Node<T>> | null = null;
-
 	/** parametric child node */
 	paramChild: ParamNode<T> | null = null;
-
 	/** value store */
 	store: T | null = null;
-
 	/** wildcard value store */
 	wildcardStore: T | null = null;
 
@@ -140,23 +137,18 @@ export class Node<T> {
 		const p = new Pattern(pattern);
 
 		let current: Node<T> = this;
-		let paramIndex = 0;
 
 		// for each static segment, if there are no static segments, this is skipped
-		for (
-			let staticIndex = 0;
-			staticIndex < p.segments.static.length;
-			staticIndex++
-		) {
-			let staticSegment = p.segments.static[staticIndex]!;
+		for (; p.static.index < p.static.segments.length; p.static.index++) {
+			let staticSegment = p.static.segments[p.static.index]!;
 
-			if (staticIndex > 0) {
+			if (p.static.index > 0) {
 				// there is only a second static segment (could just be "/")
 				// if there is a param to split them, so there must be a param here
 
 				const paramChild = current.setParamChild(
 					// param without the ":" (only increment when this is reached)
-					p.segments.param[paramIndex++]!.slice(1),
+					p.param.segments[p.param.index++]!.slice(1),
 				);
 
 				if (paramChild.staticChild) {
@@ -223,9 +215,9 @@ export class Node<T> {
 			}
 		}
 
-		if (paramIndex < p.segments.param.length) {
+		if (p.param.index < p.param.segments.length) {
 			// final segment is a param
-			current.setParamChild(p.segments.param[paramIndex]!.slice(1)).store ??=
+			current.setParamChild(p.param.segments[p.param.index]!.slice(1)).store ??=
 				store;
 		} else if (p.wildcard) {
 			// final segment is a wildcard
