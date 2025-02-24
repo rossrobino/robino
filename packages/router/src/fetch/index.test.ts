@@ -1,7 +1,7 @@
-import { Router } from "./index.js";
+import { FetchRouter } from "./index.js";
 import { expect, test } from "vitest";
 
-const router = new Router({ trailingSlash: "always" });
+const router = new FetchRouter({ trailingSlash: "always" });
 
 const get = (pathname: string) =>
 	router.fetch(new Request("http://localhost:5173" + pathname));
@@ -11,8 +11,6 @@ test("context", () => {
 		.get("/", (c) => {
 			expect(c.url).toBeInstanceOf(URL);
 			expect(c.req).toBeInstanceOf(Request);
-			expect(c.route.handler).toBeTypeOf("function");
-			expect(c.route.pattern).toBeInstanceOf(RegExp);
 
 			return new Response("hello world");
 		})
@@ -105,7 +103,7 @@ test("trailing slash - always", async () => {
 });
 
 test("trailing slash - never", async () => {
-	const nev = new Router();
+	const nev = new FetchRouter();
 	nev.get("/test", () => new Response("test"));
 
 	const res = await nev.fetch(new Request("http://localhost:5173/test/"));
@@ -115,7 +113,7 @@ test("trailing slash - never", async () => {
 });
 
 test("trailing slash - null", async () => {
-	const nul = new Router({ trailingSlash: null });
+	const nul = new FetchRouter({ trailingSlash: null });
 	nul.get("/nope", () => new Response("nope"));
 	nul.get("/yup/", () => new Response("yup"));
 

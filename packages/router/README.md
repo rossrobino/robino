@@ -6,15 +6,7 @@ npm i @robino/router
 
 A [lightweight](https://bundlephobia.com/package/@robino/router) HTTP router built on the Fetch API.
 
-## Routing
-
-- A regular expression is created for each route based on the pattern provided.
-- Upon request, the router iterates through routes within the method in the order they were added until a match is found.
-- Performance
-  - Aims to strike a balance between startup and run time.
-  - `Router.fetch` time complexity: `O(n)`, where `n` is the number of routes with the same method.
-- Parameters
-  - Supports type safe parameters starting with `:` - adapted from [regexparam](https://github.com/lukeed/regexparam)
+This project is forked and adapted from [memoirist](https://github.com/SaltyAom/memoirist) and [@medley/router](https://github.com/medleyjs/router).
 
 ## Basic
 
