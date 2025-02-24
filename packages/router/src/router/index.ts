@@ -135,8 +135,8 @@ export class Router<T> {
 			let staticSegment = staticSegments[staticIndex]!;
 
 			if (staticIndex > 0) {
-				// there is only a second static segment if there is a param to split
-				// them, so there must be a param here
+				// there is only a second static segment (could just be "/")
+				// if there is a param to split them, so there must be a param here
 
 				// param without the ":" (only increment when this is reached)
 				const name = paramSegments[paramIndex++]!.slice(1);
