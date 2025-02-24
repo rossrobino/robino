@@ -17,7 +17,7 @@ class Node<T> {
 	/** unique segment of the pattern trie */
 	segment: string;
 
-	/** Static child node map, key is the first character in the segment */
+	/** static child node map, key is the first character in the segment */
 	staticMap: Map<number, Node<T>> | null = null;
 
 	/** parametric child node */
@@ -25,8 +25,14 @@ class Node<T> {
 
 	/** value store */
 	store: T | null = null;
+
+	/** wildcard value store */
 	wildcardStore: T | null = null;
 
+	/**
+	 * @param segment pattern segment
+	 * @param staticChildren static children nodes to add to staticMap
+	 */
 	constructor(segment: string, staticChildren?: Node<T>[]) {
 		this.segment = segment;
 
@@ -44,6 +50,55 @@ class Node<T> {
 			segment,
 		};
 	}
+
+	/**
+	 * if the current segment is "api/posts"
+	 * and "api/movies" is added,
+	 * the node will need to be reassigned to "api/" and create two static children
+	 *
+	 * @param charIndex
+	 * @param segment
+	 * @returns the new child produced from the staticSegment
+	 */
+	forkStatic(charIndex: number, segment: string) {
+		const existingChild = this.clone(this.segment.slice(charIndex)); // "posts/"
+		const newChild = new Node<T>(segment.slice(charIndex)); // "movies/"
+
+		Object.assign(
+			this,
+			// "api/" with the above as children
+			new Node(this.segment.slice(0, charIndex), [existingChild, newChild]),
+		);
+
+		return newChild;
+	}
+
+	/**
+	 * node.segment = "static/static",
+	 * staticSegment = "static/",
+	 * then the node needs to be split to accommodate the shorter segment
+	 *
+	 * @param segment
+	 */
+	splitStatic(segment: string) {
+		const secondHalf = this.clone(this.segment.slice(segment.length));
+
+		Object.assign(this, new Node(segment, [secondHalf]));
+	}
+
+	/**
+	 * @param name name of the param
+	 * @returns the existing child with the same name, or creates a new
+	 */
+	setParamChild(name: string) {
+		if (this.paramChild && this.paramChild.name !== name) {
+			throw new Error(
+				`Cannot create parameter "${name}" because a different parameter ("${this.paramChild.name}") already exists in this location.\n\n${this}`,
+			);
+		}
+
+		return (this.paramChild ??= new ParamNode<T>(name));
+	}
 }
 
 export class Router<T> {
@@ -59,114 +114,88 @@ export class Router<T> {
 		const endsWithWildcard = pattern.endsWith("*");
 		if (endsWithWildcard) pattern = pattern.slice(0, -1);
 
-		const staticSegments = pattern.split(/:.+?(?=\/|$)/);
-		const paramSegments = pattern.match(/:.+?(?=\/|$)/g) ?? [];
+		const staticSegments = pattern.split(/:.+?(?=\/|$)/); // split on the params
+		const paramSegments = pattern.match(/:.+?(?=\/|$)/g) ?? []; // match the params
 
 		if (staticSegments.at(-1) === "") {
-			// if the last segment was a param then there will
-			// be an empty string - remove
+			// if the last segment is a param then there will
+			// be an empty string, remove
 			staticSegments.pop();
 		}
 
-		// set to root, create if not there
 		let node = this.#root;
 		let paramIndex = 0;
 
+		// add static segments, if there are no static segments, this is skipped
 		for (
 			let staticIndex = 0;
 			staticIndex < staticSegments.length;
 			staticIndex++
 		) {
-			let segment = staticSegments[staticIndex]!;
+			let staticSegment = staticSegments[staticIndex]!;
 
 			if (staticIndex > 0) {
-				// if we get to here, it means there is an param in between
-				// two static segments: ".../static/:param/static..."
+				// there is only a second static segment if there is a param to split
+				// them, so there must be a param here
 
-				// param without the ":" (only increment after the first loop)
+				// param without the ":" (only increment when this is reached)
 				const name = paramSegments[paramIndex++]!.slice(1);
 
-				if (!node.paramChild) {
-					// there isn't another pattern with params already
-					node.paramChild = new ParamNode<T>(name);
-				} else if (node.paramChild.name !== name) {
-					throw new Error(
-						`Cannot create route "${pattern}" with parameter "${name}" - route exists with a different parameter ("${node.paramChild.name}") in the same location.`,
-					);
-				}
+				const paramChild = node.setParamChild(name);
 
-				if (!node.paramChild.staticChild) {
+				if (!paramChild.staticChild) {
 					// create node with the next static segment
-					node = node.paramChild.staticChild = new Node<T>(segment);
+					node = paramChild.staticChild = new Node<T>(staticSegment);
 					continue;
 				}
 
-				node = node.paramChild.staticChild;
+				node = paramChild.staticChild;
 			}
 
 			for (let charIndex = 0; ; ) {
-				if (charIndex === segment.length) {
-					// passed the end of the segment
+				if (charIndex === staticSegment.length) {
+					// finished iterating through the staticSegment
 					if (charIndex < node.segment.length) {
-						// move current node down
-						Object.assign(
-							node,
-							new Node(segment, [node.clone(node.segment.slice(charIndex))]),
-						);
+						node.splitStatic(staticSegment);
 					}
-					break;
+
+					break; // next segment
 				}
 
 				if (charIndex === node.segment.length) {
-					// at the end of the segment
+					// passed the end of the current node
 					if (!node.staticMap) {
+						// new pattern, create new leaf
 						node.staticMap = new Map();
 					} else {
+						// there's already static children,
+						// check to see if there's a leaf that starts with the char
 						const staticChild = node.staticMap.get(
-							segment.charCodeAt(charIndex),
+							staticSegment.charCodeAt(charIndex),
 						);
 
 						if (staticChild) {
-							// re-run loop with existing static child
+							// re-run loop with existing staticChild
 							node = staticChild;
-							segment = segment.slice(charIndex);
+							staticSegment = staticSegment.slice(charIndex);
 							charIndex = 0;
 							continue;
 						}
 					}
 
-					// add new static child
-					node.staticMap.set(
-						segment.charCodeAt(charIndex),
-						new Node<T>(segment.slice(charIndex)),
-					);
+					// otherwise, add new static child
+					const staticChild = new Node<T>(staticSegment.slice(charIndex));
+					node.staticMap.set(staticSegment.charCodeAt(charIndex), staticChild);
+					node = staticChild;
 
-					node = node.staticMap.get(segment.charCodeAt(charIndex))!;
-
-					break;
+					break; // next segment
 				}
 
-				if (segment[charIndex] !== node.segment[charIndex]) {
-					// in this case if you had two patterns
-					// "api/posts" and "api/movies"
-					// segment[charIndex] "m", while node.segment[charIndex] "p"
+				if (staticSegment[charIndex] !== node.segment[charIndex]) {
+					// split
+					node = node.forkStatic(charIndex, staticSegment);
 
-					// split the node
-					const existingChild = node.clone(node.segment.slice(charIndex)); // "posts/"
-					const newChild = new Node<T>(segment.slice(charIndex)); // "movies/"
-
-					Object.assign(
-						node,
-						// "api/" with the above as children
-						new Node(node.segment.slice(0, charIndex), [
-							existingChild,
-							newChild,
-						]),
-					);
-
-					node = newChild;
-
-					break;
+					break; // next segment
 				}
 
 				// character is the same - rerun to check next char
@@ -177,18 +206,9 @@ export class Router<T> {
 		if (paramIndex < paramSegments.length) {
 			// final segment is a param
 			const name = paramSegments[paramIndex++]!.slice(1);
+			const paramChild = node.setParamChild(name);
 
-			if (!node.paramChild) {
-				// nothing, assign child
-				node.paramChild = new ParamNode<T>(name);
-			} else if (node.paramChild.name !== name) {
-				// param with a different name
-				throw new Error(
-					`Cannot create route "${pattern}" with parameter "${name}" - route exists with a different parameter ("${node.paramChild.name}") in the same location.`,
-				);
-			}
-
-			node.paramChild.store ??= store;
+			paramChild.store ??= store;
 
 			return this;
 		}

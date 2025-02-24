@@ -3,12 +3,13 @@ import { expect, test } from "vitest";
 
 const router = new Router<string>()
 	.add("/", "/")
-	.add("/hello/world", "/hello/world")
-	.add("/hello/:slug", "/hello/:slug")
-	.add("/hello/:slug/:another", "/hello/:slug/:another")
-	.add("/api/posts/:slug/test", "/api/posts/:slug/test")
-	.add("/api/movies/:slug/test", "/api/movies/:slug/test")
-	.add("/api/*", "/api/*")
+	.add("/static/static", "/static/static")
+	.add("/static/:param", "/static/:param")
+	.add("/static/:param/:another", "/static/:param/:another")
+	.add("/static/:param/:another/static", "/static/:param/:another/static")
+	.add("/static/fork", "/static/fork")
+	.add("/static/fork/:param", "/static/fork/:param")
+	.add("/wild/*", "/wild/*")
 	.add("/*", "/*");
 
 test("/", () => {
@@ -17,40 +18,46 @@ test("/", () => {
 	expect(result?.params).toStrictEqual({});
 });
 
-test("/hello/world", () => {
-	const result = router.find("/hello/world");
-	expect(result?.store).toBe("/hello/world");
+test("/static/static", () => {
+	const result = router.find("/static/static");
+	expect(result?.store).toBe("/static/static");
 	expect(result?.params).toStrictEqual({});
 });
 
-test("/hello/:slug", () => {
-	const result = router.find("/hello/slug");
-	expect(result?.store).toBe("/hello/:slug");
-	expect(result?.params).toStrictEqual({ slug: "slug" });
+test("/static/:param", () => {
+	const result = router.find("/static/param");
+	expect(result?.store).toBe("/static/:param");
+	expect(result?.params).toStrictEqual({ param: "param" });
 });
 
-test("/hello/:slug/:another", () => {
-	const result = router.find("/hello/slug/another");
-	expect(result?.store).toBe("/hello/:slug/:another");
-	expect(result?.params).toStrictEqual({ slug: "slug", another: "another" });
+test("/static/:param/:another", () => {
+	const result = router.find("/static/param/another");
+	expect(result?.store).toBe("/static/:param/:another");
+	expect(result?.params).toStrictEqual({ param: "param", another: "another" });
 });
 
-test("/api/posts/:slug/test", () => {
-	const result = router.find("/api/posts/my-post/test");
-	expect(result?.store).toBe("/api/posts/:slug/test");
-	expect(result?.params).toStrictEqual({ slug: "my-post" });
+test("/static/:param/:another/static", () => {
+	const result = router.find("/static/param/another/static");
+	expect(result?.store).toBe("/static/:param/:another/static");
+	expect(result?.params).toStrictEqual({ param: "param", another: "another" });
 });
 
-test("/api/movies/:slug/test", () => {
-	const result = router.find("/api/movies/batman/test");
-	expect(result?.store).toBe("/api/movies/:slug/test");
-	expect(result?.params).toStrictEqual({ slug: "batman" });
+test("/static/fork", () => {
+	const result = router.find("/static/fork");
+	expect(result?.store).toBe("/static/fork");
+	expect(result?.params).toStrictEqual({});
 });
 
-test("/api/*", () => {
-	const result = router.find("/api/wild/card");
-	expect(result?.store).toBe("/api/*");
-	expect(result?.params).toStrictEqual({ "*": "wild/card" });
+test("/static/fork/:param", () => {
+	const result = router.find("/static/fork/param");
+	expect(result?.store).toBe("/static/fork/:param");
+	expect(result?.params).toStrictEqual({ param: "param" });
+});
+
+test("/wild/*", () => {
+	const result = router.find("/wild/whatever");
+	expect(result?.store).toBe("/wild/*");
+	expect(result?.params).toStrictEqual({ "*": "whatever" });
 });
 
 test("/*", () => {
