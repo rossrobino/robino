@@ -120,7 +120,6 @@ export class Node<T> {
 	 * @returns this - the Node
 	 */
 	add(route: Route<T>) {
-		console.log(route);
 		let current: Node<T> = this;
 		let pattern = route.pattern; // created to not modify the original
 
