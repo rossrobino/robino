@@ -85,10 +85,8 @@ export class Node<T> {
 	 * @returns a clone of the Node with a new segment
 	 */
 	clone(segment: string) {
-		const cloned = Object.assign(
-			Object.create(Object.getPrototypeOf(this)).segment,
-			this,
-		);
+		const cloned = new Node();
+		Object.assign(cloned, this);
 		cloned.segment = segment;
 
 		return cloned;
