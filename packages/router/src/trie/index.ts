@@ -248,44 +248,42 @@ export class Node<T> {
 
 		// reached the end of the path
 		if (endIndex === pathname.length) {
-			if (this.route !== null) {
-				// there is a store
+			if (this.route) {
 				return {
 					route: this.route,
 					params: {},
 				};
 			}
 
-			if (this.wildcardRoute !== null) {
-				// there is a wildcard store
+			if (this.wildcardRoute) {
 				return {
 					route: this.wildcardRoute,
 					params: { "*": "" },
 				};
 			}
 
-			// no store
 			return null;
 		}
 
-		// check for a static leaf that starts with the next character
+		// check for a static leaf that starts with the first character
 		if (this.staticMap) {
 			const staticChild = this.staticMap.get(pathname.charCodeAt(endIndex));
 
 			if (staticChild) {
-				const route = staticChild.find(pathname, endIndex);
-				if (route) return route;
+				const result = staticChild.find(pathname, endIndex);
+				if (result) return result;
 			}
 		}
 
 		// check for param leaf
 		if (this.paramChild) {
-			const slashIndex = pathname.indexOf("/", endIndex);
+			const paramEnd = pathname.indexOf("/", endIndex);
 
-			if (slashIndex !== endIndex) {
-				// params cannot be empty
-				if (slashIndex === -1 || slashIndex >= pathname.length) {
-					if (this.paramChild.route !== null) {
+			if (paramEnd !== endIndex) {
+				// there is a valid parameter
+				if (paramEnd === -1 || paramEnd >= pathname.length) {
+					// param is the end of the pathname
+					if (this.paramChild.route) {
 						return {
 							route: this.paramChild.route,
 							params: {
@@ -298,21 +296,24 @@ export class Node<T> {
 					}
 				} else if (this.paramChild.staticChild) {
 					// there's a static node after the param
-					const route = this.paramChild.staticChild.find(pathname, slashIndex);
+					// this is how there can be multiple params, "/" in between
+					const result = this.paramChild.staticChild.find(pathname, paramEnd);
 
-					if (route) {
-						route.params[this.paramChild.name] = pathname.slice(
+					if (result) {
+						// add original params to the result
+						result.params[this.paramChild.name] = pathname.slice(
 							endIndex,
-							slashIndex,
+							paramEnd,
 						);
-						return route;
+
+						return result;
 					}
 				}
 			}
 		}
 
 		// check for wildcard leaf
-		if (this.wildcardRoute !== null) {
+		if (this.wildcardRoute) {
 			return {
 				route: this.wildcardRoute,
 				params: { "*": pathname.slice(endIndex, pathname.length) },
