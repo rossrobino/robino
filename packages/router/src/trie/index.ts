@@ -120,6 +120,7 @@ export class Node<T> {
 	 * @returns this - the Node
 	 */
 	add(route: Route<T>) {
+		console.log(route);
 		let current: Node<T> = this;
 		let pattern = route.pattern; // created to not modify the original
 
@@ -151,20 +152,22 @@ export class Node<T> {
 					paramSegments[paramIndex++]!.slice(1),
 				);
 
-				if (paramChild.staticChild) {
-					// there's already a static child - need to check if it's a match
-					current = paramChild.staticChild;
-				} else {
+				if (!paramChild.staticChild) {
 					// new - create node with the next static segment
 					current = paramChild.staticChild = new Node<T>(staticSegment);
-					continue; // skip the rest since it's new
+					continue; // next segment - no need to check since it's new
 				}
+
+				// there's already a static child - need to check if it's a match
+				current = paramChild.staticChild;
 			}
 
+			// check if the staticSegment matches the current node
 			for (let charIndex = 0; ; ) {
 				if (charIndex === staticSegment.length) {
 					// finished iterating through the staticSegment
 					if (charIndex < current.segment.length) {
+						// too short
 						current.split(staticSegment);
 					}
 
@@ -192,7 +195,7 @@ export class Node<T> {
 						}
 					}
 
-					// otherwise, add new static child
+					// otherwise, add new staticChild
 					const staticChild = new Node<T>(staticSegment.slice(charIndex));
 					current.staticMap.set(
 						staticSegment.charCodeAt(charIndex),
@@ -204,7 +207,7 @@ export class Node<T> {
 				}
 
 				if (staticSegment[charIndex] !== current.segment[charIndex]) {
-					// split
+					// different than the node - fork
 					current = current.fork(charIndex, staticSegment);
 
 					break; // next segment
