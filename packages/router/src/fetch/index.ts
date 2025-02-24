@@ -62,7 +62,9 @@ type Method =
 
 type TrailingSlash = "always" | "never" | null;
 
-export class FetchRouter extends Node<Handler> {
+export class FetchRouter {
+	#trieMap = new Map<Method, Node<Handler>>();
+
 	#trailingSlash: TrailingSlash;
 
 	/** Handler to run when route is not found. */
@@ -112,8 +114,6 @@ export class FetchRouter extends Node<Handler> {
 			error?: ErrorHandler;
 		} = {},
 	) {
-		super();
-
 		const {
 			trailingSlash = "never",
 			error = null,
@@ -142,13 +142,16 @@ export class FetchRouter extends Node<Handler> {
 		pattern: Pattern,
 		handler: Handler<ExtractParams<Pattern>>,
 	) {
-		if (pattern[0] !== "/") {
-			throw new Error(
-				`Invalid route: ${pattern}\nRoute pattern must begin with "/"`,
-			);
-		}
+		const route = new Route(pattern, handler);
+		const existing = this.#trieMap.get(method);
 
-		this.add(new Route("/" + method + pattern, handler));
+		if (existing) {
+			existing.add(route);
+		} else {
+			const trie = new Node<Handler>();
+			this.#trieMap.set(method, trie);
+			trie.add(route);
+		}
 
 		return this;
 	}
@@ -185,9 +188,11 @@ export class FetchRouter extends Node<Handler> {
 		try {
 			const url = new URL(req.url);
 
-			const result = this.find("/" + req.method + url.pathname);
-			if (result)
+			const result = this.#trieMap.get(req.method)?.find(url.pathname);
+
+			if (result) {
 				return result.route.store({ req, url, params: result.params });
+			}
 
 			if (this.#trailingSlash) {
 				const last = url.pathname.at(-1);

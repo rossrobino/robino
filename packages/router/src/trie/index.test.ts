@@ -95,7 +95,7 @@ test("/nope", () => {
 
 test("/static//static", () => {
 	const result = trie.find("/static//static");
-	expect(result).toBe(null); // Depending on desired behavior
+	expect(result).toBe(null);
 });
 
 test("Empty path", () => {
@@ -103,8 +103,8 @@ test("Empty path", () => {
 	expect(result).toBe(null);
 });
 
-test("/ with trailing slash", () => {
-	const result = trie.find("/static/fork/");
+test("/static/ (trailing slash)", () => {
+	const result = trie.find("/static/");
 	expect(result).toBe(null);
 });
 

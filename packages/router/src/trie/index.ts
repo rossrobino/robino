@@ -5,6 +5,12 @@ export class Route<T> {
 	store: T;
 
 	constructor(pattern: string, store: T) {
+		if (pattern[0] !== "/") {
+			throw new Error(
+				`Invalid route: ${pattern} - route pattern must begin with "/"`,
+			);
+		}
+
 		this.pattern = pattern;
 		this.store = store;
 	}
@@ -232,63 +238,57 @@ export class Node<T> {
 		return this;
 	}
 
-	find(
-		pathname: string,
-		startIndex = 0,
-	): {
+	find(pathname: string): {
 		route: Route<T>;
 		params: Record<string, string>;
 	} | null {
-		const endIndex = startIndex + this.segment.length;
+		// segment does not match current node segment
+		if (pathname.slice(0, this.segment.length) !== this.segment) return null;
 
-		if (pathname.slice(startIndex, endIndex) !== this.segment) {
-			// segment does not match current node segment
-			return null;
-		}
-
-		// reached the end of the path
-		if (endIndex === pathname.length) {
-			if (this.route) {
+		if (pathname === this.segment) {
+			// reached the end of the path
+			if (this.route)
 				return {
 					route: this.route,
 					params: {},
 				};
-			}
 
-			if (this.wildcardRoute) {
+			if (this.wildcardRoute)
 				return {
 					route: this.wildcardRoute,
 					params: { "*": "" },
 				};
-			}
 
 			return null;
 		}
 
-		// check for a static leaf that starts with the first character
 		if (this.staticMap) {
-			const staticChild = this.staticMap.get(pathname.charCodeAt(endIndex));
+			// check for a static leaf that starts with the first character
+			const staticChild = this.staticMap.get(
+				pathname.charCodeAt(this.segment.length),
+			);
 
 			if (staticChild) {
-				const result = staticChild.find(pathname, endIndex);
+				const result = staticChild.find(pathname.slice(this.segment.length));
 				if (result) return result;
 			}
 		}
 
 		// check for param leaf
 		if (this.paramChild) {
-			const paramEnd = pathname.indexOf("/", endIndex);
+			const slashIndex = pathname.indexOf("/", this.segment.length);
 
-			if (paramEnd !== endIndex) {
+			// if there is not a slash immediately following this.segment
+			if (slashIndex !== this.segment.length) {
 				// there is a valid parameter
-				if (paramEnd === -1 || paramEnd >= pathname.length) {
+				if (slashIndex === -1 || slashIndex >= pathname.length) {
 					// param is the end of the pathname
 					if (this.paramChild.route) {
 						return {
 							route: this.paramChild.route,
 							params: {
 								[this.paramChild.name]: pathname.slice(
-									endIndex,
+									this.segment.length,
 									pathname.length,
 								),
 							},
@@ -297,13 +297,15 @@ export class Node<T> {
 				} else if (this.paramChild.staticChild) {
 					// there's a static node after the param
 					// this is how there can be multiple params, "/" in between
-					const result = this.paramChild.staticChild.find(pathname, paramEnd);
+					const result = this.paramChild.staticChild.find(
+						pathname.slice(slashIndex),
+					);
 
 					if (result) {
 						// add original params to the result
 						result.params[this.paramChild.name] = pathname.slice(
-							endIndex,
-							paramEnd,
+							this.segment.length,
+							slashIndex,
 						);
 
 						return result;
@@ -316,7 +318,7 @@ export class Node<T> {
 		if (this.wildcardRoute) {
 			return {
 				route: this.wildcardRoute,
-				params: { "*": pathname.slice(endIndex, pathname.length) },
+				params: { "*": pathname.slice(this.segment.length, pathname.length) },
 			};
 		}
 
