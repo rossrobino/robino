@@ -66,7 +66,7 @@ export class Node<T> {
 	 * @param staticChildren static children nodes to add to staticMap
 	 * @param clone node to clone during construction
 	 */
-	constructor(segment = "/", staticChildren: Node<T>[] = [], clone?: Node<T>) {
+	constructor(segment = "/", staticChildren?: Node<T>[], clone?: Node<T>) {
 		this.segment = segment;
 
 		if (clone) {
@@ -76,7 +76,7 @@ export class Node<T> {
 			this.wildcardRoute = clone.wildcardRoute;
 		}
 
-		if (staticChildren.length) {
+		if (staticChildren?.length) {
 			this.staticMap ??= new Map();
 
 			for (const child of staticChildren) {
