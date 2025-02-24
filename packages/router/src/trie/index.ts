@@ -14,8 +14,14 @@ class ParamNode<T> {
 }
 
 class Pattern {
-	segments: { static: string[]; param: string[] };
+	segments: {
+		/** static pattern segments (without params) */
+		static: string[];
+		/** parametric pattern segments (/:param) */
+		param: string[];
+	};
 
+	/** pattern ends with a wildcard */
 	wildcard: boolean;
 
 	constructor(pattern: string) {
