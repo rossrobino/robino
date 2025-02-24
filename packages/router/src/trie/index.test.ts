@@ -7,10 +7,13 @@ const trie = new Node<string>()
 	.add("/static/:param", "/static/:param")
 	.add("/static/:param/:another", "/static/:param/:another")
 	.add("/static/:param/:another/static", "/static/:param/:another/static")
+	.add(
+		"/static/:param/:another/static/static",
+		"/static/:param/:another/static/static",
+	)
 	.add("/static/fork", "/static/fork")
 	.add("/static/fork/:param", "/static/fork/:param")
-	.add("/wild/*", "/wild/*")
-	.add("/*", "/*");
+	.add("/wild/*", "/wild/*");
 
 test("/", () => {
 	const result = trie.find("/");
@@ -42,6 +45,12 @@ test("/static/:param/:another/static", () => {
 	expect(result?.params).toStrictEqual({ param: "param", another: "another" });
 });
 
+test("/static/:param/:another/static/static", () => {
+	const result = trie.find("/static/param/another/static/static");
+	expect(result?.store).toBe("/static/:param/:another/static/static");
+	expect(result?.params).toStrictEqual({ param: "param", another: "another" });
+});
+
 test("/static/fork", () => {
 	const result = trie.find("/static/fork");
 	expect(result?.store).toBe("/static/fork");
@@ -60,7 +69,28 @@ test("/wild/*", () => {
 	expect(result?.params).toStrictEqual({ "*": "whatever" });
 });
 
+test("/nope", () => {
+	const result = trie.find("/nope");
+	expect(result).toBe(null);
+});
+
+test("/static//static", () => {
+	const result = trie.find("/static//static");
+	expect(result).toBe(null); // Depending on desired behavior
+});
+
+test("Empty path", () => {
+	const result = trie.find("");
+	expect(result).toBe(null);
+});
+
+test("/ with trailing slash", () => {
+	const result = trie.find("/static/fork/");
+	expect(result).toBe(null);
+});
+
 test("/*", () => {
+	trie.add("/*", "/*");
 	const result = trie.find("/whatever");
 	expect(result?.store).toBe("/*");
 	expect(result?.params).toStrictEqual({ "*": "whatever" });

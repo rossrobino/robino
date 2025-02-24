@@ -111,14 +111,14 @@ export class Node<T> {
 		const staticSegments = pattern.split(/:.+?(?=\/|$)/); // split on the params
 		const paramSegments = pattern.match(/:.+?(?=\/|$)/g) ?? []; // match the params
 
-		// if the last segment is a param then there will
-		// be an empty string, remove
+		// if the last segment is a param without a trailing slash
+		// then there will be an empty string, remove
 		if (staticSegments.at(-1) === "") staticSegments.pop();
 
-		let node: Node<T> = this;
+		let current: Node<T> = this;
 		let paramIndex = 0;
 
-		// add static segments, if there are no static segments, this is skipped
+		// for each static segment, if there are no static segments, this is skipped
 		for (
 			let staticIndex = 0;
 			staticIndex < staticSegments.length;
@@ -130,45 +130,45 @@ export class Node<T> {
 				// there is only a second static segment (could just be "/")
 				// if there is a param to split them, so there must be a param here
 
-				const paramChild = node.setParamChild(
+				const paramChild = current.setParamChild(
 					// param without the ":" (only increment when this is reached)
 					paramSegments[paramIndex++]!.slice(1),
 				);
 
 				if (!paramChild.staticChild) {
 					// create node with the next static segment
-					node = paramChild.staticChild = new Node<T>(staticSegment);
+					current = paramChild.staticChild = new Node<T>(staticSegment);
 					continue;
 				}
 
-				node = paramChild.staticChild;
+				current = paramChild.staticChild;
 			}
 
 			for (let charIndex = 0; ; ) {
 				if (charIndex === staticSegment.length) {
 					// finished iterating through the staticSegment
-					if (charIndex < node.segment.length) {
-						node.splitStatic(staticSegment);
+					if (charIndex < current.segment.length) {
+						current.splitStatic(staticSegment);
 					}
 
 					break; // next segment
 				}
 
-				if (charIndex === node.segment.length) {
+				if (charIndex === current.segment.length) {
 					// passed the end of the current node
-					if (!node.staticMap) {
+					if (!current.staticMap) {
 						// new pattern, create new leaf
-						node.staticMap = new Map();
+						current.staticMap = new Map();
 					} else {
 						// there's already static children,
 						// check to see if there's a leaf that starts with the char
-						const staticChild = node.staticMap.get(
+						const staticChild = current.staticMap.get(
 							staticSegment.charCodeAt(charIndex),
 						);
 
 						if (staticChild) {
 							// re-run loop with existing staticChild
-							node = staticChild;
+							current = staticChild;
 							staticSegment = staticSegment.slice(charIndex);
 							charIndex = 0;
 							continue;
@@ -177,15 +177,18 @@ export class Node<T> {
 
 					// otherwise, add new static child
 					const staticChild = new Node<T>(staticSegment.slice(charIndex));
-					node.staticMap.set(staticSegment.charCodeAt(charIndex), staticChild);
-					node = staticChild;
+					current.staticMap.set(
+						staticSegment.charCodeAt(charIndex),
+						staticChild,
+					);
+					current = staticChild;
 
 					break; // next segment
 				}
 
-				if (staticSegment[charIndex] !== node.segment[charIndex]) {
+				if (staticSegment[charIndex] !== current.segment[charIndex]) {
 					// split
-					node = node.forkStatic(charIndex, staticSegment);
+					current = current.forkStatic(charIndex, staticSegment);
 
 					break; // next segment
 				}
@@ -197,13 +200,14 @@ export class Node<T> {
 
 		if (paramIndex < paramSegments.length) {
 			// final segment is a param
-			node.setParamChild(paramSegments[paramIndex]!.slice(1)).store ??= store;
+			current.setParamChild(paramSegments[paramIndex]!.slice(1)).store ??=
+				store;
 		} else if (endsWithWildcard) {
 			// final segment is a wildcard
-			node.wildcardStore ??= store;
+			current.wildcardStore ??= store;
 		} else {
 			// final segment is static
-			node.store ??= store;
+			current.store ??= store;
 		}
 
 		return this;
