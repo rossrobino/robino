@@ -125,6 +125,11 @@ export class Node<T> {
 		return (this.paramChild ??= new ParamNode<T>(name));
 	}
 
+	/**
+	 * @param pattern pattern to match
+	 * @param store value to return when pattern is matched
+	 * @returns this - the Node
+	 */
 	add(pattern: string, store: T) {
 		const p = new Pattern(pattern);
 
