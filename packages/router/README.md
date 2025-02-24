@@ -46,7 +46,8 @@ router
 	.get("/", () => new Response("Hello world"))
 	.post("/api/:slug", (c) => {
 		// context
-		c.req; // the web Request
+		c.req; // Request
+		c.res; // Response returned from or set in previous handler | null
 		c.url; // new URL(req.url)
 		c.params; // type safe params: "/api/123" => { slug: "123" }
 		c.route; // the matched Route

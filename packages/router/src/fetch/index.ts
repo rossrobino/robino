@@ -13,17 +13,9 @@ type ExtractParams<Pattern extends string = string> =
 				? { "*": string }
 				: {};
 
-export type ResponseHandler<P extends Params = any> = (
-	context: Context<P>,
-) => MaybePromise<Response>;
-
-export type MiddlewareHandler<P extends Params = any> = (
+export type Handler<P extends Params = any> = (
 	context: Context<P>,
 ) => MaybePromise<Response | void>;
-
-export type Handler<P extends Params = any> =
-	| ResponseHandler<P>
-	| MiddlewareHandler<P>;
 
 export type NotFoundHandler = (
 	context?: Partial<Pick<Context, "req" | "url">>,
@@ -36,13 +28,20 @@ export type ErrorHandler = (
 ) => MaybePromise<Response>;
 
 type Context<P extends Params = ExtractParams<string>> = {
-	/** [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/API/Request) */
+	/** [Request reference](https://developer.mozilla.org/en-US/docs/Web/API/Request) */
 	req: Request;
+
+	/**
+	 * Defined if returned from a previous handler, otherwise `null`
+	 *
+	 * [Response reference](https://developer.mozilla.org/en-US/docs/Web/API/Response)
+	 */
+	res: Response | null;
 
 	/**
 	 * URL created from `req.url`
 	 *
-	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/API/URL)
+	 * [URL reference](https://developer.mozilla.org/en-US/docs/Web/API/URL)
 	 */
 	url: URL;
 
@@ -200,20 +199,24 @@ export class FetchRouter {
 		try {
 			const url = new URL(req.url);
 
-			const result = this.#trieMap.get(req.method)?.find(url.pathname);
+			const match = this.#trieMap.get(req.method)?.find(url.pathname);
 
-			if (result) {
+			if (match) {
 				const context: Context = {
 					req,
+					res: null,
 					url,
-					params: result.params,
-					route: result.route,
+					params: match.params,
+					route: match.route,
 				};
 
-				for (const handler of result.route.store) {
-					const response = await handler(context);
-					if (response instanceof Response) return response;
+				for (const handler of match.route.store) {
+					const result = await handler(context);
+
+					if (result instanceof Response) context.res = result;
 				}
+
+				if (context.res) return context.res;
 			}
 
 			if (this.#trailingSlash) {
