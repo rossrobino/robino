@@ -1,9 +1,12 @@
 class Segments {
+	pattern: string;
 	/** pattern segments */
 	segments: string[];
 	index = 0;
 
 	constructor(pattern: string, param = false) {
+		this.pattern = pattern;
+
 		if (param) {
 			this.segments = pattern.match(/:.+?(?=\/|$)/g) ?? []; // match the params
 		} else {
