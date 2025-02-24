@@ -13,6 +13,27 @@ class ParamNode<T> {
 	}
 }
 
+class Pattern {
+	segments: { static: string[]; param: string[] };
+
+	wildcard: boolean;
+
+	constructor(pattern: string) {
+		this.wildcard = pattern.endsWith("*");
+		if (this.wildcard) pattern = pattern.slice(0, -1);
+
+		const staticSegments = pattern.split(/:.+?(?=\/|$)/); // split on the params
+		// if the last segment is a param without a trailing slash
+		// then there will be an empty string, remove
+		if (staticSegments.at(-1) === "") staticSegments.pop();
+
+		this.segments = {
+			static: staticSegments,
+			param: pattern.match(/:.+?(?=\/|$)/g) ?? [], // match the params
+		};
+	}
+}
+
 export class Node<T> {
 	/** unique segment of the pattern trie */
 	segment: string;
@@ -105,15 +126,7 @@ export class Node<T> {
 	}
 
 	add(pattern: string, store: T) {
-		const endsWithWildcard = pattern.endsWith("*");
-		if (endsWithWildcard) pattern = pattern.slice(0, -1);
-
-		const staticSegments = pattern.split(/:.+?(?=\/|$)/); // split on the params
-		const paramSegments = pattern.match(/:.+?(?=\/|$)/g) ?? []; // match the params
-
-		// if the last segment is a param without a trailing slash
-		// then there will be an empty string, remove
-		if (staticSegments.at(-1) === "") staticSegments.pop();
+		const p = new Pattern(pattern);
 
 		let current: Node<T> = this;
 		let paramIndex = 0;
@@ -121,10 +134,10 @@ export class Node<T> {
 		// for each static segment, if there are no static segments, this is skipped
 		for (
 			let staticIndex = 0;
-			staticIndex < staticSegments.length;
+			staticIndex < p.segments.static.length;
 			staticIndex++
 		) {
-			let staticSegment = staticSegments[staticIndex]!;
+			let staticSegment = p.segments.static[staticIndex]!;
 
 			if (staticIndex > 0) {
 				// there is only a second static segment (could just be "/")
@@ -132,16 +145,17 @@ export class Node<T> {
 
 				const paramChild = current.setParamChild(
 					// param without the ":" (only increment when this is reached)
-					paramSegments[paramIndex++]!.slice(1),
+					p.segments.param[paramIndex++]!.slice(1),
 				);
 
-				if (!paramChild.staticChild) {
-					// create node with the next static segment
+				if (paramChild.staticChild) {
+					// there's already a static child - need to check if it's a match
+					current = paramChild.staticChild;
+				} else {
+					// new - create node with the next static segment
 					current = paramChild.staticChild = new Node<T>(staticSegment);
-					continue;
+					continue; // skip the rest since it's new
 				}
-
-				current = paramChild.staticChild;
 			}
 
 			for (let charIndex = 0; ; ) {
@@ -198,11 +212,11 @@ export class Node<T> {
 			}
 		}
 
-		if (paramIndex < paramSegments.length) {
+		if (paramIndex < p.segments.param.length) {
 			// final segment is a param
-			current.setParamChild(paramSegments[paramIndex]!.slice(1)).store ??=
+			current.setParamChild(p.segments.param[paramIndex]!.slice(1)).store ??=
 				store;
-		} else if (endsWithWildcard) {
+		} else if (p.wildcard) {
 			// final segment is a wildcard
 			current.wildcardStore ??= store;
 		} else {

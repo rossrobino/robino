@@ -11,6 +11,10 @@ const trie = new Node<string>()
 		"/static/:param/:another/static/static",
 		"/static/:param/:another/static/static",
 	)
+	.add(
+		"/static/:param/:another/static/different",
+		"/static/:param/:another/static/different",
+	)
 	.add("/static/fork", "/static/fork")
 	.add("/static/fork/:param", "/static/fork/:param")
 	.add("/wild/*", "/wild/*");
@@ -48,6 +52,12 @@ test("/static/:param/:another/static", () => {
 test("/static/:param/:another/static/static", () => {
 	const result = trie.find("/static/param/another/static/static");
 	expect(result?.store).toBe("/static/:param/:another/static/static");
+	expect(result?.params).toStrictEqual({ param: "param", another: "another" });
+});
+
+test("/static/:param/:another/static/different", () => {
+	const result = trie.find("/static/param/another/static/different");
+	expect(result?.store).toBe("/static/:param/:another/static/different");
 	expect(result?.params).toStrictEqual({ param: "param", another: "another" });
 });
 
