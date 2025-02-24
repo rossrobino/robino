@@ -64,6 +64,7 @@ export class Node<T> {
 	/**
 	 * @param segment pattern segment
 	 * @param staticChildren static children nodes to add to staticMap
+	 * @param clone node to clone during construction
 	 */
 	constructor(segment = "/", staticChildren: Node<T>[] = [], clone?: Node<T>) {
 		this.segment = segment;
