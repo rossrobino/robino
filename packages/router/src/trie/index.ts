@@ -38,17 +38,9 @@ export class Node<T> {
 	/**
 	 * @param segment pattern segment
 	 * @param staticChildren static children nodes to add to staticMap
-	 * @param clone node to clone during construction
 	 */
-	constructor(segment = "/", staticChildren?: Node<T>[], clone?: Node<T>) {
+	constructor(segment = "/", staticChildren?: Node<T>[]) {
 		this.segment = segment;
-
-		if (clone) {
-			this.staticMap = clone.staticMap;
-			this.paramChild = clone.paramChild;
-			this.route = clone.route;
-			this.wildcardRoute = clone.wildcardRoute;
-		}
 
 		if (staticChildren?.length) {
 			this.staticMap ??= new Map();
@@ -64,7 +56,14 @@ export class Node<T> {
 	 * @returns a clone of the Node with a new segment
 	 */
 	clone(segment: string) {
-		return new Node(segment, [], this);
+		const clone = new Node(segment);
+
+		clone.staticMap = this.staticMap;
+		clone.paramChild = this.paramChild;
+		clone.route = this.route;
+		clone.wildcardRoute = this.wildcardRoute;
+
+		return clone;
 	}
 
 	/**
