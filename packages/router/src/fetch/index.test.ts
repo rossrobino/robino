@@ -8,12 +8,19 @@ const get = (pathname: string) =>
 
 test("context", () => {
 	router
-		.get("/", (c) => {
-			expect(c.url).toBeInstanceOf(URL);
-			expect(c.req).toBeInstanceOf(Request);
+		.get(
+			"/",
+			(c) => {
+				c.req.headers.set("hello", "world");
+			},
+			(c) => {
+				expect(c.url).toBeInstanceOf(URL);
+				expect(c.req).toBeInstanceOf(Request);
+				expect(c.req.headers.get("hello")).toBe("world");
 
-			return new Response("hello world");
-		})
+				return new Response("hello world");
+			},
+		)
 		.get("/api/:id/", ({ params }) => {
 			expect(params.id).toBeDefined();
 

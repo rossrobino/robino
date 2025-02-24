@@ -1,5 +1,7 @@
 import { Node, Route } from "../trie/index.js";
 
+type MaybePromise<T> = T | Promise<T>;
+
 type Params = Record<string, string>;
 
 type ExtractParams<Pattern extends string = string> =
@@ -11,19 +13,27 @@ type ExtractParams<Pattern extends string = string> =
 				? { "*": string }
 				: {};
 
-export type Handler<P extends Params = any> = (
+export type ResponseHandler<P extends Params = any> = (
 	context: Context<P>,
-) => Response | Promise<Response>;
+) => MaybePromise<Response>;
+
+export type MiddlewareHandler<P extends Params = any> = (
+	context: Context<P>,
+) => MaybePromise<Response | void>;
+
+export type Handler<P extends Params = any> =
+	| ResponseHandler<P>
+	| MiddlewareHandler<P>;
 
 export type NotFoundHandler = (
 	context?: Partial<Pick<Context, "req" | "url">>,
-) => Response | Promise<Response>;
+) => MaybePromise<Response>;
 
 export type ErrorHandler = (
 	context: Partial<Pick<Context, "req">> & {
 		error: Error;
 	},
-) => Response | Promise<Response>;
+) => MaybePromise<Response>;
 
 type Context<P extends Params = ExtractParams<string>> = {
 	/** [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/API/Request) */
@@ -47,7 +57,7 @@ type Context<P extends Params = ExtractParams<string>> = {
 	params: P;
 
 	/** The matched route instance */
-	// route: Route;
+	route: Route<Handler[]>;
 };
 
 type Method =
@@ -65,7 +75,7 @@ type Method =
 type TrailingSlash = "always" | "never" | null;
 
 export class FetchRouter {
-	#trieMap = new Map<Method, Node<Handler>>();
+	#trieMap = new Map<Method, Node<Handler[]>>();
 
 	#trailingSlash: TrailingSlash;
 
@@ -136,21 +146,21 @@ export class FetchRouter {
 	/**
 	 * @param method [HTTP method](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods)
 	 * @param pattern route pattern to match
-	 * @param handler request handler
+	 * @param handlers request handlers
 	 * @returns the router instance
 	 */
 	on<Pattern extends string>(
 		method: Method,
 		pattern: Pattern,
-		handler: Handler<ExtractParams<Pattern>>,
+		...handlers: Handler<ExtractParams<Pattern>>[]
 	) {
-		const route = new Route(pattern, handler);
+		const route = new Route(pattern, handlers);
 		const existing = this.#trieMap.get(method);
 
 		if (existing) {
 			existing.add(route);
 		} else {
-			const trie = new Node<Handler>();
+			const trie = new Node<Handler[]>();
 			this.#trieMap.set(method, trie);
 			trie.add(route);
 		}
@@ -160,26 +170,26 @@ export class FetchRouter {
 
 	/**
 	 * @param pattern route pattern to match
-	 * @param handler request handler
+	 * @param handlers request handlers
 	 * @returns the router instance
 	 */
 	get<Pattern extends string>(
 		pattern: Pattern,
-		handler: Handler<ExtractParams<Pattern>>,
+		...handlers: Handler<ExtractParams<Pattern>>[]
 	) {
-		return this.on("GET", pattern, handler);
+		return this.on("GET", pattern, ...handlers);
 	}
 
 	/**
 	 * @param pattern route pattern to match
-	 * @param handler request handler
+	 * @param handlers request handlers
 	 * @returns the router instance
 	 */
 	post<Pattern extends string>(
 		pattern: Pattern,
-		handler: Handler<ExtractParams<Pattern>>,
+		...handlers: Handler<ExtractParams<Pattern>>[]
 	) {
-		return this.on("POST", pattern, handler);
+		return this.on("POST", pattern, ...handlers);
 	}
 
 	/**
@@ -193,7 +203,17 @@ export class FetchRouter {
 			const result = this.#trieMap.get(req.method)?.find(url.pathname);
 
 			if (result) {
-				return result.route.store({ req, url, params: result.params });
+				const context: Context = {
+					req,
+					url,
+					params: result.params,
+					route: result.route,
+				};
+
+				for (const handler of result.route.store) {
+					const response = await handler(context);
+					if (response instanceof Response) return response;
+				}
 			}
 
 			if (this.#trailingSlash) {
