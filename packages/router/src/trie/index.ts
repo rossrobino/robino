@@ -70,8 +70,8 @@ export class Node<T> {
 		this.segment = segment;
 
 		if (clone) {
-			this.paramChild = clone.paramChild;
 			this.staticMap = clone.staticMap;
+			this.paramChild = clone.paramChild;
 			this.route = clone.route;
 			this.wildcardRoute = clone.wildcardRoute;
 		}
