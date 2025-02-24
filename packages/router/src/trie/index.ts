@@ -1,21 +1,14 @@
 class Segments {
-	/** pattern segments */
-	segments: string[];
+	static: string[];
+	param: string[];
 
-	/** current index  */
-	index = 0;
+	constructor(pattern: string) {
+		this.param = pattern.match(/:.+?(?=\/|$)/g) ?? []; // match the params
+		this.static = pattern.split(/:.+?(?=\/|$)/); // split on the params
 
-	constructor(pattern: string, param = false) {
-		if (param) {
-			this.segments = pattern.match(/:.+?(?=\/|$)/g) ?? []; // match the params
-		} else {
-			// static
-			this.segments = pattern.split(/:.+?(?=\/|$)/); // split on the params
-
-			// if the last segment is a param without a trailing slash
-			// then there will be an empty string, remove
-			if (this.segments.at(-1) === "") this.segments.pop();
-		}
+		// if the last segment is a param without a trailing slash
+		// then there will be an empty string, remove
+		if (this.static.at(-1) === "") this.static.pop();
 	}
 }
 
@@ -26,12 +19,10 @@ export class Route<T> {
 	/** value store returned when route is found */
 	store: T;
 
-	/** pattern ends with a wildcard */
+	/** ends with wildcard */
 	wildcard: boolean;
 
-	static: Segments;
-
-	param: Segments;
+	segments: Segments;
 
 	constructor(pattern: string, store: T) {
 		this.pattern = pattern;
@@ -40,8 +31,7 @@ export class Route<T> {
 		this.wildcard = pattern.endsWith("*");
 		if (this.wildcard) pattern = pattern.slice(0, -1);
 
-		this.static = new Segments(pattern);
-		this.param = new Segments(pattern, true);
+		this.segments = new Segments(pattern);
 	}
 }
 
@@ -164,21 +154,22 @@ export class Node<T> {
 	add(route: Route<T>) {
 		let current: Node<T> = this;
 
+		let paramIndex = 0;
 		// for each static segment, if there are no static segments, this is skipped
 		for (
-			;
-			route.static.index < route.static.segments.length;
-			route.static.index++
+			let staticIndex = 0;
+			staticIndex < route.segments.static.length;
+			staticIndex++
 		) {
-			let staticSegment = route.static.segments[route.static.index]!;
+			let staticSegment = route.segments.static[staticIndex]!;
 
-			if (route.static.index > 0) {
+			if (staticIndex > 0) {
 				// there is only a second static segment (could just be "/")
 				// if there is a param to split them, so there must be a param here
 
 				const paramChild = current.setParamChild(
 					// param without the ":" (only increment when this is reached)
-					route.param.segments[route.param.index++]!.slice(1),
+					route.segments.param[paramIndex++]!.slice(1),
 				);
 
 				if (paramChild.staticChild) {
@@ -245,10 +236,10 @@ export class Node<T> {
 			}
 		}
 
-		if (route.param.index < route.param.segments.length) {
+		if (paramIndex < route.segments.param.length) {
 			// final segment is a param
 			current.setParamChild(
-				route.param.segments[route.param.index]!.slice(1),
+				route.segments.param[paramIndex]!.slice(1),
 			).route ??= route;
 		} else if (route.wildcard) {
 			// final segment is a wildcard
