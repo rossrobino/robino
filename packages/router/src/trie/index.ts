@@ -1,12 +1,9 @@
 class Segments {
-	pattern: string;
 	/** pattern segments */
 	segments: string[];
 	index = 0;
 
 	constructor(pattern: string, param = false) {
-		this.pattern = pattern;
-
 		if (param) {
 			this.segments = pattern.match(/:.+?(?=\/|$)/g) ?? []; // match the params
 		} else {
@@ -21,6 +18,8 @@ class Segments {
 }
 
 export class Route<T> {
+	/** the route pattern */
+	pattern: string;
 	/** value store returned when route is found */
 	store: T;
 	/** pattern ends with a wildcard */
@@ -29,6 +28,7 @@ export class Route<T> {
 	param: Segments;
 
 	constructor(pattern: string, store: T) {
+		this.pattern = pattern;
 		this.store = store;
 
 		this.wildcard = pattern.endsWith("*");
