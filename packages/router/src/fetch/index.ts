@@ -142,6 +142,12 @@ export class FetchRouter extends Node<Handler> {
 		pattern: Pattern,
 		handler: Handler<ExtractParams<Pattern>>,
 	) {
+		if (pattern[0] !== "/") {
+			throw new Error(
+				`Invalid route: ${pattern}\nRoute pattern must begin with "/"`,
+			);
+		}
+
 		this.add("/" + method + pattern, handler);
 
 		return this;

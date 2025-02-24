@@ -101,12 +101,6 @@ export class Node<T> {
 	}
 
 	add(pattern: string, store: T) {
-		if (pattern[0] !== "/") {
-			throw new Error(
-				`Invalid route: ${pattern}\nRoute pattern must begin with "/"`,
-			);
-		}
-
 		const endsWithWildcard = pattern.endsWith("*");
 		if (endsWithWildcard) pattern = pattern.slice(0, -1);
 
