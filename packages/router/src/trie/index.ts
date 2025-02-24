@@ -44,6 +44,10 @@ export class Node<T> {
 		}
 	}
 
+	/**
+	 * @param segment new segment
+	 * @returns a clone of the Node with a new segment
+	 */
 	clone(segment: string): Node<T> {
 		return {
 			...this,
@@ -56,9 +60,9 @@ export class Node<T> {
 	 * and "api/movies" is added,
 	 * the node will need to be reassigned to "api/" and create two static children
 	 *
-	 * @param charIndex
-	 * @param segment
-	 * @returns the new child produced from the staticSegment
+	 * @param charIndex	where to split the node
+	 * @param segment new segment to use
+	 * @returns the new child produced from the new segment
 	 */
 	forkStatic(charIndex: number, segment: string) {
 		const existingChild = this.clone(this.segment.slice(charIndex)); // "posts/"
@@ -107,11 +111,9 @@ export class Node<T> {
 		const staticSegments = pattern.split(/:.+?(?=\/|$)/); // split on the params
 		const paramSegments = pattern.match(/:.+?(?=\/|$)/g) ?? []; // match the params
 
-		if (staticSegments.at(-1) === "") {
-			// if the last segment is a param then there will
-			// be an empty string, remove
-			staticSegments.pop();
-		}
+		// if the last segment is a param then there will
+		// be an empty string, remove
+		if (staticSegments.at(-1) === "") staticSegments.pop();
 
 		let node: Node<T> = this;
 		let paramIndex = 0;
@@ -128,10 +130,10 @@ export class Node<T> {
 				// there is only a second static segment (could just be "/")
 				// if there is a param to split them, so there must be a param here
 
-				// param without the ":" (only increment when this is reached)
-				const name = paramSegments[paramIndex++]!.slice(1);
-
-				const paramChild = node.setParamChild(name);
+				const paramChild = node.setParamChild(
+					// param without the ":" (only increment when this is reached)
+					paramSegments[paramIndex++]!.slice(1),
+				);
 
 				if (!paramChild.staticChild) {
 					// create node with the next static segment
@@ -195,23 +197,14 @@ export class Node<T> {
 
 		if (paramIndex < paramSegments.length) {
 			// final segment is a param
-			const name = paramSegments[paramIndex++]!.slice(1);
-			const paramChild = node.setParamChild(name);
-
-			paramChild.store ??= store;
-
-			return this;
-		}
-
-		if (endsWithWildcard) {
+			node.setParamChild(paramSegments[paramIndex]!.slice(1)).store ??= store;
+		} else if (endsWithWildcard) {
 			// final segment is a wildcard
 			node.wildcardStore ??= store;
-
-			return this;
+		} else {
+			// final segment is static
+			node.store ??= store;
 		}
-
-		// final segment is static
-		node.store ??= store;
 
 		return this;
 	}
