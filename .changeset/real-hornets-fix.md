@@ -2,4 +2,4 @@
 "@robino/router": minor
 ---
 
-trie routing
+trie router

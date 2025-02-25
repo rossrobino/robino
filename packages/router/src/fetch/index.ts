@@ -13,7 +13,7 @@ type ExtractParams<Pattern extends string = string> =
 				? { "*": string }
 				: {};
 
-export type Handler<P extends Params = any, S = undefined> = (
+export type Handler<P extends Params = any, S = null> = (
 	context: Context<P, S>,
 ) => MaybePromise<Response | void>;
 
@@ -27,7 +27,9 @@ export type ErrorHandler = (
 	},
 ) => MaybePromise<Response>;
 
-type Context<P extends Params = ExtractParams<string>, S = undefined> = {
+type StateContext = Omit<Context<Record<string, string>>, "state">;
+
+type Context<P extends Params = ExtractParams<string>, S = null> = {
 	/** [Request reference](https://developer.mozilla.org/en-US/docs/Web/API/Request) */
 	req: Request;
 
@@ -55,9 +57,14 @@ type Context<P extends Params = ExtractParams<string>, S = undefined> = {
 	 */
 	params: P;
 
-	/** The matched route instance */
+	/** matched route instance */
 	route: Route<Handler<any, S>[]>;
 
+	/**
+	 * State returned from `config.state` during each request
+	 *
+	 * @default null
+	 */
 	state: S;
 };
 
@@ -75,10 +82,10 @@ type Method =
 
 type TrailingSlash = "always" | "never" | null;
 
-export class FetchRouter<S = undefined> {
-	#trieMap = new Map<Method, Node<Handler<any, S>[]>>();
+export class Router<S = null> {
+	#trieMap = new Map<Method, Node<Handler<any, any>[]>>();
 
-	#state: any;
+	#state?: (context: StateContext) => S;
 
 	#trailingSlash: TrailingSlash;
 
@@ -128,7 +135,11 @@ export class FetchRouter<S = undefined> {
 			 */
 			error?: ErrorHandler;
 
-			state?: S;
+			/**
+			 * @param context request context
+			 * @returns any state to access in handlers
+			 */
+			state?: (context: StateContext) => S;
 		} = {},
 	) {
 		const {
@@ -210,14 +221,16 @@ export class FetchRouter<S = undefined> {
 			const match = this.#trieMap.get(req.method)?.find(url.pathname);
 
 			if (match) {
-				const context: Context<any, S> = {
+				const context: Context<any, any> = {
 					req,
 					res: null,
 					url,
 					params: match.params,
 					route: match.route,
-					state: this.#state,
+					state: null,
 				};
+
+				if (this.#state) context.state = this.#state(context);
 
 				for (const handler of match.route.store) {
 					const result = await handler(context);

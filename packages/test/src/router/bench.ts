@@ -1,11 +1,11 @@
-import { FetchRouter } from "@robino/router";
+import { Router } from "@robino/router";
 import { Hono } from "hono";
 import { run, bench, boxplot } from "mitata";
 import { Trouter } from "trouter";
 
 const r = async (_c: any) => new Response();
 
-const router = new FetchRouter({
+const router = new Router({
 	notFound: (c) => {
 		throw new Error(c?.url?.pathname + " not found");
 	},
@@ -87,7 +87,7 @@ trouter
 
 boxplot(() => {
 	bench("init", () => {
-		new FetchRouter();
+		new Router();
 	});
 
 	bench("hono init", () => {
@@ -101,7 +101,7 @@ boxplot(() => {
 
 boxplot(() => {
 	bench("init and add routes", () => {
-		new FetchRouter()
+		new Router()
 			.get("/", r)
 			.get("/foo", r)
 			.get("/foo/bar", r)
@@ -176,7 +176,7 @@ boxplot(() => {
 	});
 });
 
-const benchReq = (pathname: string, router: Hono | FetchRouter) => {
+const benchReq = (pathname: string, router: Hono | Router) => {
 	bench(`${"delete" in router ? "hono" : ""} ${pathname}`, async () => {
 		await router.fetch(new Request(`http://localhost:5173${pathname}`));
 	}).gc("inner");

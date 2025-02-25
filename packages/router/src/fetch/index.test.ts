@@ -1,9 +1,11 @@
-import { FetchRouter } from "./index.js";
+import { Router } from "./index.js";
 import { expect, test } from "vitest";
 
-const router = new FetchRouter({
+const router = new Router({
 	trailingSlash: "always",
-	state: { foo: "bar" },
+	state: (c) => {
+		return { foo: "bar" };
+	},
 });
 
 const get = (pathname: string) =>
@@ -128,7 +130,7 @@ test("trailing slash - always", async () => {
 });
 
 test("trailing slash - never", async () => {
-	const nev = new FetchRouter();
+	const nev = new Router();
 	nev.get("/test", () => new Response("test"));
 
 	const res = await nev.fetch(new Request("http://localhost:5173/test/"));
@@ -138,7 +140,7 @@ test("trailing slash - never", async () => {
 });
 
 test("trailing slash - null", async () => {
-	const nul = new FetchRouter({ trailingSlash: null });
+	const nul = new Router({ trailingSlash: null });
 	nul.get("/nope", () => new Response("nope"));
 	nul.get("/yup/", () => new Response("yup"));
 
