@@ -1,4 +1,4 @@
-import { MarkdownProcessor } from "./index.js";
+import { Processor } from "./index.js";
 import fs from "node:fs/promises";
 import path from "node:path";
 import langHtml from "shiki/langs/html.mjs";
@@ -8,7 +8,7 @@ import langTsx from "shiki/langs/tsx.mjs";
 import { expect, test } from "vitest";
 import { z } from "zod";
 
-const processor = new MarkdownProcessor({
+const processor = new Processor({
 	highlighter: {
 		langs: [langHtml, langMd, langTsx, langLua],
 		langAlias: {
@@ -44,6 +44,10 @@ date: 10, 23, 23
 # Heading 1
 
 ## Heading 2
+
+| Header 1 | Header 2 |
+|----------|----------|
+| Cell 1   | Cell 2   |
 
 Paragraph
 
