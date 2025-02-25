@@ -1,5 +1,11 @@
 # @robino/html
 
+## 0.6.1
+
+### Patch Changes
+
+- 66dd9b6: add git links to package.json
+
 ## 0.6.0
 
 ### Minor Changes

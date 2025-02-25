@@ -1,5 +1,28 @@
 # @robino/md
 
+## 3.0.0
+
+### Major Changes
+
+- 0613189: Breaking changes
+
+  - Renamed
+    - `MarkdownProcessor` => `Processor`
+    - type `MdHeading` => `Heading`
+    - type `MdData` => `Result`
+    - type `MarkdownProcessorOptions` => `Options`
+  - Adds `<div style="overflow-x: auto;">` around each table element to prevent overflow
+  - Skips highlighting if there are no `highlighter.langs` provided
+
+  Patch changes
+
+  - improve `getHeadings` performance
+
+### Patch Changes
+
+- 66dd9b6: add git links to package.json
+- 0613189: update dependencies
+
 ## 2.0.0
 
 ### Major Changes
