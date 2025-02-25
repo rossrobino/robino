@@ -4,7 +4,7 @@
 npm i @robino/router
 ```
 
-A [lightweight](https://bundlephobia.com/package/@robino/router) trie data structure and HTTP router built on the Fetch API.
+A [lightweight](https://bundlephobia.com/package/@robino/router) [radix trie](https://en.wikipedia.org/wiki/Radix_tree) data structure and HTTP router built on the Fetch API.
 
 This project is forked and adapted from [memoirist](https://github.com/SaltyAom/memoirist) and [@medley/router](https://github.com/medleyjs/router).
 
@@ -54,9 +54,23 @@ const router = new Router({
 });
 ```
 
-### Add routes
+### Context
 
-- `Context` contains context for the current route
+`Context` contains context for the current route.
+
+```ts
+router.get("/api/:id", (c) => {
+	c.req; // Request
+	c.res; // Response returned from or set in previous handler | null
+	c.url; // new URL(req.url)
+	c.params; // type safe params: "/api/123" => { id: "123" }
+	c.route; // Matched Route
+	c.state; // whatever is returned from `config.state`
+});
+```
+
+### Routing
+
 - Supports type safe `/:params` within the route pattern
 - Methods return an instance of the router so they can be chained if you like
 - If a `Response` is returned from a handler, `Context.res` is set to the response - the final `Context.res` is returned
@@ -64,14 +78,8 @@ const router = new Router({
 ```ts
 router
 	.get("/", () => new Response("Hello world"))
-	.post("/api/:slug", (c) => {
-		// context
-		c.req; // Request
-		c.res; // Response returned from or set in previous handler | null
-		c.url; // new URL(req.url)
-		c.params; // type safe params: "/api/123" => { slug: "123" }
-		c.route; // the matched Route
-		c.state; // whatever is returned from `config.state` ex: "foo"
+	.post("/api/:id", (c) => {
+		// matches "/api/123"
 	})
 	// other http methods
 	.on("METHOD", "/pattern", () => new Response("handler"))
@@ -86,6 +94,10 @@ router
 			res.headers.set("post", "middleware");
 		},
 	);
+	.get("/wild/*", () => {
+		// add a star to match all remaining segments in the route
+		// matches "/wild/anything/..."
+	})
 ```
 
 ### fetch
