@@ -7,7 +7,7 @@ const r = async (_c: any) => new Response();
 
 const router = new Router({
 	notFound: (c) => {
-		throw new Error(c?.url?.pathname + " not found");
+		throw new Error(c.url.pathname + " not found");
 	},
 	trailingSlash: null,
 });

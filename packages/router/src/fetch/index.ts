@@ -18,11 +18,11 @@ export type Handler<P extends Params = any, S = null> = (
 ) => MaybePromise<Response | void>;
 
 export type NotFoundHandler = (
-	context?: Partial<Pick<Context, "req" | "url">>,
+	context: Pick<Context, "req" | "url">,
 ) => MaybePromise<Response>;
 
 export type ErrorHandler = (
-	context: Partial<Pick<Context, "req">> & {
+	context: Pick<Context, "req"> & {
 		error: Error;
 	},
 ) => MaybePromise<Response>;
