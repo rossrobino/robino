@@ -217,45 +217,48 @@ export class Router<S = null> {
 	async fetch(req: Request): Promise<Response> {
 		try {
 			const url = new URL(req.url);
+			const trie = this.#trieMap.get(req.method);
 
-			const match = this.#trieMap.get(req.method)?.find(url.pathname);
+			if (trie) {
+				const match = trie.find(url.pathname);
 
-			if (match) {
-				const context: Context<any, any> = {
-					req,
-					res: null,
-					url,
-					params: match.params,
-					route: match.route,
-					state: null,
-				};
+				if (match) {
+					const context: Context<any, any> = {
+						req,
+						res: null,
+						url,
+						params: match.params,
+						route: match.route,
+						state: null,
+					};
 
-				if (this.#state) context.state = this.#state(context);
+					if (this.#state) context.state = this.#state(context);
 
-				for (const handler of match.route.store) {
-					const result = await handler(context);
+					for (const handler of match.route.store) {
+						const result = await handler(context);
 
-					if (result instanceof Response) context.res = result;
+						if (result instanceof Response) context.res = result;
+					}
+
+					if (context.res) return context.res;
 				}
 
-				if (context.res) return context.res;
-			}
+				if (this.#trailingSlash) {
+					const last = url.pathname.at(-1);
 
-			if (this.#trailingSlash) {
-				const last = url.pathname.at(-1);
+					if (this.#trailingSlash === "always" && last !== "/") {
+						url.pathname += "/";
+						return Response.redirect(url, 308);
+					}
 
-				if (this.#trailingSlash === "always" && last !== "/") {
-					url.pathname += "/";
-					return Response.redirect(url, 308);
-				}
-
-				if (
-					this.#trailingSlash === "never" &&
-					url.pathname !== "/" &&
-					last === "/"
-				) {
-					url.pathname = url.pathname.slice(0, -1);
-					return Response.redirect(url, 308);
+					if (
+						this.#trailingSlash === "never" &&
+						url.pathname !== "/" &&
+						last === "/"
+					) {
+						url.pathname = url.pathname.slice(0, -1);
+						return Response.redirect(url, 308);
+					}
 				}
 			}
 

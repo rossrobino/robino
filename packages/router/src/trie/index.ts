@@ -242,8 +242,14 @@ export class Node<T> {
 		route: Route<T>;
 		params: Record<string, string>;
 	} | null {
-		// segment does not match current node segment
-		if (pathname.slice(0, this.segment.length) !== this.segment) return null;
+		if (
+			// too short
+			pathname.length < this.segment.length ||
+			// segment does not match current node segment
+			!pathname.startsWith(this.segment)
+		) {
+			return null;
+		}
 
 		if (pathname === this.segment) {
 			// reached the end of the path
@@ -281,19 +287,17 @@ export class Node<T> {
 			// if there is not a slash immediately following this.segment
 			if (slashIndex !== this.segment.length) {
 				// there is a valid parameter
-				if (slashIndex === -1 || slashIndex >= pathname.length) {
+				if (
 					// param is the end of the pathname
-					if (this.paramChild.route) {
-						return {
-							route: this.paramChild.route,
-							params: {
-								[this.paramChild.name]: pathname.slice(
-									this.segment.length,
-									pathname.length,
-								),
-							},
-						};
-					}
+					slashIndex === -1 &&
+					this.paramChild.route
+				) {
+					return {
+						route: this.paramChild.route,
+						params: {
+							[this.paramChild.name]: pathname.slice(this.segment.length),
+						},
+					};
 				} else if (this.paramChild.staticChild) {
 					// there's a static node after the param
 					// this is how there can be multiple params, "/" in between
@@ -318,7 +322,7 @@ export class Node<T> {
 		if (this.wildcardRoute) {
 			return {
 				route: this.wildcardRoute,
-				params: { "*": pathname.slice(this.segment.length, pathname.length) },
+				params: { "*": pathname.slice(this.segment.length) },
 			};
 		}
 
