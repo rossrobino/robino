@@ -1,5 +1,19 @@
 # @robino/html
 
+## 0.6.0
+
+### Minor Changes
+
+- 3c8d8cb: feat: pass an optional custom `ResponseInit` into `Page.toResponse` to override the default status or headers.
+
+  ```ts
+  const page = new Page();
+
+  // ...
+
+  const res = page.toResponse({ status: 404 });
+  ```
+
 ## 0.5.0
 
 ### Minor Changes
