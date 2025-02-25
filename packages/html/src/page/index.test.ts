@@ -14,11 +14,29 @@ describe("toResponse", () => {
 		expect(res).toBeInstanceOf(Response);
 	});
 
+	test("should have default content-type header", () => {
+		expect(res.headers.get("content-type")).toBe("text/html; charset=utf-8");
+	});
+
 	test("verify result", async () => {
 		const html = await res.text();
 		expect(html).toBe(
 			"<!doctype html><html><head>head</head><body>delay body</body></html>",
 		);
+	});
+	test("custom headers", () => {
+		const custom = new Page().toResponse({
+			headers: { "content-type": "application/js" },
+		});
+
+		expect(custom.headers.get("content-type")).toBe("application/js");
+	});
+
+	test("custom status", () => {
+		const custom = new Page().toResponse({ status: 404 });
+
+		expect(custom.headers.get("content-type")).toBe("text/html; charset=utf-8");
+		expect(custom.status).toBe(404);
 	});
 });
 

@@ -175,12 +175,17 @@ export class Page {
 	}
 
 	/**
+	 * @param init [ResponseInit](https://developer.mozilla.org/en-US/docs/Web/API/Response/Response#options),
+	 * defaults to have content-type HTML header
 	 * @returns a `Response` that streams the HTML in order as each `TagInput`  resolves
 	 */
-	toResponse() {
-		return new Response(this.toStream().pipeThrough(new TextEncoderStream()), {
-			headers: { "content-type": "text/html; charset=utf-8" },
-		});
+	toResponse(init: ResponseInit = {}) {
+		init.headers ??= { "content-type": "text/html; charset=utf-8" };
+
+		return new Response(
+			this.toStream().pipeThrough(new TextEncoderStream()),
+			init,
+		);
 	}
 
 	/**
