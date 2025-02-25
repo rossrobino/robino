@@ -1,5 +1,12 @@
 # @robino/router
 
+## 0.1.1
+
+### Patch Changes
+
+- d35a856: clean up/performance improvements
+- 3473566: better notFound and error context types
+
 ## 0.1.0
 
 ### Minor Changes
