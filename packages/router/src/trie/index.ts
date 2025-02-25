@@ -114,7 +114,8 @@ export class Node<T> {
 	setParamChild(name: string) {
 		if (this.paramChild && this.paramChild.name !== name) {
 			throw new Error(
-				`Cannot create parameter "${name}" because a different parameter ("${this.paramChild.name}") already exists in this location.\n\n${this}`,
+				`Cannot create parameter "${name}" because a different parameter ` +
+					`("${this.paramChild.name}") already exists in this location.\n\n${this}`,
 			);
 		}
 
