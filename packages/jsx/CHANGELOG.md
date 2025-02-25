@@ -1,5 +1,13 @@
 # @robino/html
 
+## 0.2.3
+
+### Patch Changes
+
+- 66dd9b6: add git links to package.json
+- Updated dependencies [66dd9b6]
+  - @robino/html@0.6.1
+
 ## 0.2.2
 
 ### Patch Changes

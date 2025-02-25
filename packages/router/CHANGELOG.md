@@ -1,5 +1,11 @@
 # @robino/router
 
+## 0.1.2
+
+### Patch Changes
+
+- 66dd9b6: add git links to package.json
+
 ## 0.1.1
 
 ### Patch Changes

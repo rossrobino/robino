@@ -1,5 +1,12 @@
 # @robino/tsconfig
 
+## 1.0.1
+
+### Patch Changes
+
+- 66dd9b6: add git links to package.json
+- 0613189: update dependencies
+
 ## 1.0.0
 
 ### Major Changes
