@@ -13,7 +13,7 @@ import {
 } from "shiki/core";
 import { createJavaScriptRegexEngine } from "shiki/engine-javascript.mjs";
 
-export interface MdHeading {
+export type MdHeading = {
 	/** The heading's `id` (lowercase name separated by dashes). */
 	id: string;
 
@@ -22,9 +22,9 @@ export interface MdHeading {
 
 	/** The text content of the heading element. */
 	name: string;
-}
+};
 
-export interface MdData<T extends StandardSchemaV1> {
+export type MdData<T extends StandardSchemaV1> = {
 	/** The markdown content, without the frontmatter if it is parsed. */
 	article: string;
 
@@ -36,7 +36,7 @@ export interface MdData<T extends StandardSchemaV1> {
 
 	/** The parsed frontmatter inferred from the passed in schema. */
 	frontmatter: StandardSchemaV1.InferOutput<T>;
-}
+};
 
 export type MarkdownProcessorOptions = {
 	/**
@@ -100,14 +100,12 @@ export class MarkdownProcessor {
 	markdownIt: MarkdownIt;
 
 	constructor(options: MarkdownProcessorOptions = {}) {
-		if (!options.markdownIt) {
-			// default MarkdownIt options
-			options.markdownIt = {
-				typographer: true,
-				linkify: true,
-				html: true,
-			};
-		}
+		// default MarkdownIt options
+		options.markdownIt ??= {
+			typographer: true,
+			linkify: true,
+			html: true,
+		};
 
 		this.markdownIt = MarkdownIt(options.markdownIt);
 
@@ -140,21 +138,17 @@ export class MarkdownProcessor {
 		md: string,
 		frontmatterSchema?: T,
 	): Promise<MdData<T>> {
-		const split = md.split("---");
+		const [, yaml, ...articleSegments] = md.split("---");
+		const processFrontmatter = yaml && frontmatterSchema;
+		const article = processFrontmatter ? articleSegments.join("---") : md;
 
-		const yaml = split.at(1);
-		const shouldProcessFrontmatter = yaml && frontmatterSchema;
-
-		const article = shouldProcessFrontmatter ? split.slice(2).join("---") : md;
-
-		// Process frontmatter based on option
-		const frontmatter = shouldProcessFrontmatter
+		const frontmatter = processFrontmatter
 			? await this.getFrontmatter(yaml, frontmatterSchema)
 			: {};
 
 		const headings = this.getHeadings(article);
 
-		// Render markdown to HTML
+		// render markdown to HTML
 		const html = this.markdownIt.render(article);
 
 		return { article, headings, html, frontmatter };
@@ -162,38 +156,24 @@ export class MarkdownProcessor {
 
 	/** Extracts headings from markdown content, skipping code blocks. */
 	getHeadings(md: string) {
-		const lines = md.split("\n");
-		const headingRegex = /^(#{1,6})\s*(.+)/;
-		const codeFenceRegex = /^```/;
-
-		let inCodeFence = false;
 		const headings: MdHeading[] = [];
-		for (let line of lines) {
-			line = line.trim();
+		// removes content inside code blocks
+		const withoutCodeBlocks = md.replace(/```[\s\S]*?```/g, "");
+		const matches = withoutCodeBlocks.matchAll(/^(#{1,6})\s+(.+)$/gm);
 
-			// Check for code fence
-			if (codeFenceRegex.test(line)) {
-				inCodeFence = !inCodeFence;
-				continue;
-			}
+		for (const match of matches) {
+			const level = match.at(1)?.length;
+			const name = match.at(2)?.trim();
 
-			// Skip headings within code fences
-			if (inCodeFence) continue;
-
-			const match = headingRegex.exec(line);
-			if (match) {
-				const level = match.at(1)?.length;
-				const name = match.at(2);
-
-				if (level && name) {
-					const id = name
-						.trim()
+			if (level && name) {
+				headings.push({
+					id: name
 						.toLowerCase()
-						.replace(/\s+/g, "-")
-						.replace(/[^\w-]+/g, "");
-
-					headings.push({ id, level, name });
-				}
+						.replaceAll(" ", "-")
+						.replace(/[^\w-]+/g, ""),
+					level,
+					name,
+				});
 			}
 		}
 
@@ -205,7 +185,8 @@ export class MarkdownProcessor {
 	 * If frontmatter is invalid, throws an error.
 	 *
 	 * @param yaml the frontmatter
-	 * @param frontmatterSchema
+	 * @param frontmatterSchema schema to validate frontmatter with
+	 * - if no `frontmatterSchema` is provided, return type is `unknown`
 	 * @returns parsed frontmatter object
 	 */
 	async getFrontmatter<T extends StandardSchemaV1>(
