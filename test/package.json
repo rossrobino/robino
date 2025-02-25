@@ -1,6 +1,6 @@
 {
 	"name": "test",
-	"description": "A private package for testing other packages in the robino monorepo",
+	"description": "A private package for testing other packages in the monorepo",
 	"private": true,
 	"type": "module",
 	"scripts": {

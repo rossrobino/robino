@@ -2,10 +2,14 @@
 	"name": "@robino/prettier",
 	"description": "prettier config",
 	"version": "1.0.1",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/rossrobino/robino.git"
+	},
 	"type": "module",
 	"types": "./dist/index.d.ts",
 	"main": "./dist/index.js",
-	"license": "MIT",
 	"files": [
 		"dist",
 		"README.md"

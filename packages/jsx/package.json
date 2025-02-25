@@ -2,6 +2,11 @@
 	"name": "@robino/jsx",
 	"description": "jsx to html import source",
 	"version": "0.2.2",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/rossrobino/robino.git"
+	},
 	"type": "module",
 	"types": "./dist/index.d.ts",
 	"main": "./dist/index.js",
@@ -19,7 +24,6 @@
 			"default": "./dist/jsx-dev-runtime.js"
 		}
 	},
-	"license": "MIT",
 	"files": [
 		"dist",
 		"README.md"

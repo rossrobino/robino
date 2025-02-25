@@ -1,6 +1,11 @@
 {
 	"name": "@robino/router",
 	"description": "HTTP router built on the Fetch API",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/rossrobino/robino.git"
+	},
 	"version": "0.1.1",
 	"type": "module",
 	"types": "./dist/index.d.ts",
@@ -11,7 +16,6 @@
 			"default": "./dist/index.js"
 		}
 	},
-	"license": "MIT",
 	"files": [
 		"dist",
 		"README.md"

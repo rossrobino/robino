@@ -2,6 +2,10 @@
 	"name": "@robino/tsconfig",
 	"description": "tsconfig",
 	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/rossrobino/robino.git"
+	},
 	"version": "1.0.0",
 	"files": [
 		"tsc.json",
