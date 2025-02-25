@@ -24,6 +24,26 @@ trie.add(route);
 const match = trie.find("/hello/world"); // { route, params: { name: "world" } }
 ```
 
+### Prioritization
+
+Given three routes are added in any order,
+
+```ts
+trie.add(new Route("/hello/world", "store"));
+trie.add(new Route("/hello/:name", "store"));
+trie.add(new Route("/hello/*", "store"));
+```
+
+The following pathnames would match the corresponding patterns.
+
+| pathname              | Route.pattern    |
+| --------------------- | ---------------- |
+| `"/hello/world"`      | `"/hello/world"` |
+| `"/hello/john"`       | `"/hello/:name"` |
+| `"/hello/john/smith"` | `"/hello/*"`     |
+
+More specific matches are prioritized. First, the static match is found, then the parametric, and finally the wildcard.
+
 ## Router
 
 Straightforward HTTP routing.
@@ -71,37 +91,15 @@ router.get("/api/:id", (c) => {
 });
 ```
 
-### Routing
+### Examples
 
-#### Prioritization
-
-Given three routes are added in any order,
-
-```ts
-router.get("/hello/world", ...);
-router.get("/hello/:name", ...);
-router.get("/hello/*", ...);
-```
-
-The following pathnames would match the corresponding patterns.
-
-| pathname              | Route.pattern    |
-| --------------------- | ---------------- |
-| `"/hello/world"`      | `"/hello/world"` |
-| `"/hello/john"`       | `"/hello/:name"` |
-| `"/hello/john/smith"` | `"/hello/*"`     |
-
-First, the static match is found, then the parametric, and finally the wildcard.
-
-#### Examples
-
-##### Basic
+#### Basic
 
 ```ts
 router.get("/", () => new Response("Hello world"));
 ```
 
-##### Param
+#### Param
 
 ```ts
 router.post("/api/:id", (c) => {
@@ -110,7 +108,7 @@ router.post("/api/:id", (c) => {
 });
 ```
 
-##### Wildcard
+#### Wildcard
 
 Add an asterisk `*` to match all remaining segments in the route.
 
@@ -120,13 +118,13 @@ router.get("/wild/*", () => {
 });
 ```
 
-##### Other or custom methods
+#### Other or custom methods
 
 ```ts
 router.on("METHOD", "/pattern", () => new Response("handler"));
 ```
 
-##### Multiple handlers or middleware
+#### Multiple handlers or middleware
 
 While not as composable as router that use a `next` hook, the processing of the handlers for each route is very straightforward.
 
