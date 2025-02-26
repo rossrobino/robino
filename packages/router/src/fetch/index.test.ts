@@ -3,7 +3,7 @@ import { expect, test } from "vitest";
 
 const router = new Router({
 	trailingSlash: "always",
-	state: (c) => {
+	start: (c) => {
 		return { foo: "bar" };
 	},
 });
@@ -11,9 +11,9 @@ const router = new Router({
 const get = (pathname: string) =>
 	router.fetch(new Request("http://localhost:5173" + pathname));
 
-const logger = router.create(({ url, req }) => {
-	console.log(req.method, url.pathname);
-});
+const logger = router.create(({ url, req }) =>
+	console.log(req.method, url.pathname),
+);
 
 test("context", () => {
 	router
@@ -24,6 +24,7 @@ test("context", () => {
 				c.state.foo = "baz";
 				c.req.headers.set("hello", "world");
 			},
+			logger,
 			(c) => {
 				expect(c.state.foo).toBe("baz");
 				expect(c.url).toBeInstanceOf(URL);
@@ -43,6 +44,15 @@ test("context", () => {
 
 			return Response.json(params);
 		});
+	router.get(["/multi/:param", "/pattern/:another"], ({ params }) => {
+		if ("param" in params) {
+			expect(params.param).toBeDefined();
+			return new Response("multi");
+		} else {
+			expect(params.another).toBeDefined();
+			return new Response("pattern");
+		}
+	});
 });
 
 test("GET /", async () => {
@@ -85,6 +95,16 @@ test("POST /post/", async () => {
 	const json = await res.json();
 
 	expect(json).toBe("value");
+});
+
+test("GET /multi/param & /pattern/another", async () => {
+	const multi = await get("/multi/param");
+	const mText = await multi.text();
+	expect(mText).toBe("multi");
+
+	const patt = await get("/pattern/another");
+	const pText = await patt.text();
+	expect(pText).toBe("pattern");
 });
 
 test("GET /not-found/", async () => {

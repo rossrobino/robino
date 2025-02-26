@@ -71,8 +71,8 @@ const router = new Router({
 	// add an error handler
 	error: ({ error }) => new Response(error.message, { status: 500 }),
 
-	// state created during each request
-	state: (c) => ({ foo: "bar" }),
+	// run at the start of each request, return state to use in handlers
+	start: (c) => ({ foo: "bar" }),
 });
 ```
 
@@ -87,7 +87,7 @@ router.get("/api/:id", (c) => {
 	c.url; // new URL(req.url)
 	c.params; // type safe params: "/api/123" => { id: "123" }
 	c.route; // Matched Route
-	c.state; // whatever is returned from `config.state`, for example use for an auth helper or a key/value store
+	c.state; // whatever is returned from `config.start`, for example an auth helper or a key/value store
 });
 ```
 
@@ -133,14 +133,22 @@ Add multiple handlers or middleware to a route, they will be processed in order.
 ```ts
 router.get(
 	"/multi",
-	() => {
-		console.log("pre middleware");
-	},
+	() => console.log("pre middleware"),
 	() => new Response("handler"),
 	({ res }) => {
 		res.headers.set("post", "middleware");
 	},
 );
+```
+
+#### Multiple patterns
+
+Apply handlers to multiple patterns at once with type safe parameters.
+
+```ts
+router.get(["/multi/:param", "/pattern/:another"], ({ param }) => {
+	param; // { param: string } | { another: string }
+});
 ```
 
 ### fetch

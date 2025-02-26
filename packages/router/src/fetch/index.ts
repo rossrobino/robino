@@ -13,7 +13,16 @@ type ExtractParams<Pattern extends string = string> =
 				? { "*": string }
 				: {};
 
-export type Handler<P extends Params = any, S = null> = (
+type ExtractMultiParams<Patterns extends string[]> = Patterns extends [
+	infer First extends string,
+	...infer Rest extends string[],
+]
+	? Rest["length"] extends 0
+		? ExtractParams<First>
+		: ExtractParams<First> | ExtractMultiParams<Rest>
+	: never;
+
+export type Handler<P extends Params = Params, S = null> = (
 	context: Context<P, S>,
 ) => MaybePromise<Response | void>;
 
@@ -27,9 +36,9 @@ export type ErrorHandler = (
 	},
 ) => MaybePromise<Response>;
 
-type StateContext = Omit<Context<Record<string, string>>, "state">;
+type Start<S> = (context: Omit<Context, "state">) => S;
 
-type Context<P extends Params = ExtractParams<string>, S = null> = {
+type Context<P extends Params = Params, S = null> = {
 	/** [Request reference](https://developer.mozilla.org/en-US/docs/Web/API/Request) */
 	req: Request;
 
@@ -58,10 +67,10 @@ type Context<P extends Params = ExtractParams<string>, S = null> = {
 	params: P;
 
 	/** matched route instance */
-	route: Route<Handler<any, S>[]>;
+	route: Route<Handler<Params, S>[]>;
 
 	/**
-	 * State returned from `config.state` during each request
+	 * `state` returned from `config.start` during each request
 	 *
 	 * @default null
 	 */
@@ -83,9 +92,9 @@ type Method =
 type TrailingSlash = "always" | "never" | null;
 
 export class Router<S = null> {
-	#trieMap = new Map<Method, Node<Handler<any, any>[]>>();
+	#trieMap = new Map<Method, Node<Handler<Params, S | null>[]>>();
 
-	#state?: (context: StateContext) => S;
+	#start?: Start<S>;
 
 	#trailingSlash: TrailingSlash;
 
@@ -136,10 +145,12 @@ export class Router<S = null> {
 			error?: ErrorHandler;
 
 			/**
+			 * Runs at the start of each request.
+			 *
 			 * @param context request context
 			 * @returns any state to access in handlers
 			 */
-			state?: (context: StateContext) => S;
+			start?: Start<S>;
 		} = {},
 	) {
 		const {
@@ -150,13 +161,13 @@ export class Router<S = null> {
 					status: 404,
 					headers: { "content-type": "text/html" },
 				}),
-			state,
+			start,
 		} = config;
 
 		this.#trailingSlash = trailingSlash;
 		this.error = error;
 		this.notFound = notFound;
-		this.#state = state;
+		this.#start = start;
 
 		this.fetch = this.fetch.bind(this);
 	}
@@ -172,8 +183,8 @@ export class Router<S = null> {
 	}
 
 	/**
-	 * @param method [HTTP method](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods)
-	 * @param pattern route pattern to match
+	 * @param method HTTP method
+	 * @param pattern route pattern
 	 * @param handlers request handlers
 	 * @returns the router instance
 	 */
@@ -181,43 +192,91 @@ export class Router<S = null> {
 		method: Method,
 		pattern: Pattern,
 		...handlers: Handler<ExtractParams<Pattern>, S>[]
+	): this;
+	/**
+	 * @param method HTTP method
+	 * @param patterns array of route patterns
+	 * @param handlers request handlers
+	 * @returns the router instance
+	 */
+	on<Patterns extends string[]>(
+		method: Method,
+		patterns: [...Patterns],
+		...handlers: Handler<ExtractMultiParams<Patterns>, S>[]
+	): this;
+	on<PatternOrPatterns extends string | string[]>(
+		method: Method,
+		pattern: PatternOrPatterns,
+		...handlers: Handler<Params, S>[]
 	) {
-		const route = new Route(pattern, handlers);
-		const existing = this.#trieMap.get(method);
+		let patterns: string[];
+		if (!Array.isArray(pattern)) patterns = [pattern];
+		else patterns = pattern;
 
-		if (existing) {
-			existing.add(route);
-		} else {
-			const trie = new Node<Handler<any, S>[]>();
-			this.#trieMap.set(method, trie);
-			trie.add(route);
+		for (const p of patterns) {
+			const route = new Route(p, handlers);
+			const existing = this.#trieMap.get(method);
+
+			if (existing) {
+				existing.add(route);
+			} else {
+				const trie = new Node<Handler<Params, S>[]>();
+				this.#trieMap.set(method, trie);
+				trie.add(route);
+			}
 		}
 
 		return this;
 	}
 
 	/**
-	 * @param pattern route pattern to match
+	 * @param pattern route pattern
 	 * @param handlers request handlers
 	 * @returns the router instance
 	 */
 	get<Pattern extends string>(
 		pattern: Pattern,
 		...handlers: Handler<ExtractParams<Pattern>, S>[]
+	): this;
+	/**
+	 * @param patterns array of route patterns
+	 * @param handlers request handlers
+	 * @returns the router instance
+	 */
+	get<Patterns extends string[]>(
+		patterns: [...Patterns],
+		...handlers: Handler<ExtractMultiParams<Patterns>, S>[]
+	): this;
+	get<PatternOrPatterns extends string | string[]>(
+		patternOrPatterns: PatternOrPatterns,
+		...handlers: Handler<Params, S>[]
 	) {
-		return this.on("GET", pattern, ...handlers);
+		return this.on("GET", patternOrPatterns as string, ...handlers);
 	}
 
 	/**
-	 * @param pattern route pattern to match
+	 * @param pattern route pattern
 	 * @param handlers request handlers
 	 * @returns the router instance
 	 */
 	post<Pattern extends string>(
 		pattern: Pattern,
 		...handlers: Handler<ExtractParams<Pattern>, S>[]
+	): this;
+	/**
+	 * @param patterns array of route patterns
+	 * @param handlers request handlers
+	 * @returns the router instance
+	 */
+	post<Patterns extends string[]>(
+		patterns: [...Patterns],
+		...handlers: Handler<ExtractMultiParams<Patterns>, S>[]
+	): this;
+	post<PatternOrPatterns extends string | string[]>(
+		patternOrPatterns: PatternOrPatterns,
+		...handlers: Handler<Params, S>[]
 	) {
-		return this.on("POST", pattern, ...handlers);
+		return this.on("POST", patternOrPatterns as string, ...handlers);
 	}
 
 	/**
@@ -233,7 +292,7 @@ export class Router<S = null> {
 				const match = trie.find(url.pathname);
 
 				if (match) {
-					const context: Context<any, any> = {
+					const context: Context<Params, S | null> = {
 						req,
 						res: null,
 						url,
@@ -242,7 +301,7 @@ export class Router<S = null> {
 						state: null,
 					};
 
-					if (this.#state) context.state = this.#state(context);
+					if (this.#start) context.state = this.#start(context);
 
 					for (const handler of match.route.store) {
 						const result = await handler(context);
