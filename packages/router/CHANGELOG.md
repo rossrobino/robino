@@ -1,5 +1,20 @@
 # @robino/router
 
+## 0.2.0
+
+### Minor Changes
+
+- bc8055b: feat: add `Router.create` - create typed handler helper function
+- 2b7296b: feat: apply handlers to multiple patterns at once with type safe parameters.
+
+  ```ts
+  router.get(["/multi/:param", "/pattern/:another"], ({ param }) => {
+  	param; // { param: string } | { another: string }
+  });
+  ```
+
+- 5eb28ce: breaking: rename config.state to config.start
+
 ## 0.1.2
 
 ### Patch Changes
