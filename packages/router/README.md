@@ -4,13 +4,16 @@
 npm i @robino/router
 ```
 
-A [lightweight](https://bundlephobia.com/package/@robino/router) radix trie [data structure](https://en.wikipedia.org/wiki/Radix_tree) and HTTP router built on the Fetch API.
+A [lightweight](https://bundlephobia.com/package/@robino/router) radix [trie](https://en.wikipedia.org/wiki/Radix_tree) routing library.
+
+- [Trie](#trie) data structure
+- HTTP [router](#router) built on the Fetch API.
 
 This project is forked and adapted from [memoirist](https://github.com/SaltyAom/memoirist) and [@medley/router](https://github.com/medleyjs/router).
 
 ## Trie
 
-The HTTP [`Router`](#router) is built using the trie `Node` and `Route` classes. You can build your own trie based router by importing them.
+The HTTP [router](#router) is built using these trie `Node` and `Route` classes. You can build your own trie based router by importing them.
 
 ```ts
 import { Node, Route } from "@robino/router";
