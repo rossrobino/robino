@@ -162,3 +162,13 @@ export const GET = router.fetch;
 // bun, deno, cloudflare...
 export default router;
 ```
+
+### create
+
+Use the `create` helper function to create a typed handler for the router.
+
+```ts
+const logger = router.create(({ url, req }) => {
+	console.log(req.method, url.pathname);
+});
+```

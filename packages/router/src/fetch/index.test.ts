@@ -11,6 +11,10 @@ const router = new Router({
 const get = (pathname: string) =>
 	router.fetch(new Request("http://localhost:5173" + pathname));
 
+const logger = router.create(({ url, req }) => {
+	console.log(req.method, url.pathname);
+});
+
 test("context", () => {
 	router
 		.get(

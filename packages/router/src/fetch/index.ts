@@ -162,6 +162,16 @@ export class Router<S = null> {
 	}
 
 	/**
+	 * Create handler helper function.
+	 *
+	 * @param handler
+	 * @returns typed handler based on the created router
+	 */
+	create(handler: Handler<Params, S>) {
+		return handler;
+	}
+
+	/**
 	 * @param method [HTTP method](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods)
 	 * @param pattern route pattern to match
 	 * @param handlers request handlers
