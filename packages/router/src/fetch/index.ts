@@ -22,17 +22,17 @@ type ExtractMultiParams<Patterns extends string[]> = Patterns extends [
 		: ExtractParams<First> | ExtractMultiParams<Rest>
 	: never;
 
-export type Handler<P extends Params = Params, S = null> = (
-	context: Context<P, S>,
+export type Handler<P extends Params = Params, State = null> = (
+	context: Context<P, State>,
 ) => MaybePromise<Response | void>;
 
-type NotFoundContext<S> = Pick<
-	Context<Params, S>,
+type NotFoundContext<State> = Pick<
+	Context<Params, State>,
 	"req" | "res" | "url" | "state"
 >;
 
-export type NotFoundHandler<S> = (
-	context: NotFoundContext<S>,
+export type NotFoundHandler<State> = (
+	context: NotFoundContext<State>,
 ) => MaybePromise<Response>;
 
 export type ErrorHandler = (
@@ -41,9 +41,9 @@ export type ErrorHandler = (
 	},
 ) => MaybePromise<Response>;
 
-type Start<S> = (context: Pick<Context, "req" | "url">) => S;
+type Start<State> = (context: Pick<Context, "req" | "url">) => State;
 
-type Context<P extends Params = Params, S = null> = {
+type Context<P extends Params = Params, State = null> = {
 	/** [Request reference](https://developer.mozilla.org/en-US/docs/Web/API/Request) */
 	req: Request;
 
@@ -72,14 +72,14 @@ type Context<P extends Params = Params, S = null> = {
 	params: P;
 
 	/** matched route instance */
-	route: Route<Handler<Params, S>[]>;
+	route: Route<Handler<Params, State>[]>;
 
 	/**
 	 * `state` returned from `config.start` during each request
 	 *
 	 * @default null
 	 */
-	state: S;
+	state: State;
 };
 
 type Method =
@@ -96,15 +96,15 @@ type Method =
 
 type TrailingSlash = "always" | "never" | null;
 
-export class Router<S = null> {
-	#trieMap = new Map<Method, Node<Handler<Params, S>[]>>();
+export class Router<State = null> {
+	#trieMap = new Map<Method, Node<Handler<Params, State>[]>>();
 
-	#start?: Start<S>;
+	#start?: Start<State>;
 
 	#trailingSlash: TrailingSlash;
 
 	/** Handler to run when route is not found. */
-	notFound: NotFoundHandler<S> = () =>
+	notFound: NotFoundHandler<State> = () =>
 		new Response("Not found", {
 			status: 404,
 			headers: { "content-type": "text/html" },
@@ -137,7 +137,7 @@ export class Router<S = null> {
 			 * 	headers: { "content-type": "text/html" },
 			 * })
 			 */
-			notFound?: NotFoundHandler<S>;
+			notFound?: NotFoundHandler<State>;
 
 			/**
 			 * Assign a handler to run when an Error is thrown.
@@ -155,7 +155,7 @@ export class Router<S = null> {
 			 * @param context request context
 			 * @returns any state to access in handlers
 			 */
-			start?: Start<S>;
+			start?: Start<State>;
 		} = {},
 	) {
 		const {
@@ -183,7 +183,7 @@ export class Router<S = null> {
 	 * @param handler
 	 * @returns typed handler based on the created router
 	 */
-	create(handler: Handler<Params, S>) {
+	create(handler: Handler<Params, State>) {
 		return handler;
 	}
 
@@ -196,7 +196,7 @@ export class Router<S = null> {
 	on<Pattern extends string>(
 		method: Method,
 		pattern: Pattern,
-		...handlers: Handler<ExtractParams<Pattern>, S>[]
+		...handlers: Handler<ExtractParams<Pattern>, State>[]
 	): this;
 	/**
 	 * @param method HTTP method
@@ -207,12 +207,12 @@ export class Router<S = null> {
 	on<Patterns extends string[]>(
 		method: Method,
 		patterns: [...Patterns],
-		...handlers: Handler<ExtractMultiParams<Patterns>, S>[]
+		...handlers: Handler<ExtractMultiParams<Patterns>, State>[]
 	): this;
 	on<PatternOrPatterns extends string | string[]>(
 		method: Method,
 		pattern: PatternOrPatterns,
-		...handlers: Handler<Params, S>[]
+		...handlers: Handler<Params, State>[]
 	) {
 		let patterns: string[];
 		if (!Array.isArray(pattern)) patterns = [pattern];
@@ -225,7 +225,7 @@ export class Router<S = null> {
 			if (existing) {
 				existing.add(route);
 			} else {
-				const trie = new Node<Handler<Params, S>[]>();
+				const trie = new Node<Handler<Params, State>[]>();
 				this.#trieMap.set(method, trie);
 				trie.add(route);
 			}
@@ -241,7 +241,7 @@ export class Router<S = null> {
 	 */
 	get<Pattern extends string>(
 		pattern: Pattern,
-		...handlers: Handler<ExtractParams<Pattern>, S>[]
+		...handlers: Handler<ExtractParams<Pattern>, State>[]
 	): this;
 	/**
 	 * @param patterns array of route patterns
@@ -250,11 +250,11 @@ export class Router<S = null> {
 	 */
 	get<Patterns extends string[]>(
 		patterns: [...Patterns],
-		...handlers: Handler<ExtractMultiParams<Patterns>, S>[]
+		...handlers: Handler<ExtractMultiParams<Patterns>, State>[]
 	): this;
 	get<PatternOrPatterns extends string | string[]>(
 		patternOrPatterns: PatternOrPatterns,
-		...handlers: Handler<Params, S>[]
+		...handlers: Handler<Params, State>[]
 	) {
 		return this.on("GET", patternOrPatterns as string, ...handlers);
 	}
@@ -266,7 +266,7 @@ export class Router<S = null> {
 	 */
 	post<Pattern extends string>(
 		pattern: Pattern,
-		...handlers: Handler<ExtractParams<Pattern>, S>[]
+		...handlers: Handler<ExtractParams<Pattern>, State>[]
 	): this;
 	/**
 	 * @param patterns array of route patterns
@@ -275,11 +275,11 @@ export class Router<S = null> {
 	 */
 	post<Patterns extends string[]>(
 		patterns: [...Patterns],
-		...handlers: Handler<ExtractMultiParams<Patterns>, S>[]
+		...handlers: Handler<ExtractMultiParams<Patterns>, State>[]
 	): this;
 	post<PatternOrPatterns extends string | string[]>(
 		patternOrPatterns: PatternOrPatterns,
-		...handlers: Handler<Params, S>[]
+		...handlers: Handler<Params, State>[]
 	) {
 		return this.on("POST", patternOrPatterns as string, ...handlers);
 	}
@@ -293,12 +293,13 @@ export class Router<S = null> {
 			const url = new URL(req.url);
 			const trie = this.#trieMap.get(req.method);
 
-			const context: NotFoundContext<S> & Partial<Context<Params, S>> = {
-				req,
-				res: null,
-				url,
-				state: this.#start ? this.#start({ req, url }) : (null as S),
-			};
+			const context: NotFoundContext<State> & Partial<Context<Params, State>> =
+				{
+					req,
+					res: null,
+					url,
+					state: this.#start ? this.#start({ req, url }) : (null as State),
+				};
 
 			if (trie) {
 				const match = trie.find(url.pathname);
@@ -308,7 +309,7 @@ export class Router<S = null> {
 					context.route = match.route;
 
 					for (const handler of match.route.store) {
-						const result = await handler(context as Context<Params, S>);
+						const result = await handler(context as Context<Params, State>);
 
 						if (result instanceof Response) context.res = result;
 					}
