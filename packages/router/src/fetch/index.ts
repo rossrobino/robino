@@ -310,7 +310,6 @@ export class Router<State = null> {
 
 					for (const handler of match.route.store) {
 						const result = await handler(context as Context<Params, State>);
-
 						if (result instanceof Response) context.res = result;
 					}
 
