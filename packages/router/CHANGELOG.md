@@ -1,5 +1,11 @@
 # @robino/router
 
+## 0.2.1
+
+### Patch Changes
+
+- df2d554: allow access to `state` in not found handler
+
 ## 0.2.0
 
 ### Minor Changes
