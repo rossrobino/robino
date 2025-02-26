@@ -26,8 +26,13 @@ export type Handler<P extends Params = Params, S = null> = (
 	context: Context<P, S>,
 ) => MaybePromise<Response | void>;
 
-export type NotFoundHandler = (
-	context: Pick<Context, "req" | "url">,
+type NotFoundContext<S> = Pick<
+	Context<Params, S>,
+	"req" | "res" | "url" | "state"
+>;
+
+export type NotFoundHandler<S> = (
+	context: NotFoundContext<S>,
 ) => MaybePromise<Response>;
 
 export type ErrorHandler = (
@@ -36,7 +41,7 @@ export type ErrorHandler = (
 	},
 ) => MaybePromise<Response>;
 
-type Start<S> = (context: Omit<Context, "state">) => S;
+type Start<S> = (context: Pick<Context, "req" | "url">) => S;
 
 type Context<P extends Params = Params, S = null> = {
 	/** [Request reference](https://developer.mozilla.org/en-US/docs/Web/API/Request) */
@@ -92,14 +97,14 @@ type Method =
 type TrailingSlash = "always" | "never" | null;
 
 export class Router<S = null> {
-	#trieMap = new Map<Method, Node<Handler<Params, S | null>[]>>();
+	#trieMap = new Map<Method, Node<Handler<Params, S>[]>>();
 
 	#start?: Start<S>;
 
 	#trailingSlash: TrailingSlash;
 
 	/** Handler to run when route is not found. */
-	notFound: NotFoundHandler = () =>
+	notFound: NotFoundHandler<S> = () =>
 		new Response("Not found", {
 			status: 404,
 			headers: { "content-type": "text/html" },
@@ -132,7 +137,7 @@ export class Router<S = null> {
 			 * 	headers: { "content-type": "text/html" },
 			 * })
 			 */
-			notFound?: NotFoundHandler;
+			notFound?: NotFoundHandler<S>;
 
 			/**
 			 * Assign a handler to run when an Error is thrown.
@@ -288,23 +293,22 @@ export class Router<S = null> {
 			const url = new URL(req.url);
 			const trie = this.#trieMap.get(req.method);
 
+			const context: NotFoundContext<S> & Partial<Context<Params, S>> = {
+				req,
+				res: null,
+				url,
+				state: this.#start ? this.#start({ req, url }) : (null as S),
+			};
+
 			if (trie) {
 				const match = trie.find(url.pathname);
 
 				if (match) {
-					const context: Context<Params, S | null> = {
-						req,
-						res: null,
-						url,
-						params: match.params,
-						route: match.route,
-						state: null,
-					};
-
-					if (this.#start) context.state = this.#start(context);
+					context.params = match.params;
+					context.route = match.route;
 
 					for (const handler of match.route.store) {
-						const result = await handler(context);
+						const result = await handler(context as Context<Params, S>);
 
 						if (result instanceof Response) context.res = result;
 					}
@@ -331,7 +335,7 @@ export class Router<S = null> {
 				}
 			}
 
-			return this.notFound({ req, url });
+			return this.notFound(context);
 		} catch (error) {
 			if (this.error && error instanceof Error) {
 				return this.error({ req, error });
