@@ -44,7 +44,7 @@ page
 	});
 ```
 
-The Injections will be sorted and resolved upon calling one of the following methods.
+The Injections will be sorted and resolved concurrently upon calling one of the following methods.
 
 ```ts
 const res = page.toResponse(); // creates an in order stream response
