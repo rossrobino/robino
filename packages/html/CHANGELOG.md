@@ -1,5 +1,25 @@
 # @robino/html
 
+## 0.7.0
+
+### Minor Changes
+
+- 2c2177a: feat: stream with generator functions
+
+  ```ts
+  import { Page } from "@robino/html";
+
+  const page = new Page();
+
+  page.body(async function* () {
+  	yield "<p>first</p>";
+  	// await...
+  	yield "<p>next</p>";
+  });
+
+  const res = page.toResponse();
+  ```
+
 ## 0.6.1
 
 ### Patch Changes
