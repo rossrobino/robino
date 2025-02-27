@@ -1,10 +1,14 @@
 import { Page } from "./index.js";
 import { describe, expect, test } from "vitest";
 
+const delay = (ms: number) => {
+	return new Promise((res) => setTimeout(res, ms));
+};
+
 describe("toResponse", () => {
 	const page = new Page()
 		.body(async () => {
-			await new Promise((res) => setTimeout(res, 50));
+			await delay(50);
 			return "delay body";
 		})
 		.head("head");
@@ -68,7 +72,7 @@ test("multiple", async () => {
 
 	const html = await page
 		.body(async () => {
-			await new Promise((res) => setTimeout(res, 50));
+			await delay(50);
 			return "delay body";
 		})
 		.body("1")
@@ -91,16 +95,16 @@ describe("streaming", async () => {
 	const res = page
 		.inject("custom-element", "custom content")
 		.body(async () => {
-			await new Promise((res) => setTimeout(res, 200));
+			await delay(200);
 			return "delay body 2";
 		})
 		.body(async () => {
-			await new Promise((res) => setTimeout(res, 100));
+			await delay(100);
 			return "delay body 1";
 		})
 		.body("body")
 		.body(async () => {
-			await new Promise((res) => setTimeout(res, 300));
+			await delay(300);
 			return "delay body 3";
 		})
 		.head("head")
@@ -147,5 +151,38 @@ describe("empty", () => {
 	test("should not be empty", () => {
 		page.body("not empty");
 		expect(page.empty).toBe(false);
+	});
+});
+
+describe("generator", async () => {
+	const page = new Page();
+
+	let check = false;
+
+	page
+		.body(async function* () {
+			yield "starting 1 ";
+			await delay(100);
+			check = true;
+			yield "done 1 ";
+		})
+		.body(async function* () {
+			yield "starting 2 ";
+			await delay(50);
+			expect(check).toBe(false); // occurs first
+			yield [
+				{ name: "p", attrs: { class: "bg-blue-500" }, children: "done 2" },
+			];
+		})
+		.head(function* () {
+			yield "YIELD HEAD";
+			return " RETURN HEAD";
+		});
+
+	test("parallel", async () => {
+		const text = await page.toString();
+		expect(text).toBe(
+			'<!doctype html><html><head>YIELD HEAD RETURN HEAD</head><body>starting 1 done 1 starting 2 <p class="bg-blue-500">done 2</p></body></html>',
+		);
 	});
 });

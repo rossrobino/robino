@@ -41,7 +41,9 @@ export type TagInput =
 	| Tags
 	| Promise<Tags>
 	| (() => Tags)
-	| (() => Promise<Tags>);
+	| (() => Promise<Tags>)
+	| Generator<Tags, Tags, never>
+	| AsyncGenerator<Tags, Tags, never>;
 
 export type Injection = {
 	/**
@@ -59,9 +61,12 @@ export type Injection = {
 
 	/** Result of the match. */
 	match?: string;
-};
 
-export type MatchedInjection = Required<Injection> & {
-	/** The matched and encoded content. */
+	/** Content is built and ready to enqueue. */
+	waiting?: boolean;
+
+	/** The matched content. */
 	content?: string;
 };
+
+export type MatchedInjection = Required<Injection>;

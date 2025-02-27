@@ -35,7 +35,13 @@ page
 	// Tag or array of Tags
 	.head({ name: "script", attrs: { type: "module", src: "./script.js" } })
 	// other tags (need to be present in the initial HTML)
-	.inject("some-other-tag", "tags");
+	.inject("some-other-tag", "tags")
+	// generators
+	.body(async function* () {
+		yield "<p>first</p>";
+		// await...
+		yield "<p>next</p>";
+	});
 ```
 
 The Injections will be sorted and resolved upon calling one of the following methods.

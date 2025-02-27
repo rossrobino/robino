@@ -34,18 +34,37 @@ export class Page {
 	 * @param injection to resolve
 	 * @returns the content with the match
 	 */
-	async #resolveTagInput(injection: MatchedInjection) {
+	async *#resolveTagInput(injection: MatchedInjection) {
 		let tagInput = injection.tagInput;
 
 		if (typeof tagInput === "function") {
 			tagInput = tagInput();
 		}
 
-		if (tagInput instanceof Promise) {
+		if (typeof tagInput === "object" && "next" in tagInput) {
+			if (Symbol.asyncIterator in tagInput) {
+				// async
+				while (true) {
+					const { value, done } = await tagInput.next();
+					yield serialize(value);
+					if (done) break;
+				}
+			} else {
+				// sync
+				while (true) {
+					const { value, done } = tagInput.next();
+					yield serialize(value);
+					if (done) break;
+				}
+			}
+		} else if (tagInput instanceof Promise) {
 			tagInput = await tagInput;
+			yield serialize(tagInput);
+		} else {
+			yield serialize(tagInput);
 		}
 
-		return serialize(tagInput) + injection.match;
+		yield injection.match;
 	}
 
 	/**
@@ -81,7 +100,8 @@ export class Page {
 	}
 
 	/**
-	 * @returns a `ReadableStream` that streams the HTML in order as each `TagInput` resolves
+	 * @returns a `ReadableStream` that streams the HTML in order as
+	 * each `TagInput` resolves
 	 */
 	toStream() {
 		const matched: MatchedInjection[] = this.#injections
@@ -93,11 +113,14 @@ export class Page {
 
 				if (!result?.index)
 					throw new Error(
-						`Tag not found: </${injection.target}> did not match in initial HTML, ensure ${injection.target} element exists.\n\n${this.#html}\n`,
+						`Tag not found: </${injection.target}> did not match in initial` +
+							` HTML, ensure ${injection.target} element exists.\n\n${this.#html}\n`,
 					);
 
 				injection.index = result.index;
 				injection.match = result.at(0);
+				injection.waiting = false;
+				injection.content = "";
 
 				// `as` because index and result are now set
 				return injection as MatchedInjection;
@@ -123,11 +146,11 @@ export class Page {
 
 				c.enqueue(first);
 
-				// tracks the number of characters of the initial html that have been sent
+				/** Number of characters of the initial html that have been sent */
 				let charsSent = first.length;
 				let queueIndex = 0;
 
-				// resolved injections waiting to be sent in the correct order
+				/** Resolved injections waiting to be sent in the correct order */
 				const queue: MatchedInjection[] = [];
 				const tasks = [];
 
@@ -137,22 +160,46 @@ export class Page {
 					queue.push(queuedInjection);
 
 					const task = (async () => {
-						queuedInjection.content =
-							await this.#resolveTagInput(queuedInjection);
+						let streamed = false;
+
+						for await (const str of this.#resolveTagInput(queuedInjection)) {
+							if (i !== queueIndex) {
+								queuedInjection.content += str;
+							} else {
+								if (!streamed) {
+									streamed = true;
+
+									if (queuedInjection.content) {
+										// send what's done
+										c.enqueue(queuedInjection.content);
+									}
+								}
+
+								// stream the rest
+								c.enqueue(str);
+							}
+						}
+
+						queuedInjection.waiting = true;
 
 						if (i === queueIndex) {
 							let current: MatchedInjection | undefined = queuedInjection;
 
-							while (current?.content) {
-								// send the content
-								c.enqueue(current.content);
+							while (current?.waiting) {
+								if (!streamed || current !== queuedInjection) {
+									// send the first if not already streamed
+									// always send the others
+									c.enqueue(current.content);
+								}
+
+								// sent the match with the content/stream, increment
 								charsSent += current.match.length;
 
 								// set to next injection in the queue
 								current = queue.at(++queueIndex);
 
 								if (current) {
-									// send chunk immediately, even if current hasn't resolved yet
+									// send between chunk immediately, even if current hasn't resolved yet
 									const chunk = this.#html.slice(charsSent, current.index);
 									if (chunk) c.enqueue(chunk);
 									charsSent = current.index;
