@@ -72,7 +72,7 @@ const mdStream = new ReadableStream<string>({
 const htmlStream = processor.renderStream(mdStream);
 ```
 
-The result will come in chunks of elements instead of by word since the entire element needs to be present to render and highlight correctly.
+The result will come in chunks of elements instead of by word since the entire element needs to be present to render and highlight correctly. Use with [@robino/html](https://github.com/rossrobino/robino/tree/main/packages/html) to easily send the result as an HTML response.
 
 ## process
 

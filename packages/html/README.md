@@ -41,7 +41,9 @@ page
 		yield "<p>first</p>";
 		// await...
 		yield "<p>next</p>";
-	});
+	})
+	// streams
+	.body(new ReadableStream<string>());
 ```
 
 The Injections will be sorted and resolved concurrently upon calling one of the following methods.
