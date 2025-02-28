@@ -1,5 +1,11 @@
 # @robino/html
 
+## 0.8.0
+
+### Minor Changes
+
+- cda22a6: feat: out of order streaming
+
 ## 0.7.0
 
 ### Minor Changes

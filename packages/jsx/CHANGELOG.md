@@ -1,5 +1,12 @@
 # @robino/html
 
+## 0.2.5
+
+### Patch Changes
+
+- Updated dependencies [cda22a6]
+  - @robino/html@0.8.0
+
 ## 0.2.4
 
 ### Patch Changes
