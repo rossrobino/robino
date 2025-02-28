@@ -1,14 +1,29 @@
+import { escape } from "../escape/index.js";
 import { serialize } from "../serialize/index.js";
-import type { Injection, MatchedInjection, TagInput } from "../types/index.js";
+import type {
+	Injection,
+	MatchedInjection,
+	TagInput,
+	Tags,
+} from "../types/index.js";
 
 export class Page {
-	/** The initial HTML string to inject content into. */
+	/** Initial HTML string to inject content into. */
 	#html: string;
 
-	/** An array of injections to process when a response is generated. */
+	/** Injections to process when a response is generated. */
 	#injections: Injection[] = [];
 
-	/** A set of tag names that have been used -- to avoid sending the same match multiple times. */
+	/** Completed injection ids used to check if deferred can be sent. */
+	#completed = new Set<string>();
+
+	/** Deferred injections to stream out of order. */
+	#deferred: Injection[] = [];
+
+	/** If the out of order client side stream script has been added. */
+	#scriptAdded = false;
+
+	/** Tag names that have been used -- to avoid sending the same match multiple times. */
 	#targets: Set<string> = new Set();
 
 	/**
@@ -17,54 +32,122 @@ export class Page {
 	 * @default
 	 *
 	 * ```html
-	 * <!doctype html>
-	 * <html>
-	 * 	<head></head>
-	 * 	<body></body>
-	 * </html>
+	 * <!doctype html><html><head></head><body></body></html>
 	 * ```
 	 */
-	constructor(
-		html: string = "<!doctype html><html><head></head><body></body></html>",
-	) {
+	constructor(html = "<!doctype html><html><head></head><body></body></html>") {
 		this.#html = html;
 	}
 
+	/** @returns client side script for out of order streaming */
+	#outOfOrderScript() {
+		return serialize({
+			name: "script",
+			children:
+				"(" +
+				(() => {
+					if (!customElements.get("page-defer"))
+						customElements.define(
+							"page-defer",
+							class extends HTMLElement {
+								connectedCallback() {
+									const h = this.dataset.html ?? "";
+									if (this.hasAttribute("data-head")) {
+										document.head.innerHTML += h;
+									} else {
+										const t = document.querySelector<HTMLElement>(
+											"[data-id='" + this.dataset.id + "']",
+										);
+										if (t) {
+											if (t.hasAttribute("data-clear")) {
+												t.removeAttribute("data-clear");
+												t.innerHTML = "";
+											}
+											t.innerHTML += h;
+										}
+									}
+								}
+							},
+						);
+				}).toString() +
+				")()",
+		});
+	}
+
 	/**
-	 * @param injection to resolve
+	 * @param inj injection
+	 * @param tags html tags
+	 * @returns `<page-defer>` custom element
+	 */
+	#pageDefer(inj: Injection, tags: Tags) {
+		return serialize({
+			name: "page-defer",
+			attrs: {
+				style: "display: none;",
+				"data-id": inj.id,
+				"data-html": escape(serialize(tags), true),
+				"data-head": inj.head,
+			},
+		});
+	}
+
+	/**
+	 * @param inj injection to resolve
 	 * @returns the content with the match
 	 */
-	async *#resolveTagInput(injection: MatchedInjection) {
-		let tagInput = injection.tagInput;
-
-		if (typeof tagInput === "function") {
-			tagInput = tagInput();
+	async *#resolveInjection(inj: Injection) {
+		if (inj.loading) {
+			if (!this.#scriptAdded) {
+				this.#scriptAdded = true;
+				yield this.#outOfOrderScript();
+			}
+			yield `<page-stream style="display: contents;" data-id="${inj.id}" data-clear>`;
 		}
 
-		if (typeof tagInput === "object" && "next" in tagInput) {
-			if (Symbol.asyncIterator in tagInput) {
-				// async
+		if (typeof inj.tagInput === "function") inj.tagInput = inj.tagInput();
+
+		if (typeof inj.tagInput === "object" && "next" in inj.tagInput) {
+			if (Symbol.asyncIterator in inj.tagInput) {
 				while (true) {
-					const { value, done } = await tagInput.next();
-					yield serialize(value);
+					const { value, done } = await inj.tagInput.next();
+					if (value) {
+						if (inj.defer) yield this.#pageDefer(inj, value);
+						else yield serialize(value);
+					}
 					if (done) break;
 				}
 			} else {
-				// sync
 				while (true) {
-					const { value, done } = tagInput.next();
-					yield serialize(value);
+					const { value, done } = inj.tagInput.next();
+					if (value) {
+						if (inj.defer) yield this.#pageDefer(inj, value);
+						else yield serialize(value);
+					}
 					if (done) break;
 				}
 			}
-		} else if (tagInput instanceof Promise) {
-			tagInput = await tagInput;
-			yield serialize(tagInput);
+		} else if (inj.tagInput instanceof ReadableStream) {
+			const reader = inj.tagInput.getReader();
+			while (true) {
+				const { value, done } = await reader.read();
+				if (value) {
+					if (inj.defer) yield this.#pageDefer(inj, value);
+					else yield serialize(value);
+				}
+				if (done) break;
+			}
+		} else if (inj.tagInput instanceof Promise) {
+			inj.tagInput = await inj.tagInput;
+			if (inj.defer) yield this.#pageDefer(inj, inj.tagInput);
+			else yield serialize(inj.tagInput);
 		} else {
-			yield serialize(tagInput);
+			if (inj.defer) yield this.#pageDefer(inj, inj.tagInput);
+			else yield serialize(inj.tagInput);
 		}
 
-		yield injection.match;
+		if (inj.loading) yield "</page-stream>";
+
+		if (inj.match) yield inj.match;
 	}
 
 	/**
@@ -77,26 +160,60 @@ export class Page {
 	/**
 	 * @param target tag to inject into, for example `"main"`
 	 * @param tagInput tags to inject
+	 * @param loading provide loading tags to stream the result out of order
 	 */
-	inject(target: string, tagInput: TagInput) {
-		this.#injections.push({ target, tagInput });
+	inject(target: string, tagInput: TagInput, loading?: TagInput) {
+		if (loading !== undefined) {
+			const id = crypto.randomUUID().split("-").at(0)!;
+			const head = target === "head";
+
+			if (!head) {
+				this.#injections.push({
+					target,
+					tagInput: loading,
+					content: "",
+					defer: false,
+					loading: true,
+					id,
+				});
+			}
+			this.#deferred.push({
+				target,
+				tagInput,
+				content: "",
+				defer: true,
+				loading: false,
+				id,
+				head,
+			});
+		} else {
+			this.#injections.push({
+				target,
+				tagInput,
+				content: "",
+				defer: false,
+				loading: false,
+				id: "",
+			});
+		}
+
 		return this;
 	}
 
 	/**
 	 * @param tagInput tags to inject into the `<head>` element
+	 * @param stream whether or not the tags should be streamed into the `<head>`
 	 */
-	head(tagInput: TagInput) {
-		this.#injections.push({ target: "head", tagInput });
-		return this;
+	head(tagInput: TagInput, stream?: boolean) {
+		return this.inject("head", tagInput, stream ? "stream" : undefined);
 	}
 
 	/**
 	 * @param tagInput tags to inject into the `<body>` element
+	 * @param loading provide loading tags to stream the result out of order
 	 */
-	body(tagInput: TagInput) {
-		this.#injections.push({ target: "body", tagInput });
-		return this;
+	body(tagInput: TagInput, loading?: TagInput) {
+		return this.inject("body", tagInput, loading);
 	}
 
 	/**
@@ -120,10 +237,8 @@ export class Page {
 				injection.index = result.index;
 				injection.match = result.at(0);
 				injection.waiting = false;
-				injection.content = "";
 
-				// `as` because index and result are now set
-				return injection as MatchedInjection;
+				return injection as MatchedInjection; // `as` because index and result are now set
 			})
 			// sort by location of the match -- for example, head might come before body
 			.sort((a, b) => a.index - b.index);
@@ -143,7 +258,6 @@ export class Page {
 		return new ReadableStream<string>({
 			start: async (c) => {
 				const first = this.#html.slice(0, matched.at(0)?.index);
-
 				c.enqueue(first);
 
 				/** Number of characters of the initial html that have been sent */
@@ -152,49 +266,44 @@ export class Page {
 
 				/** Resolved injections waiting to be sent in the correct order */
 				const queue: MatchedInjection[] = [];
-				const tasks = [];
+				const tasks: Promise<void>[] = [];
 
 				for (let i = 0; i < matched.length; i++) {
-					const queuedInjection: MatchedInjection = matched.at(i)!;
+					const inj: MatchedInjection = matched.at(i)!;
+					queue.push(inj);
 
-					queue.push(queuedInjection);
-
-					const task = (async () => {
+					const promise = (async () => {
 						let streamed = false;
-
-						for await (const str of this.#resolveTagInput(queuedInjection)) {
+						for await (const str of this.#resolveInjection(inj)) {
 							if (i !== queueIndex) {
-								queuedInjection.content += str;
+								inj.content += str;
 							} else {
 								if (!streamed) {
 									streamed = true;
-
-									if (queuedInjection.content) {
-										// send what's done
-										c.enqueue(queuedInjection.content);
+									if (inj.content) {
+										c.enqueue(inj.content); // send what's done
 									}
 								}
-
-								// stream the rest
-								c.enqueue(str);
+								c.enqueue(str); // stream the rest
 							}
 						}
 
-						queuedInjection.waiting = true;
+						if (streamed) this.#completed.add(inj.id);
+						inj.waiting = true;
 
 						if (i === queueIndex) {
-							let current: MatchedInjection | undefined = queuedInjection;
+							let current: MatchedInjection | undefined = inj;
 
 							while (current?.waiting) {
-								if (!streamed || current !== queuedInjection) {
+								if (!streamed || current !== inj) {
 									// send the first if not already streamed
 									// always send the others
 									c.enqueue(current.content);
+									this.#completed.add(current.id);
 								}
 
 								// sent the match with the content/stream, increment
 								charsSent += current.match.length;
-
 								// set to next injection in the queue
 								current = queue.at(++queueIndex);
 
@@ -206,16 +315,44 @@ export class Page {
 								}
 							}
 						}
+
+						// clear the waiting deferred injections
+						for (const def of this.#deferred) {
+							if (def.waiting) {
+								c.enqueue(def.content);
+								def.waiting = false;
+							}
+						}
 					})();
 
-					tasks.push(task);
+					tasks.push(promise);
+				}
+
+				for (const inj of this.#deferred) {
+					const promise = (async () => {
+						let streamed = false;
+						for await (const str of this.#resolveInjection(inj)) {
+							if (this.#completed.has(inj.id) || inj.head) {
+								if (!streamed) {
+									streamed = true;
+									if (inj.content) {
+										c.enqueue(inj.content);
+									}
+								}
+								c.enqueue(str);
+							} else {
+								inj.content += str;
+							}
+						}
+						if (!streamed) inj.waiting = true;
+					})();
+
+					tasks.push(promise);
 				}
 
 				await Promise.all(tasks);
 
-				// last
-				c.enqueue(this.#html.slice(charsSent));
-
+				c.enqueue(this.#html.slice(charsSent)); // last
 				c.close();
 			},
 		});
@@ -247,7 +384,7 @@ export class Page {
 		let html = "";
 
 		while (true) {
-			const { done, value } = await reader.read();
+			const { value, done } = await reader.read();
 			if (done) return html;
 			html += value;
 		}

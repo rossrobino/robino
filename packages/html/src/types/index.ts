@@ -43,7 +43,8 @@ export type TagInput =
 	| (() => Tags)
 	| (() => Promise<Tags>)
 	| Generator<Tags, Tags, never>
-	| AsyncGenerator<Tags, Tags, never>;
+	| AsyncGenerator<Tags, Tags, never>
+	| ReadableStream<string>;
 
 export type Injection = {
 	/**
@@ -53,8 +54,23 @@ export type Injection = {
 	 */
 	target: string;
 
-	/** The tags to inject. */
+	/** Tags to inject. */
 	tagInput: TagInput;
+
+	/** If the injection should be streamed out of order. */
+	defer: boolean;
+
+	/** ID for out of order streaming, default to `""` if not streaming. */
+	id: string;
+
+	/** If the injection holds the loading state for out of order streaming. */
+	loading: boolean;
+
+	/** The matched content, starts as `""`. */
+	content: string;
+
+	/** If the injection is targeted to the <head> element. */
+	head?: boolean;
 
 	/** Index of the matched tag.  */
 	index?: number;
@@ -64,9 +80,6 @@ export type Injection = {
 
 	/** Content is built and ready to enqueue. */
 	waiting?: boolean;
-
-	/** The matched content. */
-	content?: string;
 };
 
 export type MatchedInjection = Required<Injection>;
