@@ -7,7 +7,7 @@ npm i @robino/md
 An extended [markdown-it](https://github.com/markdown-it/markdown-it) instance with the following features.
 
 - `renderStream` function to render and highlight a stream of markdown
-- Process markdown with frontmatter using a [Standard Schema](https://standardschema.dev/#what-schema-libraries-implement-the-spec) validator
+- `process` markdown with frontmatter using a [Standard Schema](https://standardschema.dev/#what-schema-libraries-implement-the-spec) validator
 - Syntax highlighting with [shiki](https://shiki.style/) using the [CSS variables](https://shiki.style/guide/theme-colors#css-variables-theme) theme to style
 - Adds `<div style="overflow-x: auto;">...</div>` around each table element to prevent overflow
 
