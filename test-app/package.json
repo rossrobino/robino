@@ -16,6 +16,7 @@
 	},
 	"dependencies": {
 		"@robino/html": "*",
+		"@robino/md": "*",
 		"@robino/router": "*",
 		"openai": "^4.86.1",
 		"uico": "^0.4.6"

@@ -20,18 +20,20 @@
 		"build": "tsc"
 	},
 	"dependencies": {
-		"@shikijs/markdown-it": "^3.0.0",
-		"@shikijs/transformers": "^3.0.0",
+		"@shikijs/core": "^3.1.0",
+		"@shikijs/engine-javascript": "^3.1.0",
+		"@shikijs/langs": "^3.1.0",
+		"@shikijs/markdown-it": "^3.1.0",
+		"@shikijs/transformers": "^3.1.0",
 		"@standard-schema/spec": "^1.0.0",
+		"@types/markdown-it": "^14.1.2",
 		"js-yaml": "^4.1.0",
 		"markdown-it": "^14.1.0",
-		"markdown-it-anchor": "^9.2.0",
-		"shiki": "^3.0.0"
+		"markdown-it-anchor": "^9.2.0"
 	},
 	"devDependencies": {
 		"@robino/tsconfig": "*",
 		"@types/js-yaml": "^4.0.9",
-		"@types/markdown-it": "^14.1.2",
 		"zod": "^3.24.2"
 	}
 }

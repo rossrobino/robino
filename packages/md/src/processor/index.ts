@@ -1,4 +1,12 @@
 import { tableOverflow } from "../table-overflow/index.js";
+import {
+	createCssVariablesTheme,
+	createHighlighterCoreSync,
+	type HighlighterGeneric,
+	type HighlighterCoreOptions,
+} from "@shikijs/core";
+import { createJavaScriptRegexEngine } from "@shikijs/engine-javascript";
+import langMd from "@shikijs/langs/md";
 import { fromHighlighter } from "@shikijs/markdown-it/core";
 import { transformerMetaHighlight } from "@shikijs/transformers";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
@@ -6,13 +14,6 @@ import { load } from "js-yaml";
 import MarkdownIt from "markdown-it";
 import type { Options as MarkdownItOptions } from "markdown-it";
 import Anchor from "markdown-it-anchor";
-import {
-	createCssVariablesTheme,
-	createHighlighterCoreSync,
-	type HighlighterGeneric,
-	type HighlighterCoreOptions,
-} from "shiki/core";
-import { createJavaScriptRegexEngine } from "shiki/engine-javascript.mjs";
 
 export type Heading = {
 	/** The heading's `id` (lowercase name separated by dashes). */
@@ -70,6 +71,8 @@ export type Options = {
 };
 
 export class Processor extends MarkdownIt {
+	#highlighter;
+
 	constructor(options: Options = {}) {
 		super(
 			(options.markdownIt ??= {
@@ -79,24 +82,25 @@ export class Processor extends MarkdownIt {
 			}),
 		);
 
+		this.#highlighter = createHighlighterCoreSync({
+			themes: [createCssVariablesTheme()],
+			langs: [langMd, ...(options.highlighter?.langs ?? [])],
+			engine: createJavaScriptRegexEngine(),
+			langAlias: options.highlighter?.langAlias,
+		}) as HighlighterGeneric<any, any>;
+
 		this.use(Anchor, {
 			permalink: Anchor.permalink.headerLink(),
 		}).use(tableOverflow);
 
 		if (options.highlighter?.langs) {
 			this.use(
-				fromHighlighter(
-					createHighlighterCoreSync({
-						themes: [createCssVariablesTheme()],
-						langs: options.highlighter?.langs,
-						engine: createJavaScriptRegexEngine(),
-						langAlias: options.highlighter?.langAlias,
-					}) as HighlighterGeneric<any, any>,
-					{
-						theme: "css-variables",
-						transformers: [transformerMetaHighlight()],
-					},
-				),
+				fromHighlighter(this.#highlighter, {
+					theme: "css-variables",
+					transformers: [transformerMetaHighlight()],
+					defaultLanguage: "md",
+					fallbackLanguage: "md",
+				}),
 			);
 		}
 	}
@@ -124,6 +128,60 @@ export class Processor extends MarkdownIt {
 		const html = this.render(article);
 
 		return { article, headings, html, frontmatter };
+	}
+
+	#processCompleteElements(text: string) {
+		const notComplete = { output: "", remaining: text };
+
+		if (!text.trim()) return notComplete;
+
+		if (text.includes("```")) {
+			const codeBlockMatch = text.match(
+				/^```\s*(\w+)?\n([\s\S]*?)\n```(?:\n|$)/m,
+			);
+			if (!codeBlockMatch) return notComplete;
+
+			const endPos = codeBlockMatch.index! + codeBlockMatch[0].length;
+
+			return {
+				output: this.render(text.slice(0, endPos)),
+				remaining: text.slice(endPos),
+			};
+		}
+
+		const double = "\n\n";
+		const parts = text.split(double);
+		if (parts.length > 1) {
+			return {
+				output: this.render(parts[0] + double),
+				remaining: parts.slice(1).join(double),
+			};
+		}
+
+		return notComplete;
+	}
+
+	renderStream(textStream: ReadableStream<string>) {
+		let buffer = "";
+
+		return textStream.pipeThrough<string>(
+			new TransformStream<string>({
+				transform: (chunk, c) => {
+					buffer += chunk;
+					let result = this.#processCompleteElements(buffer);
+
+					while (result.output) {
+						c.enqueue(result.output);
+						buffer = result.remaining;
+						if (!buffer) break;
+						result = this.#processCompleteElements(buffer);
+					}
+				},
+				flush: (c) => {
+					if (buffer) c.enqueue(this.render(buffer)); // last
+				},
+			}),
+		);
 	}
 
 	/**

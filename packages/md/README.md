@@ -4,20 +4,18 @@
 npm i @robino/md
 ```
 
-Markdown processing toolkit.
+An extended [markdown-it](https://github.com/markdown-it/markdown-it) instance with the following features.
 
-- Processes markdown with [markdown-it](https://github.com/markdown-it/markdown-it)
-- Optionally parse frontmatter using a [Standard Schema](https://standardschema.dev/#what-schema-libraries-implement-the-spec) validator
+- `renderStream` function to render and highlight a stream of markdown
+- Process markdown with frontmatter using a [Standard Schema](https://standardschema.dev/#what-schema-libraries-implement-the-spec) validator
 - Syntax highlighting with [shiki](https://shiki.style/) using the [CSS variables](https://shiki.style/guide/theme-colors#css-variables-theme) theme to style
-- Creates an array of headings with `id`, `level` and `name` to make a table of contents, etc.
 - Adds `<div style="overflow-x: auto;">...</div>` around each table element to prevent overflow
 
-## Example
+## Processor
 
 ```ts
 import { Processor } from "@robino/md";
-import langHtml from "shiki/langs/html.mjs";
-import { z } from "zod";
+import langJs from "@shikijs/langs/js";
 
 const processor = new Processor({
 	// markdown-it options
@@ -26,15 +24,64 @@ const processor = new Processor({
 	},
 	highlighter: {
 		// shiki langs
-		langs: [langHtml],
-		// lang aliases
-		langAlias: {
-			svelte: "html",
+		langs: [langJs],
+	},
+});
+```
+
+## render
+
+Use the `render` method to render highlighted HTML.
+
+```ts
+const html = processor.render(md);
+```
+
+## renderStream
+
+`renderStream` streams the result of a markdown stream through the renderer/highlighter. You can easily render/highlight and stream the output from an LLM on the server.
+
+```ts
+import { OpenAI } from "openai";
+
+const openai = new OpenAI({
+	apiKey: OPENAI_API_KEY,
+});
+
+const stream = await openai.chat.completions.create({
+	messages: [
+		{
+			role: "user",
+			content: "write some sample prose, a list, js code, table, etc.",
 		},
+	],
+	model: "gpt-4o-mini",
+	stream: true,
+});
+
+const mdStream = new ReadableStream<string>({
+	async start(c) {
+		for await (const chunk of stream) {
+			const content = chunk.choices[0]?.delta.content;
+			if (content) c.enqueue(content);
+		}
+		c.close();
 	},
 });
 
-// example using zod
+const htmlStream = processor.renderStream(mdStream);
+```
+
+The result will come in chunks of elements instead of by word since the entire element needs to be present to render and highlight correctly.
+
+## process
+
+The `process` method provides extra meta data in addition to the HTML result.
+
+```ts
+// example using zod, any Standard Schema validator is supported
+import { z } from "zod";
+
 const frontmatterSchema = z
 	.object({
 		title: z.string(),
@@ -46,14 +93,9 @@ const frontmatterSchema = z
 	})
 	.strict();
 
-const {
-	// original markdown document
-	article,
-	// { id: string, name: string, level: number }[]
-	headings,
-	// processed HTML article
-	html,
-	// type-safe/validated frontmatter based on the schema
-	frontmatter,
-} = await processor.process(md, frontmatterSchema);
+const result = await processor.process(md, frontmatterSchema);
+
+result.html; // processed HTML article
+result.headings; // { id: string, name: string, level: number }[]
+result.frontmatter; // type-safe/validated frontmatter based on the schema
 ```
