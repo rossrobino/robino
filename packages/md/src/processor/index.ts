@@ -69,25 +69,22 @@ export type Options = {
 	};
 };
 
-export class Processor {
-	/** MarkdownIt instance */
-	markdownIt: MarkdownIt;
-
+export class Processor extends MarkdownIt {
 	constructor(options: Options = {}) {
-		options.markdownIt ??= {
-			typographer: true,
-			linkify: true,
-			html: true,
-		};
+		super(
+			(options.markdownIt ??= {
+				typographer: true,
+				linkify: true,
+				html: true,
+			}),
+		);
 
-		this.markdownIt = MarkdownIt(options.markdownIt)
-			.use(Anchor, {
-				permalink: Anchor.permalink.headerLink(),
-			})
-			.use(tableOverflow);
+		this.use(Anchor, {
+			permalink: Anchor.permalink.headerLink(),
+		}).use(tableOverflow);
 
 		if (options.highlighter?.langs) {
-			this.markdownIt.use(
+			this.use(
 				fromHighlighter(
 					createHighlighterCoreSync({
 						themes: [createCssVariablesTheme()],
@@ -124,7 +121,7 @@ export class Processor {
 		const headings = this.getHeadings(article);
 
 		// render markdown to HTML
-		const html = this.markdownIt.render(article);
+		const html = this.render(article);
 
 		return { article, headings, html, frontmatter };
 	}

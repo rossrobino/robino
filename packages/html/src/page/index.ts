@@ -83,7 +83,7 @@ export class Page {
 		return serialize({
 			name: "page-defer",
 			attrs: {
-				style: "display: none;",
+				style: "display: none",
 				"data-id": inj.id,
 				"data-html": escape(serialize(tags), true),
 				"data-head": inj.head,
@@ -101,7 +101,7 @@ export class Page {
 				this.#scriptAdded = true;
 				yield this.#outOfOrderScript();
 			}
-			yield `<page-stream style="display: contents;" data-id="${inj.id}" data-clear>`;
+			yield `<page-stream style="display: contents" data-id="${inj.id}" data-clear>`;
 		}
 
 		if (typeof inj.tagInput === "function") inj.tagInput = inj.tagInput();

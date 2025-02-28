@@ -1,5 +1,1 @@
-@layer base {
-	:root {
-		color-scheme: light dark;
-	}
-}
+@import "uico";
