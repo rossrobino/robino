@@ -116,27 +116,30 @@ export class Processor extends MarkdownIt {
 	): Promise<Result<T>> {
 		const [, yaml, ...articleSegments] = md.split("---");
 		const processFrontmatter = yaml && frontmatterSchema;
-		const article = processFrontmatter ? articleSegments.join("---") : md;
 
+		const article = processFrontmatter ? articleSegments.join("---") : md;
 		const frontmatter = processFrontmatter
 			? await this.getFrontmatter(yaml, frontmatterSchema)
 			: {};
-
 		const headings = this.getHeadings(article);
-
-		// render markdown to HTML
 		const html = this.render(article);
 
 		return { article, headings, html, frontmatter };
 	}
 
-	#processCompleteElements(text: string) {
-		const notComplete = { output: "", remaining: text };
+	/**
+	 * Only render complete elements.
+	 *
+	 * @param md markdown to render
+	 * @returns rendered markdown and remaining to be highlight in the next run
+	 */
+	#processCompleteElements(md: string) {
+		const notComplete = { html: "", remaining: md };
 
-		if (!text.trim()) return notComplete;
+		if (!md.trim()) return notComplete;
 
-		if (text.includes("```")) {
-			const codeBlockMatch = text.match(
+		if (md.includes("```")) {
+			const codeBlockMatch = md.match(
 				/^```\s*(\w+)?\n([\s\S]*?)\n```(?:\n|$)/m,
 			);
 			if (!codeBlockMatch) return notComplete;
@@ -144,16 +147,16 @@ export class Processor extends MarkdownIt {
 			const endPos = codeBlockMatch.index! + codeBlockMatch[0].length;
 
 			return {
-				output: this.render(text.slice(0, endPos)),
-				remaining: text.slice(endPos),
+				html: this.render(md.slice(0, endPos)),
+				remaining: md.slice(endPos),
 			};
 		}
 
 		const double = "\n\n";
-		const parts = text.split(double);
+		const parts = md.split(double);
 		if (parts.length > 1) {
 			return {
-				output: this.render(parts[0] + double),
+				html: this.render(parts[0] + double),
 				remaining: parts.slice(1).join(double),
 			};
 		}
@@ -161,17 +164,21 @@ export class Processor extends MarkdownIt {
 		return notComplete;
 	}
 
-	renderStream(textStream: ReadableStream<string>) {
+	/**
+	 * @param mdStream `ReadableStream<string>` of markdown
+	 * @returns `ReadableStream<string>` of syntax highlighted HTML
+	 */
+	renderStream(mdStream: ReadableStream<string>) {
 		let buffer = "";
 
-		return textStream.pipeThrough<string>(
+		return mdStream.pipeThrough<string>(
 			new TransformStream<string>({
 				transform: (chunk, c) => {
 					buffer += chunk;
 					let result = this.#processCompleteElements(buffer);
 
-					while (result.output) {
-						c.enqueue(result.output);
+					while (result.html) {
+						c.enqueue(result.html);
 						buffer = result.remaining;
 						if (!buffer) break;
 						result = this.#processCompleteElements(buffer);
