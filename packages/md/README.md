@@ -41,6 +41,24 @@ const html = processor.render(md);
 
 `renderStream` streams the result of a markdown stream through the renderer/highlighter. You can easily render/highlight and stream the output from an LLM on the server.
 
+The result will come in chunks of elements instead of by word since the entire element needs to be present to render and highlight correctly. Use with [@robino/html](https://github.com/rossrobino/robino/tree/main/packages/html) to easily send the result as an HTML response.
+
+### ai-sdk
+
+```ts
+import { openai } from "@ai-sdk/openai";
+import { streamText } from "ai";
+
+const { textStream } = streamText({
+	model: openai("gpt-4o-mini"),
+	prompt: "write some js code",
+});
+
+const htmlStream = processor.renderStream(textStream);
+```
+
+### openai
+
 ```ts
 import { OpenAI } from "openai";
 
@@ -71,8 +89,6 @@ const mdStream = new ReadableStream<string>({
 
 const htmlStream = processor.renderStream(mdStream);
 ```
-
-The result will come in chunks of elements instead of by word since the entire element needs to be present to render and highlight correctly. Use with [@robino/html](https://github.com/rossrobino/robino/tree/main/packages/html) to easily send the result as an HTML response.
 
 ## process
 
