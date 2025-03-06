@@ -184,14 +184,3 @@ export const GET = router.fetch;
 // bun, deno, cloudflare...
 export default router;
 ```
-
-### create
-
-Use the `create` helper function to create a typed middleware for the router.
-
-```ts
-const logger = router.create((c, next) => {
-	console.log(c.req.method, c.url.pathname);
-	await next();
-});
-```

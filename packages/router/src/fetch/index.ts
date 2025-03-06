@@ -179,16 +179,6 @@ export class Router<State = null> {
 	}
 
 	/**
-	 * Create middleware helper function.
-	 *
-	 * @param middleware
-	 * @returns typed middleware based on the created router
-	 */
-	create(middleware: Middleware<Params, State>) {
-		return middleware;
-	}
-
-	/**
 	 * @param method HTTP method
 	 * @param pattern route pattern
 	 * @param middleware
