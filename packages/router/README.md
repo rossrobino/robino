@@ -139,10 +139,11 @@ When a `Response` is returned from a handler, the router will immediately return
 router.get(
 	"/multi",
 	() => {
-		// middleware, since it returns void
+		// middleware
+		// returns void, next handler
 	},
 	() => {
-		return new Response("hello world");
+		return new Response("hello world"); // done
 	},
 	() => {
 		// since a Response is returned, this never runs
