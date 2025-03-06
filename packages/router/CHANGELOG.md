@@ -1,5 +1,11 @@
 # @robino/router
 
+## 0.3.0
+
+### Minor Changes
+
+- 2bf5ce9: fix: stop processing handlers when a `Response` is returned
+
 ## 0.2.1
 
 ### Patch Changes
