@@ -14,7 +14,7 @@ const app = new Router({
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
 app.get("/", (c) => {
-	return c.state.page
+	c.res = c.state.page
 		.body(
 			new Page("<readable-stream></readable-stream>")
 				.inject("readable-stream", async () => {
@@ -74,7 +74,7 @@ app.get("/chat", async (c) => {
 
 	const htmlStream = processor.renderStream(mdStream);
 
-	return c.state.page.body(htmlStream).toResponse();
+	c.res = c.state.page.body(htmlStream).toResponse();
 });
 
 export const handler = app.fetch;
