@@ -309,11 +309,12 @@ export class Router<State = null> {
 					context.route = match.route;
 
 					for (const handler of match.route.store) {
-						const result = await handler(context as Context<Params, State>);
-						if (result instanceof Response) context.res = result;
+						const res = await handler(context as Context<Params, State>);
+						// when a Response is returned, stop processing handlers
+						if (res instanceof Response) return res;
 					}
 
-					if (context.res) return context.res;
+					if (context.res instanceof Response) return context.res;
 				}
 
 				if (this.#trailingSlash) {

@@ -131,15 +131,40 @@ router.on("METHOD", "/pattern", () => new Response("handler"));
 
 While not as composable as router that use a `next` hook, the processing of the handlers for each route is very straightforward.
 
-Add multiple handlers or middleware to a route, they will be processed in order. When a `Response` is returned from a handler, it will be assigned to `Context.res`. The final `Context.res` will be returned as the response for the route.
+Add multiple handlers or middleware to a route, they will be processed in order.
+
+When a `Response` is returned from a handler, the router will immediately return the `Response` and not process future handlers.
 
 ```ts
 router.get(
 	"/multi",
-	() => console.log("pre middleware"),
-	() => new Response("handler"),
-	({ res }) => {
-		res.headers.set("post", "middleware");
+	() => {
+		// middleware, since it returns void
+	},
+	() => {
+		return new Response("hello world");
+	},
+	() => {
+		// since a Response is returned, this never runs
+	},
+);
+```
+
+After all the handlers have been run, if no `Response` has been returned, the router will check to see if `Context.res` has been set and return it if so. This is useful if you need to add _post_ middleware, you can set the `Context.res` instead of returning it to keep processing the following handlers.
+
+```ts
+router.get(
+	"/multi",
+	() => {
+		// returns void, next handler
+	},
+	(c) => {
+		c.res = new Response("hello world");
+
+		// returns void, next handler
+	},
+	(c) => {
+		c.res.headers.set("post", "middleware");
 	},
 );
 ```
