@@ -9,7 +9,7 @@ A [lightweight](https://bundlephobia.com/package/@robino/router) radix [trie](ht
 - [Trie](#trie) data structure
 - HTTP [router](#router) built on the Fetch API.
 
-This project is forked and adapted from [memoirist](https://github.com/SaltyAom/memoirist) and [@medley/router](https://github.com/medleyjs/router).
+This project is forked and adapted from [memoirist](https://github.com/SaltyAom/memoirist) and [@medley/router](https://github.com/medleyjs/router), middleware is based on [koa-compose](https://github.com/koajs/compose).
 
 ## Trie
 
@@ -56,7 +56,9 @@ import { Router } from "@robino/router";
 
 const router = new Router();
 
-router.get("/", (c) => new Response("Hello world"));
+router.get("/", (c) => {
+	c.res = new Response("Hello world");
+});
 ```
 
 ### Configuration
@@ -74,19 +76,19 @@ const router = new Router({
 	// add an error handler
 	error: ({ error }) => new Response(error.message, { status: 500 }),
 
-	// run at the start of each request, return state to use in handlers
+	// run at the start of each request, return state to use in middleware
 	start: (c) => ({ foo: "bar" }),
 });
 ```
 
 ### Context
 
-`Context` contains context for the current route. `Router` doesn't provide many helpers in favor of using standard APIs or creating your own `state`. For example, there is no `c.redirect` you can just use [`Response.redirect`](https://developer.mozilla.org/en-US/docs/Web/API/Response/redirect_static).
+`Context` contains context for the current request. `Router` doesn't provide many helpers in favor of using standard APIs or creating your own `state`. For example, there is no `c.redirect` you can just use [`Response.redirect`](https://developer.mozilla.org/en-US/docs/Web/API/Response/redirect_static).
 
 ```ts
 router.get("/api/:id", (c) => {
 	c.req; // Request
-	c.res; // Response returned from or set in previous handler | null
+	c.res; // (Response set in previous middleware) | undefined
 	c.url; // new URL(req.url)
 	c.params; // type safe params: "/api/123" => { id: "123" }
 	c.route; // Matched Route
@@ -99,7 +101,9 @@ router.get("/api/:id", (c) => {
 #### Basic
 
 ```ts
-router.get("/", () => new Response("Hello world"));
+router.get("/", (c) => {
+	c.res = new Response("Hello world");
+});
 ```
 
 #### Param
@@ -124,59 +128,40 @@ router.get("/wild/*", () => {
 #### Other or custom methods
 
 ```ts
-router.on("METHOD", "/pattern", () => new Response("handler"));
+router.on("METHOD", "/pattern", () => {
+	// ...
+});
 ```
 
-#### Multiple handlers or middleware
+#### Middleware
 
-While not as composable as router that use a `next` hook, the processing of the handlers for each route is very straightforward.
-
-Add multiple handlers or middleware to a route, they will be processed in order.
-
-When a `Response` is returned from a handler, the router will immediately return the `Response` and not process future handlers.
+Add middleware to a route, the first middleware added to the route will be called, and the `next` middleware can be called within the first by using `await next()`.
 
 ```ts
 router.get(
 	"/multi",
-	() => {
+	async (c, next) => {
 		// middleware
-		// returns void, next handler
-	},
-	() => {
-		return new Response("hello world"); // done
-	},
-	() => {
-		// since a Response is returned, this never runs
-	},
-);
-```
-
-After all the handlers have been run, if no `Response` has been returned, the router will check to see if `Context.res` has been set and return it if so. This is useful if you need to add _post_ middleware, you can set the `Context.res` instead of returning it to keep processing the following handlers.
-
-```ts
-router.get(
-	"/multi",
-	() => {
-		// returns void, next handler
+		console.log("pre"); // 1
+		await next(); // calls the next middleware below
+		console.log("post"); // 3
 	},
 	(c) => {
+		console.log("final"); // 2
 		c.res = new Response("hello world");
-
-		// returns void, next handler
-	},
-	(c) => {
-		c.res.headers.set("post", "middleware");
 	},
 );
 ```
+
+After all the handlers have been run, the router will check to see if `Context.res` has been set and return it if so.
 
 #### Multiple patterns
 
 Apply handlers to multiple patterns at once with type safe parameters.
 
 ```ts
-router.get(["/multi/:param", "/pattern/:another"], ({ param }) => {
-	param; // { param: string } | { another: string }
+router.get(["/multi/:param", "/pattern/:another"], (c) => {
+	c.param; // { param: string } | { another: string }
 });
 ```
 
@@ -202,10 +187,11 @@ export default router;
 
 ### create
 
-Use the `create` helper function to create a typed handler for the router.
+Use the `create` helper function to create a typed middleware for the router.
 
 ```ts
-const logger = router.create(({ url, req }) => {
-	console.log(req.method, url.pathname);
+const logger = router.create((c, next) => {
+	console.log(c.req.method, c.url.pathname);
+	await next();
 });
 ```

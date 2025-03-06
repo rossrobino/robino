@@ -11,46 +11,48 @@ const router = new Router({
 const get = (pathname: string) =>
 	router.fetch(new Request("http://localhost:5173" + pathname));
 
-const logger = router.create(({ url, req }) =>
-	console.log(req.method, url.pathname),
-);
+const logger = router.create(async ({ url, req }, next) => {
+	console.log(req.method, url.pathname);
+	await next();
+});
 
 test("context", () => {
 	router
 		.get(
 			"/",
-			(c) => {
+			async (c, next) => {
 				expect(c.state.foo).toBe("bar");
 				c.state.foo = "baz";
 				c.req.headers.set("hello", "world");
+				await next();
 			},
 			logger,
-			(c) => {
+			async (c) => {
 				expect(c.state.foo).toBe("baz");
 				expect(c.url).toBeInstanceOf(URL);
 				expect(c.req).toBeInstanceOf(Request);
 				expect(c.req.headers.get("hello")).toBe("world");
 
-				return new Response("hello world");
+				c.res = new Response("hello world");
 			},
 		)
-		.get("/api/:id/", ({ params }) => {
-			expect(params.id).toBeDefined();
+		.get("/api/:id/", (c) => {
+			expect(c.params.id).toBeDefined();
 
-			return Response.json(params);
+			c.res = Response.json(c.params);
 		})
-		.get("/wild/*", ({ params }) => {
-			expect(params["*"]).toBeDefined();
+		.get("/wild/*", (c) => {
+			expect(c.params["*"]).toBeDefined();
 
-			return Response.json(params);
+			c.res = Response.json(c.params);
 		});
-	router.get(["/multi/:param", "/pattern/:another"], ({ params }) => {
-		if ("param" in params) {
-			expect(params.param).toBeDefined();
-			return new Response("multi");
+	router.get(["/multi/:param", "/pattern/:another"], (c) => {
+		if ("param" in c.params) {
+			expect(c.params.param).toBeDefined();
+			c.res = new Response("multi");
 		} else {
-			expect(params.another).toBeDefined();
-			return new Response("pattern");
+			expect(c.params.another).toBeDefined();
+			c.res = new Response("pattern");
 		}
 	});
 });
@@ -59,7 +61,7 @@ test("GET /", async () => {
 	const res = await get("/");
 	const text = await res.text();
 
-	expect(text).toBe("hello world");
+	expect(text).toBe("hello world"); // this is failing, not found
 });
 
 test("GET /api/:id/", async () => {
@@ -77,9 +79,9 @@ test("GET /wild/*", async () => {
 });
 
 test("POST /post/", async () => {
-	router.post("/post/", async ({ req }) => {
-		const formData = await req.formData();
-		return Response.json(formData.get("key"));
+	router.post("/post/", async (c) => {
+		const formData = await c.req.formData();
+		c.res = Response.json(formData.get("key"));
 	});
 
 	const formData = new FormData();
@@ -155,7 +157,9 @@ test("trailing slash - always", async () => {
 
 test("trailing slash - never", async () => {
 	const nev = new Router();
-	nev.get("/test", () => new Response("test"));
+	nev.get("/test", (c) => {
+		c.res = new Response("test");
+	});
 
 	const res = await nev.fetch(new Request("http://localhost:5173/test/"));
 
@@ -165,8 +169,12 @@ test("trailing slash - never", async () => {
 
 test("trailing slash - null", async () => {
 	const nul = new Router({ trailingSlash: null });
-	nul.get("/nope", () => new Response("nope"));
-	nul.get("/yup/", () => new Response("yup"));
+	nul.get("/nope", (c) => {
+		c.res = new Response("nope");
+	});
+	nul.get("/yup/", (c) => {
+		c.res = new Response("yup");
+	});
 
 	expect(
 		(await nul.fetch(new Request("http://localhost:5173/nope"))).status,

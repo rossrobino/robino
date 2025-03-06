@@ -22,9 +22,10 @@ type ExtractMultiParams<Patterns extends string[]> = Patterns extends [
 		: ExtractParams<First> | ExtractMultiParams<Rest>
 	: never;
 
-export type Handler<P extends Params = Params, State = null> = (
+export type Middleware<P extends Params = Params, State = null> = (
 	context: Context<P, State>,
-) => MaybePromise<Response | void>;
+	next: () => Promise<void>,
+) => MaybePromise<void>;
 
 type NotFoundContext<State> = Pick<
 	Context<Params, State>,
@@ -48,11 +49,11 @@ type Context<P extends Params = Params, State = null> = {
 	req: Request;
 
 	/**
-	 * Defined if returned from a previous handler, otherwise `null`
+	 * The final response to return.
 	 *
 	 * [Response reference](https://developer.mozilla.org/en-US/docs/Web/API/Response)
 	 */
-	res: Response | null;
+	res?: Response;
 
 	/**
 	 * URL created from `req.url`
@@ -71,8 +72,8 @@ type Context<P extends Params = Params, State = null> = {
 	 */
 	params: P;
 
-	/** matched route instance */
-	route: Route<Handler<Params, State>[]>;
+	/** The matched `Route` instance. */
+	route: Route<Middleware<Params, State>[]>;
 
 	/**
 	 * `state` returned from `config.start` during each request
@@ -97,7 +98,7 @@ type Method =
 type TrailingSlash = "always" | "never" | null;
 
 export class Router<State = null> {
-	#trieMap = new Map<Method, Node<Handler<Params, State>[]>>();
+	#trieMap = new Map<Method, Node<Middleware<Params, State>[]>>();
 
 	#start?: Start<State>;
 
@@ -153,7 +154,7 @@ export class Router<State = null> {
 			 * Runs at the start of each request.
 			 *
 			 * @param context request context
-			 * @returns any state to access in handlers
+			 * @returns any state to access in middleware
 			 */
 			start?: Start<State>;
 		} = {},
@@ -178,54 +179,54 @@ export class Router<State = null> {
 	}
 
 	/**
-	 * Create handler helper function.
+	 * Create middleware helper function.
 	 *
-	 * @param handler
-	 * @returns typed handler based on the created router
+	 * @param middleware
+	 * @returns typed middleware based on the created router
 	 */
-	create(handler: Handler<Params, State>) {
-		return handler;
+	create(middleware: Middleware<Params, State>) {
+		return middleware;
 	}
 
 	/**
 	 * @param method HTTP method
 	 * @param pattern route pattern
-	 * @param handlers request handlers
+	 * @param middleware
 	 * @returns the router instance
 	 */
 	on<Pattern extends string>(
 		method: Method,
 		pattern: Pattern,
-		...handlers: Handler<ExtractParams<Pattern>, State>[]
+		...middleware: Middleware<ExtractParams<Pattern>, State>[]
 	): this;
 	/**
 	 * @param method HTTP method
 	 * @param patterns array of route patterns
-	 * @param handlers request handlers
+	 * @param middleware
 	 * @returns the router instance
 	 */
 	on<Patterns extends string[]>(
 		method: Method,
 		patterns: [...Patterns],
-		...handlers: Handler<ExtractMultiParams<Patterns>, State>[]
+		...middleware: Middleware<ExtractMultiParams<Patterns>, State>[]
 	): this;
 	on<PatternOrPatterns extends string | string[]>(
 		method: Method,
 		pattern: PatternOrPatterns,
-		...handlers: Handler<Params, State>[]
+		...middleware: Middleware<Params, State>[]
 	) {
 		let patterns: string[];
 		if (!Array.isArray(pattern)) patterns = [pattern];
 		else patterns = pattern;
 
 		for (const p of patterns) {
-			const route = new Route(p, handlers);
+			const route = new Route(p, middleware);
 			const existing = this.#trieMap.get(method);
 
 			if (existing) {
 				existing.add(route);
 			} else {
-				const trie = new Node<Handler<Params, State>[]>();
+				const trie = new Node<Middleware<Params, State>[]>();
 				this.#trieMap.set(method, trie);
 				trie.add(route);
 			}
@@ -236,52 +237,52 @@ export class Router<State = null> {
 
 	/**
 	 * @param pattern route pattern
-	 * @param handlers request handlers
+	 * @param middleware
 	 * @returns the router instance
 	 */
 	get<Pattern extends string>(
 		pattern: Pattern,
-		...handlers: Handler<ExtractParams<Pattern>, State>[]
+		...middleware: Middleware<ExtractParams<Pattern>, State>[]
 	): this;
 	/**
 	 * @param patterns array of route patterns
-	 * @param handlers request handlers
+	 * @param middleware
 	 * @returns the router instance
 	 */
 	get<Patterns extends string[]>(
 		patterns: [...Patterns],
-		...handlers: Handler<ExtractMultiParams<Patterns>, State>[]
+		...middleware: Middleware<ExtractMultiParams<Patterns>, State>[]
 	): this;
 	get<PatternOrPatterns extends string | string[]>(
 		patternOrPatterns: PatternOrPatterns,
-		...handlers: Handler<Params, State>[]
+		...middleware: Middleware<Params, State>[]
 	) {
-		return this.on("GET", patternOrPatterns as string, ...handlers);
+		return this.on("GET", patternOrPatterns as string, ...middleware);
 	}
 
 	/**
 	 * @param pattern route pattern
-	 * @param handlers request handlers
+	 * @param middleware
 	 * @returns the router instance
 	 */
 	post<Pattern extends string>(
 		pattern: Pattern,
-		...handlers: Handler<ExtractParams<Pattern>, State>[]
+		...middleware: Middleware<ExtractParams<Pattern>, State>[]
 	): this;
 	/**
 	 * @param patterns array of route patterns
-	 * @param handlers request handlers
+	 * @param middleware
 	 * @returns the router instance
 	 */
 	post<Patterns extends string[]>(
 		patterns: [...Patterns],
-		...handlers: Handler<ExtractMultiParams<Patterns>, State>[]
+		...middleware: Middleware<ExtractMultiParams<Patterns>, State>[]
 	): this;
 	post<PatternOrPatterns extends string | string[]>(
 		patternOrPatterns: PatternOrPatterns,
-		...handlers: Handler<Params, State>[]
+		...middleware: Middleware<Params, State>[]
 	) {
-		return this.on("POST", patternOrPatterns as string, ...handlers);
+		return this.on("POST", patternOrPatterns as string, ...middleware);
 	}
 
 	/**
@@ -296,7 +297,7 @@ export class Router<State = null> {
 			const context: NotFoundContext<State> & Partial<Context<Params, State>> =
 				{
 					req,
-					res: null,
+					res: undefined,
 					url,
 					state: this.#start ? this.#start({ req, url }) : (null as State),
 				};
@@ -308,11 +309,11 @@ export class Router<State = null> {
 					context.params = match.params;
 					context.route = match.route;
 
-					for (const handler of match.route.store) {
-						const res = await handler(context as Context<Params, State>);
-						// when a Response is returned, stop processing handlers
-						if (res instanceof Response) return res;
-					}
+					const composed = this.#compose(match.route.store);
+
+					await composed(context as Context<Params, State>, () =>
+						Promise.resolve(),
+					);
 
 					if (context.res instanceof Response) return context.res;
 				}
@@ -344,5 +345,31 @@ export class Router<State = null> {
 
 			throw error;
 		}
+	}
+
+	/**
+	 * adapted from [koa-compose](https://github.com/koajs/compose/blob/master/index.js)
+	 *
+	 * @param middleware
+	 * @returns single function comprised of all middleware
+	 */
+	#compose(middleware: Middleware<Params, State>[]): Middleware<Params, State> {
+		return (c, next) => {
+			let index = -1;
+
+			const dispatch = async (i: number): Promise<void> => {
+				if (i <= index) throw new Error("next() called multiple times");
+
+				index = i;
+
+				const mw = i === middleware.length ? next : middleware[i];
+
+				if (!mw) return;
+
+				return mw(c, dispatch.bind(null, i + 1));
+			};
+
+			return dispatch(0);
+		};
 	}
 }
