@@ -1,5 +1,11 @@
 # @robino/router
 
+## 0.4.0
+
+### Minor Changes
+
+- 0405af9: update to use middleware and a `next` function to be more composable
+
 ## 0.3.0
 
 ### Minor Changes
