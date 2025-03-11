@@ -187,16 +187,25 @@ test("mount", async () => {
 	const base = new Router();
 	const sub = new Router();
 
+	sub.get("/", (c) => {
+		c.res = new Response("hello");
+	});
+
 	sub.get("/world", (c) => {
 		c.res = new Response("hello world");
 	});
 
 	base.mount("/hello", sub);
 
-	const res = await base.fetch(
+	const hello = await base.fetch(new Request("http://localhost:5173/hello"));
+
+	expect(hello.status).toBe(200);
+	expect(await hello.text()).toBe("hello");
+
+	const world = await base.fetch(
 		new Request("http://localhost:5173/hello/world"),
 	);
 
-	expect(res.status).toBe(200);
-	expect(await res.text()).toBe("hello world");
+	expect(world.status).toBe(200);
+	expect(await world.text()).toBe("hello world");
 });

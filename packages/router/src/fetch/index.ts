@@ -287,6 +287,14 @@ export class Router<State = null> {
 
 		router.#routesMap.forEach((routes, method) => {
 			for (const route of routes) {
+				if (
+					this.#trailingSlash !== "always" &&
+					route.pattern === "/" &&
+					basePattern !== ""
+				) {
+					route.pattern = "";
+				}
+
 				this.on(method, basePattern + route.pattern, ...route.store);
 			}
 		});
