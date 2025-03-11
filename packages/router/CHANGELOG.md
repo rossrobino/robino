@@ -1,5 +1,11 @@
 # @robino/router
 
+## 0.5.1
+
+### Patch Changes
+
+- 0fbe3be: fix: `mount` router state type conflict
+
 ## 0.5.0
 
 ### Minor Changes
