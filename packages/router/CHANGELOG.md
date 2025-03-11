@@ -1,5 +1,12 @@
 # @robino/router
 
+## 0.5.0
+
+### Minor Changes
+
+- 37af66a: feat: add `mount` method to mount sub-routers
+- 2137139: remove `create` helper, just use the `Middleware` type
+
 ## 0.4.0
 
 ### Minor Changes
