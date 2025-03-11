@@ -282,7 +282,7 @@ export class Router<State = null> {
 	 * @param router sub-router to mount
 	 * @returns the base router instance
 	 */
-	mount(basePattern: string, router: Router) {
+	mount(basePattern: string, router: Router<State>) {
 		if (basePattern.at(-1) === "/") basePattern = basePattern.slice(0, -1);
 
 		router.#routesMap.forEach((routes, method) => {
