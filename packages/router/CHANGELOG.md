@@ -1,5 +1,11 @@
 # @robino/router
 
+## 0.5.2
+
+### Patch Changes
+
+- d07e18b: fix: trailing slash mount issue
+
 ## 0.5.1
 
 ### Patch Changes
