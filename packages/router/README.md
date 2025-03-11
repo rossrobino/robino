@@ -83,7 +83,7 @@ const router = new Router({
 
 ### Context
 
-`Context` contains context for the current request. `Router` doesn't provide many helpers in favor of using standard APIs or creating your own `state`. For example, there is no `c.redirect` you can just use [`Response.redirect`](https://developer.mozilla.org/en-US/docs/Web/API/Response/redirect_static).
+`Context` contains context for the current request.
 
 ```ts
 router.get("/api/:id", (c) => {
@@ -183,4 +183,20 @@ export const GET = router.fetch;
 ```ts
 // bun, deno, cloudflare...
 export default router;
+```
+
+### mount
+
+Mount routers onto another with a base pattern.
+
+```ts
+const app = new Router();
+
+const hello = new Router();
+
+hello.get("/world", (c) => {
+	c.res = new Response("hello world");
+});
+
+app.mount("/hello", hello); // "/hello/world"
 ```

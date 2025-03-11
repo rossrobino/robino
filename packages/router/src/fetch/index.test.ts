@@ -11,11 +11,6 @@ const router = new Router({
 const get = (pathname: string) =>
 	router.fetch(new Request("http://localhost:5173" + pathname));
 
-const logger = router.create(async ({ url, req }, next) => {
-	console.log(req.method, url.pathname);
-	await next();
-});
-
 test("context", () => {
 	router
 		.get(
@@ -26,7 +21,6 @@ test("context", () => {
 				c.req.headers.set("hello", "world");
 				await next();
 			},
-			logger,
 			async (c) => {
 				expect(c.state.foo).toBe("baz");
 				expect(c.url).toBeInstanceOf(URL);
@@ -55,6 +49,13 @@ test("context", () => {
 			c.res = new Response("pattern");
 		}
 	});
+	router.post("/post/", async (c) => {
+		const formData = await c.req.formData();
+		c.res = Response.json(formData.get("key"));
+	});
+	router.get("/error/", () => {
+		throw new Error("An error occurred");
+	});
 });
 
 test("GET /", async () => {
@@ -79,11 +80,6 @@ test("GET /wild/*", async () => {
 });
 
 test("POST /post/", async () => {
-	router.post("/post/", async (c) => {
-		const formData = await c.req.formData();
-		c.res = Response.json(formData.get("key"));
-	});
-
 	const formData = new FormData();
 	formData.append("key", "value");
 
@@ -130,10 +126,6 @@ test("GET /not-found/ (custom)", async () => {
 });
 
 test("GET /error/", async () => {
-	router.get("/error/", () => {
-		throw new Error("An error occurred");
-	});
-
 	await expect(() => get("/error/")).rejects.toThrowError();
 });
 
@@ -189,4 +181,22 @@ test("trailing slash - null", async () => {
 	expect(
 		(await nul.fetch(new Request("http://localhost:5173/yup/"))).status,
 	).toBe(200);
+});
+
+test("mount", async () => {
+	const base = new Router();
+	const sub = new Router();
+
+	sub.get("/world", (c) => {
+		c.res = new Response("hello world");
+	});
+
+	base.mount("/hello", sub);
+
+	const res = await base.fetch(
+		new Request("http://localhost:5173/hello/world"),
+	);
+
+	expect(res.status).toBe(200);
+	expect(await res.text()).toBe("hello world");
 });

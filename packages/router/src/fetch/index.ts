@@ -98,7 +98,11 @@ type Method =
 type TrailingSlash = "always" | "never" | null;
 
 export class Router<State = null> {
+	/** Holds the built trie per HTTP method */
 	#trieMap = new Map<Method, Node<Middleware<Params, State>[]>>();
+
+	/** Holds the added routes per HTTP method */
+	#routesMap = new Map<Method, Route<Middleware<Params, State>[]>[]>();
 
 	#start?: Start<State>;
 
@@ -211,14 +215,12 @@ export class Router<State = null> {
 
 		for (const p of patterns) {
 			const route = new Route(p, middleware);
-			const existing = this.#trieMap.get(method);
+			const existing = this.#routesMap.get(method);
 
 			if (existing) {
-				existing.add(route);
+				existing.push(route);
 			} else {
-				const trie = new Node<Middleware<Params, State>[]>();
-				this.#trieMap.set(method, trie);
-				trie.add(route);
+				this.#routesMap.set(method, [route]);
 			}
 		}
 
@@ -276,13 +278,41 @@ export class Router<State = null> {
 	}
 
 	/**
+	 * @param basePattern pattern to mount the router to, each route will begin with this base
+	 * @param router sub-router to mount
+	 * @returns the base router instance
+	 */
+	mount(basePattern: string, router: Router) {
+		if (basePattern.at(-1) === "/") basePattern = basePattern.slice(0, -1);
+
+		router.#routesMap.forEach((routes, method) => {
+			for (const route of routes) {
+				this.on(method, basePattern + route.pattern, ...route.store);
+			}
+		});
+
+		return this;
+	}
+
+	/**
 	 * @param req [Request](https://developer.mozilla.org/en-US/docs/Web/API/Request)
 	 * @returns [Response](https://developer.mozilla.org/en-US/docs/Web/API/Response)
 	 */
 	async fetch(req: Request): Promise<Response> {
 		try {
 			const url = new URL(req.url);
-			const trie = this.#trieMap.get(req.method);
+			let trie = this.#trieMap.get(req.method);
+
+			if (!trie) {
+				const routes = this.#routesMap.get(req.method);
+
+				if (routes) {
+					// build trie
+					trie = new Node<Middleware<Params, State>[]>();
+					for (const route of routes) trie.add(route);
+					this.#trieMap.set(req.method, trie);
+				}
+			}
 
 			const context: NotFoundContext<State> & Partial<Context<Params, State>> =
 				{
