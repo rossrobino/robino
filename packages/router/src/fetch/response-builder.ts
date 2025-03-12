@@ -128,7 +128,7 @@ export class ResponseBuilder<State> {
 			const page = new Page(bodyOrInject);
 			statusOrInject(page);
 			body = page.toByteStream();
-		} else if (bodyOrInject) {
+		} else if (bodyOrInject !== undefined) {
 			body = bodyOrInject;
 		} else if (this.#html) {
 			body = this.#html;
@@ -137,7 +137,7 @@ export class ResponseBuilder<State> {
 		}
 
 		this.set(body, {
-			status,
+			status: typeof statusOrInject === "number" ? statusOrInject : status,
 			headers: { contentType: "text/html; charset=utf-8" },
 		});
 	}
