@@ -24,5 +24,8 @@
 		"check": "tsc --noEmit",
 		"dev": "tsc --watch",
 		"build": "tsc"
+	},
+	"dependencies": {
+		"@mjackson/headers": "^0.10.0"
 	}
 }

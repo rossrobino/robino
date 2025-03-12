@@ -56,9 +56,7 @@ import { Router } from "@robino/router";
 
 const router = new Router();
 
-router.get("/", (c) => {
-	c.res = new Response("Hello world");
-});
+router.get("/", (c) => c.res.set("Hello world"));
 ```
 
 ### Configuration
@@ -71,10 +69,10 @@ const router = new Router({
 	trailingSlash: "always",
 
 	// customize the not found response
-	notFound: ({ req, url }) => new Response("custom", { status: 404 }),
+	notFound: (c) => c.res.set("custom", { status: 404 }),
 
 	// add an error handler
-	error: ({ error }) => new Response(error.message, { status: 500 }),
+	error: (c) => c.res.set(c.error.message, { status: 500 }),
 
 	// run at the start of each request, return state to use in middleware
 	start: (c) => ({ foo: "bar" }),
@@ -87,9 +85,8 @@ const router = new Router({
 
 ```ts
 router.get("/api/:id", (c) => {
-	c.req; // Request
-	c.res; // (Response set in previous middleware) | undefined
-	c.url; // new URL(req.url)
+	c.req; // enhanced Request
+	c.res; // ResponseBuilder (set in previous middleware)
 	c.params; // type safe params: "/api/123" => { id: "123" }
 	c.route; // Matched Route
 	c.state; // whatever is returned from `config.start`, for example an auth helper or a key/value store
@@ -101,9 +98,7 @@ router.get("/api/:id", (c) => {
 #### Basic
 
 ```ts
-router.get("/", (c) => {
-	c.res = new Response("Hello world");
-});
+router.get("/", (c) => c.res.set("Hello world"));
 ```
 
 #### Param
@@ -148,12 +143,12 @@ router.get(
 	},
 	(c) => {
 		console.log("final"); // 2
-		c.res = new Response("hello world");
+		c.res.set("hello world");
 	},
 );
 ```
 
-After all the handlers have been run, the router will check to see if `Context.res` has been set and return it if so.
+`Context` is passed between between each middleware that is stored in the matched `Route`. After all the handlers have been run, the `Context.res` will `build` and return the final response.
 
 #### Multiple patterns
 
@@ -194,9 +189,7 @@ const app = new Router();
 
 const hello = new Router();
 
-hello.get("/world", (c) => {
-	c.res = new Response("hello world");
-});
+hello.get("/world", (c) => c.res.set("hello world"));
 
 app.mount("/hello", hello); // "/hello/world"
 ```

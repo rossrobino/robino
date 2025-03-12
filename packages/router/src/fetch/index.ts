@@ -1,8 +1,8 @@
 import { Node, Route } from "../trie/index.js";
+import { ResponseBuilder } from "./response-builder.js";
+import { SuperRequest } from "./super-request.js";
 
-type MaybePromise<T> = T | Promise<T>;
-
-type Params = Record<string, string>;
+export type Params = Record<string, string>;
 
 type ExtractParams<Pattern extends string = string> =
 	Pattern extends `${infer _Start}:${infer Param}/${infer Rest}`
@@ -25,42 +25,31 @@ type ExtractMultiParams<Patterns extends string[]> = Patterns extends [
 export type Middleware<P extends Params = Params, State = null> = (
 	context: Context<P, State>,
 	next: () => Promise<void>,
-) => MaybePromise<void>;
+) => any;
 
-type NotFoundContext<State> = Pick<
+export type NotFoundContext<State> = Pick<
 	Context<Params, State>,
-	"req" | "res" | "url" | "state"
+	"req" | "res" | "state"
 >;
 
-export type NotFoundHandler<State> = (
+export type NotFoundMiddleware<State> = (
 	context: NotFoundContext<State>,
-) => MaybePromise<Response>;
+) => any;
 
-export type ErrorHandler = (
-	context: Pick<Context, "req"> & {
+export type ErrorMiddleware = (
+	context: Pick<Context, "req" | "res"> & {
 		error: Error;
 	},
-) => MaybePromise<Response>;
+) => any;
 
-type Start<State> = (context: Pick<Context, "req" | "url">) => State;
+export type Start<State> = (context: Pick<Context, "req">) => State;
 
-type Context<P extends Params = Params, State = null> = {
-	/** [Request reference](https://developer.mozilla.org/en-US/docs/Web/API/Request) */
-	req: Request;
+export type Context<P extends Params = Params, State = null> = {
+	/** Request context with enhanced `Headers` and URL. */
+	req: SuperRequest;
 
-	/**
-	 * The final response to return.
-	 *
-	 * [Response reference](https://developer.mozilla.org/en-US/docs/Web/API/Response)
-	 */
-	res?: Response;
-
-	/**
-	 * URL created from `req.url`
-	 *
-	 * [URL reference](https://developer.mozilla.org/en-US/docs/Web/API/URL)
-	 */
-	url: URL;
+	/** Builds the final `Response` after middleware has processed. */
+	res: ResponseBuilder<State>;
 
 	/**
 	 * Route pattern parameters
@@ -83,7 +72,7 @@ type Context<P extends Params = Params, State = null> = {
 	state: State;
 };
 
-type Method =
+export type Method =
 	| "GET"
 	| "HEAD"
 	| "POST"
@@ -108,15 +97,11 @@ export class Router<State = null> {
 
 	#trailingSlash: TrailingSlash;
 
-	/** Handler to run when route is not found. */
-	notFound: NotFoundHandler<State> = () =>
-		new Response("Not found", {
-			status: 404,
-			headers: { "content-type": "text/html" },
-		});
+	/** Middleware to run when route is not found. */
+	notFound?: NotFoundMiddleware<State | null>;
 
 	/** Handler to run when an Error is thrown.  */
-	error: ErrorHandler | null;
+	error: ErrorMiddleware | null;
 
 	constructor(
 		config: {
@@ -137,12 +122,12 @@ export class Router<State = null> {
 			 *
 			 * @default
 			 *
-			 * () => new Response("Not found", {
+			 * (c) => c.res.set("Not found", {
 			 * 	status: 404,
-			 * 	headers: { "content-type": "text/html" },
+			 * 	headers: { contentType: "text/html" },
 			 * })
 			 */
-			notFound?: NotFoundHandler<State>;
+			notFound?: NotFoundMiddleware<State | null>;
 
 			/**
 			 * Assign a handler to run when an Error is thrown.
@@ -152,7 +137,7 @@ export class Router<State = null> {
 			 *
 			 * @default null
 			 */
-			error?: ErrorHandler;
+			error?: ErrorMiddleware;
 
 			/**
 			 * Runs at the start of each request.
@@ -163,16 +148,7 @@ export class Router<State = null> {
 			start?: Start<State>;
 		} = {},
 	) {
-		const {
-			trailingSlash = "never",
-			error = null,
-			notFound = () =>
-				new Response("Not found", {
-					status: 404,
-					headers: { "content-type": "text/html" },
-				}),
-			start,
-		} = config;
+		const { trailingSlash = "never", error = null, notFound, start } = config;
 
 		this.#trailingSlash = trailingSlash;
 		this.error = error;
@@ -303,12 +279,13 @@ export class Router<State = null> {
 	}
 
 	/**
-	 * @param req [Request](https://developer.mozilla.org/en-US/docs/Web/API/Request)
+	 * @param request [Request](https://developer.mozilla.org/en-US/docs/Web/API/Request)
 	 * @returns [Response](https://developer.mozilla.org/en-US/docs/Web/API/Response)
 	 */
-	async fetch(req: Request): Promise<Response> {
+	async fetch(request: Request): Promise<Response> {
+		const req = new SuperRequest(request);
+
 		try {
-			const url = new URL(req.url);
 			let trie = this.#trieMap.get(req.method);
 
 			if (!trie) {
@@ -322,16 +299,21 @@ export class Router<State = null> {
 				}
 			}
 
+			const state = this.#start ? this.#start({ req }) : (null as State);
+
 			const context: NotFoundContext<State> & Partial<Context<Params, State>> =
 				{
 					req,
-					res: undefined,
-					url,
-					state: this.#start ? this.#start({ req, url }) : (null as State),
+					res: new ResponseBuilder({
+						req,
+						state,
+						notFound: this.notFound as NotFoundMiddleware<State>,
+					}),
+					state,
 				};
 
 			if (trie) {
-				const match = trie.find(url.pathname);
+				const match = trie.find(req.url.pathname);
 
 				if (match) {
 					context.params = match.params;
@@ -342,33 +324,40 @@ export class Router<State = null> {
 					await composed(context as Context<Params, State>, () =>
 						Promise.resolve(),
 					);
-
-					if (context.res instanceof Response) return context.res;
 				}
 
-				if (this.#trailingSlash) {
-					const last = url.pathname.at(-1);
+				if (
+					(!context.res.status || context.res.status === 404) &&
+					this.#trailingSlash
+				) {
+					const last = req.url.pathname.at(-1);
 
 					if (this.#trailingSlash === "always" && last !== "/") {
-						url.pathname += "/";
-						return Response.redirect(url, 308);
-					}
-
-					if (
+						req.url.pathname += "/";
+						context.res.redirect(req.url, 308);
+					} else if (
 						this.#trailingSlash === "never" &&
-						url.pathname !== "/" &&
+						req.url.pathname !== "/" &&
 						last === "/"
 					) {
-						url.pathname = url.pathname.slice(0, -1);
-						return Response.redirect(url, 308);
+						req.url.pathname = req.url.pathname.slice(0, -1);
+						context.res.redirect(req.url, 308);
 					}
 				}
 			}
 
-			return this.notFound(context);
+			return context.res.build();
 		} catch (error) {
 			if (this.error && error instanceof Error) {
-				return this.error({ req, error });
+				const res = new ResponseBuilder({
+					req,
+					state: null,
+					notFound: this.notFound as NotFoundMiddleware<null>,
+				});
+
+				this.error({ req, error, res });
+
+				return res.build();
 			}
 
 			throw error;
