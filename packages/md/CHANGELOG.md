@@ -1,5 +1,11 @@
 # @robino/md
 
+## 3.1.2
+
+### Patch Changes
+
+- 15b90e8: update dependencies
+
 ## 3.1.1
 
 ### Patch Changes

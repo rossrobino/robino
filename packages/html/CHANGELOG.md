@@ -1,5 +1,11 @@
 # @robino/html
 
+## 0.9.0
+
+### Minor Changes
+
+- c3af911: feat: add `toByteStream` method
+
 ## 0.8.0
 
 ### Minor Changes
