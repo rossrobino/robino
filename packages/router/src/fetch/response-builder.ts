@@ -1,6 +1,9 @@
 import type { NotFoundContext, NotFoundMiddleware } from "./index.js";
 import type { SuperRequest } from "./super-request.js";
 import { SuperHeaders, type SuperHeadersInit } from "@mjackson/headers";
+import { Page } from "@robino/html";
+
+type Inject = (page: Page) => void;
 
 export class ResponseBuilder<State> {
 	/** [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/API/Response/Response#body) */
@@ -18,27 +21,39 @@ export class ResponseBuilder<State> {
 	 */
 	headers = new SuperHeaders();
 
+	/** `config.notFound` */
 	#notFound: NotFoundMiddleware<State>;
+
+	/** created with `config` and `this` */
 	#notFoundContext: NotFoundContext<State>;
 
-	constructor(options: {
+	/** `config.html` */
+	#html?: string;
+
+	constructor(config: {
 		req: SuperRequest;
 		state: State;
+		html?: string;
 		notFound?: NotFoundMiddleware<State>;
 	}) {
-		this.#notFoundContext = {
-			req: options.req,
-			state: options.state,
-			res: this,
-		};
-
-		this.#notFound =
-			options.notFound ??
-			((c) =>
+		const {
+			req,
+			state,
+			html,
+			notFound = (c) =>
 				c.res.set("Not found", {
 					status: 404,
 					headers: { contentType: "text/html" },
-				}));
+				}),
+		} = config;
+
+		this.#notFoundContext = {
+			req,
+			state,
+			res: this,
+		};
+		this.#html = html;
+		this.#notFound = notFound;
 	}
 
 	/**
@@ -81,9 +96,46 @@ export class ResponseBuilder<State> {
 	 * Creates an HTML response.
 	 *
 	 * @param body HTML body
-	 * @param status HTTP status code
+	 * @param status [HTTP response status code](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status)
 	 */
-	html(body: BodyInit, status?: number) {
+	html(body?: BodyInit | null, status?: number): void;
+	/**
+	 * @param html HTML to inject into
+	 * @param inject callback to inject tags into HTML
+	 * @param status [HTTP response status code](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status)
+	 */
+	html(html: string, inject: Inject, status?: number): void;
+	/**
+	 * @param inject callback to inject tags into default HTML
+	 * @param status [HTTP response status code](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status)
+	 */
+	html(inject: Inject, status?: number): void;
+	html(
+		bodyOrInject?: (BodyInit | null) | Inject,
+		statusOrInject?: number | Inject,
+		status?: number,
+	) {
+		let body: BodyInit | null;
+
+		if (typeof bodyOrInject === "function") {
+			const page = new Page(this.#html);
+			bodyOrInject(page);
+			body = page.toByteStream();
+		} else if (
+			typeof bodyOrInject === "string" &&
+			typeof statusOrInject === "function"
+		) {
+			const page = new Page(bodyOrInject);
+			statusOrInject(page);
+			body = page.toByteStream();
+		} else if (bodyOrInject) {
+			body = bodyOrInject;
+		} else if (this.#html) {
+			body = this.#html;
+		} else {
+			body = null;
+		}
+
 		this.set(body, {
 			status,
 			headers: { contentType: "text/html; charset=utf-8" },
@@ -94,7 +146,7 @@ export class ResponseBuilder<State> {
 	 * Creates a JSON response.
 	 *
 	 * @param value passed into JSON.stringify to create the body
-	 * @param status HTTP status code
+	 * @param status [HTTP response status code](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status)
 	 */
 	json(value: any, status?: number) {
 		this.set(JSON.stringify(value), {
@@ -107,7 +159,7 @@ export class ResponseBuilder<State> {
 	 * Creates a plain text response.
 	 *
 	 * @param body response body
-	 * @param status HTTP status code
+	 * @param status [HTTP response status code](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status)
 	 */
 	text(body: BodyInit, status?: number) {
 		this.set(body, { status, headers: { contentType: "text/html" } });
@@ -120,11 +172,11 @@ export class ResponseBuilder<State> {
 	 * @param status defaults to [`302`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/302)
 	 */
 	redirect(location: string | URL, status: 301 | 302 | 303 | 307 | 308 = 302) {
-		this.status = status;
 		this.headers.location = location.toString();
+		this.status = status;
 	}
 
-	/** Runs the `notFound` middleware.  */
+	/** Runs the `notFound` middleware. */
 	notFound() {
 		this.#notFound(this.#notFoundContext);
 	}

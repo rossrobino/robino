@@ -32,7 +32,7 @@ export class SuperRequest {
 	}
 
 	// these are exposed because they are accessed often enough it would
-	// be inconvenient to access via `raw` every time
+	// be inconvenient to access via `req` every time
 
 	/** [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/API/Request/method) */
 	get method(): Method {

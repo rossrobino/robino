@@ -35,8 +35,9 @@ export class Page {
 	 * <!doctype html><html><head></head><body></body></html>
 	 * ```
 	 */
-	constructor(html = "<!doctype html><html><head></head><body></body></html>") {
-		this.#html = html;
+	constructor(html?: string | null) {
+		this.#html =
+			html ?? "<!doctype html><html><head></head><body></body></html>";
 	}
 
 	/** @returns client side script for out of order streaming */
@@ -217,7 +218,7 @@ export class Page {
 	}
 
 	/**
-	 * @returns a `ReadableStream` that streams the HTML in order as
+	 * @returns a `ReadableStream<string>` that streams the HTML in order as
 	 * each `TagInput` resolves
 	 */
 	toStream() {
@@ -359,6 +360,13 @@ export class Page {
 	}
 
 	/**
+	 * @returns `toStream` piped through a `TextEncoderStream`
+	 */
+	toByteStream() {
+		return this.toStream().pipeThrough(new TextEncoderStream());
+	}
+
+	/**
 	 * @param init [ResponseInit](https://developer.mozilla.org/en-US/docs/Web/API/Response/Response#options),
 	 * defaults to have content-type HTML header
 	 * @returns a `Response` that streams the HTML in order as each `TagInput`  resolves
@@ -366,10 +374,7 @@ export class Page {
 	toResponse(init: ResponseInit = {}) {
 		init.headers ??= { "content-type": "text/html; charset=utf-8" };
 
-		return new Response(
-			this.toStream().pipeThrough(new TextEncoderStream()),
-			init,
-		);
+		return new Response(this.toByteStream(), init);
 	}
 
 	/**

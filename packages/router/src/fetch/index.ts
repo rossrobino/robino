@@ -4,45 +4,21 @@ import { SuperRequest } from "./super-request.js";
 
 export type Params = Record<string, string>;
 
-type ExtractParams<Pattern extends string = string> =
-	Pattern extends `${infer _Start}:${infer Param}/${infer Rest}`
-		? { [k in Param | keyof ExtractParams<Rest>]: string }
-		: Pattern extends `${infer _Start}:${infer Param}`
-			? { [k in Param]: string }
-			: Pattern extends `${infer _Rest}*`
-				? { "*": string }
-				: {};
-
-type ExtractMultiParams<Patterns extends string[]> = Patterns extends [
-	infer First extends string,
-	...infer Rest extends string[],
-]
-	? Rest["length"] extends 0
-		? ExtractParams<First>
-		: ExtractParams<First> | ExtractMultiParams<Rest>
-	: never;
-
-export type Middleware<P extends Params = Params, State = null> = (
-	context: Context<P, State>,
-	next: () => Promise<void>,
-) => any;
+export type StartContext = Pick<Context, "req">;
+export type Start<State> = (context: StartContext) => State;
 
 export type NotFoundContext<State> = Pick<
 	Context<Params, State>,
 	"req" | "res" | "state"
 >;
-
 export type NotFoundMiddleware<State> = (
 	context: NotFoundContext<State>,
 ) => any;
 
-export type ErrorMiddleware = (
-	context: Pick<Context, "req" | "res"> & {
-		error: Error;
-	},
-) => any;
-
-export type Start<State> = (context: Pick<Context, "req">) => State;
+export type ErrorContext<State> = Pick<Context<{}, State>, "req" | "res"> & {
+	error: Error;
+};
+export type ErrorMiddleware<State> = (context: ErrorContext<State>) => any;
 
 export type Context<P extends Params = Params, State = null> = {
 	/** Request context with enhanced `Headers` and URL. */
@@ -72,6 +48,11 @@ export type Context<P extends Params = Params, State = null> = {
 	state: State;
 };
 
+export type Middleware<P extends Params = Params, State = null> = (
+	context: Context<P, State>,
+	next: () => Promise<void>,
+) => any;
+
 export type Method =
 	| "GET"
 	| "HEAD"
@@ -86,22 +67,45 @@ export type Method =
 
 type TrailingSlash = "always" | "never" | null;
 
+type ExtractParams<Pattern extends string = string> =
+	Pattern extends `${infer _Start}:${infer Param}/${infer Rest}`
+		? { [k in Param | keyof ExtractParams<Rest>]: string }
+		: Pattern extends `${infer _Start}:${infer Param}`
+			? { [k in Param]: string }
+			: Pattern extends `${infer _Rest}*`
+				? { "*": string }
+				: {};
+
+type ExtractMultiParams<Patterns extends string[]> = Patterns extends [
+	infer First extends string,
+	...infer Rest extends string[],
+]
+	? Rest["length"] extends 0
+		? ExtractParams<First>
+		: ExtractParams<First> | ExtractMultiParams<Rest>
+	: never;
+
 export class Router<State = null> {
-	/** Holds the built trie per HTTP method */
+	/** Built tries per HTTP method */
 	#trieMap = new Map<Method, Node<Middleware<Params, State>[]>>();
 
-	/** Holds the added routes per HTTP method */
+	/** Added routes per HTTP method */
 	#routesMap = new Map<Method, Route<Middleware<Params, State>[]>[]>();
 
+	/** `config.start` */
 	#start?: Start<State>;
 
+	/** `config.trailingSlash` */
 	#trailingSlash: TrailingSlash;
 
+	/** `config.html` */
+	#html?: string;
+
 	/** Middleware to run when route is not found. */
-	notFound?: NotFoundMiddleware<State | null>;
+	notFound?: NotFoundMiddleware<State>;
 
 	/** Handler to run when an Error is thrown.  */
-	error: ErrorMiddleware | null;
+	error: ErrorMiddleware<State> | null;
 
 	constructor(
 		config: {
@@ -127,7 +131,7 @@ export class Router<State = null> {
 			 * 	headers: { contentType: "text/html" },
 			 * })
 			 */
-			notFound?: NotFoundMiddleware<State | null>;
+			notFound?: NotFoundMiddleware<State>;
 
 			/**
 			 * Assign a handler to run when an Error is thrown.
@@ -137,7 +141,7 @@ export class Router<State = null> {
 			 *
 			 * @default null
 			 */
-			error?: ErrorMiddleware;
+			error?: ErrorMiddleware<State>;
 
 			/**
 			 * Runs at the start of each request.
@@ -146,14 +150,24 @@ export class Router<State = null> {
 			 * @returns any state to access in middleware
 			 */
 			start?: Start<State>;
+
+			/** Default `HTML` string to respond with or inject into with `c.res.html()`. */
+			html?: string;
 		} = {},
 	) {
-		const { trailingSlash = "never", error = null, notFound, start } = config;
+		const {
+			trailingSlash = "never",
+			error = null,
+			notFound,
+			start,
+			html,
+		} = config;
 
 		this.#trailingSlash = trailingSlash;
 		this.error = error;
 		this.notFound = notFound;
 		this.#start = start;
+		this.#html = html;
 
 		this.fetch = this.fetch.bind(this);
 	}
@@ -284,6 +298,13 @@ export class Router<State = null> {
 	 */
 	async fetch(request: Request): Promise<Response> {
 		const req = new SuperRequest(request);
+		const state = this.#start ? this.#start({ req }) : (null as State);
+		const res = new ResponseBuilder({
+			req,
+			state,
+			html: this.#html,
+			notFound: this.notFound,
+		});
 
 		try {
 			let trie = this.#trieMap.get(req.method);
@@ -299,16 +320,10 @@ export class Router<State = null> {
 				}
 			}
 
-			const state = this.#start ? this.#start({ req }) : (null as State);
-
 			const context: NotFoundContext<State> & Partial<Context<Params, State>> =
 				{
 					req,
-					res: new ResponseBuilder({
-						req,
-						state,
-						notFound: this.notFound as NotFoundMiddleware<State>,
-					}),
+					res,
 					state,
 				};
 
@@ -347,20 +362,23 @@ export class Router<State = null> {
 			}
 
 			return context.res.build();
-		} catch (error) {
-			if (this.error && error instanceof Error) {
-				const res = new ResponseBuilder({
-					req,
-					state: null,
-					notFound: this.notFound as NotFoundMiddleware<null>,
-				});
+		} catch (e) {
+			if (this.error) {
+				let error: Error;
+				if (e instanceof Error) {
+					error = e;
+				} else {
+					error = new Error(
+						`Something other than an \`Error\` was thrown:\n\n${e}`,
+					);
+				}
 
 				this.error({ req, error, res });
 
 				return res.build();
 			}
 
-			throw error;
+			throw e;
 		}
 	}
 

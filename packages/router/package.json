@@ -26,6 +26,7 @@
 		"build": "tsc"
 	},
 	"dependencies": {
-		"@mjackson/headers": "^0.10.0"
+		"@mjackson/headers": "^0.10.0",
+		"@robino/html": "^0.8.0"
 	}
 }

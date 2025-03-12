@@ -59,6 +59,12 @@ test("context", () => {
 	router.get("/error/", () => {
 		throw new Error("An error occurred");
 	});
+
+	router.get("/page", (c) => {
+		c.res.html((p) => {
+			p.body("body");
+		});
+	});
 });
 
 test("GET /", async () => {
@@ -188,4 +194,11 @@ test("mount", async () => {
 
 	expect(world.status).toBe(200);
 	expect(await world.text()).toBe("hello world");
+});
+
+test("html", async () => {
+	const res = await get("/page");
+	const text = await res.text();
+	expect(res.status).toBe(200);
+	expect(text.startsWith("<")).toBe(true);
 });
