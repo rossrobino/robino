@@ -1,5 +1,11 @@
 # @robino/tsconfig
 
+## 1.0.2
+
+### Patch Changes
+
+- 15b90e8: update dependencies
+
 ## 1.0.1
 
 ### Patch Changes

@@ -1,5 +1,17 @@
 # @robino/router
 
+## 0.6.0
+
+### Minor Changes
+
+- 2058d22: feat: change context to use `ResponseBuilder` and `SuperRequest`
+- c3af911: feat: add inject method to `c.res.html`
+
+### Patch Changes
+
+- Updated dependencies [c3af911]
+  - @robino/html@0.9.0
+
 ## 0.5.2
 
 ### Patch Changes
