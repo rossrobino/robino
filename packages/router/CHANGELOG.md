@@ -1,5 +1,11 @@
 # @robino/router
 
+## 0.6.1
+
+### Patch Changes
+
+- 685d095: fix: set c.res.html status correctly
+
 ## 0.6.0
 
 ### Minor Changes
