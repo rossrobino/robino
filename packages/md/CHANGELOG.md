@@ -1,5 +1,11 @@
 # @robino/md
 
+## 3.2.0
+
+### Minor Changes
+
+- e7e5819: feat: add vite plugin
+
 ## 3.1.2
 
 ### Patch Changes
