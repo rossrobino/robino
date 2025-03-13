@@ -107,19 +107,19 @@ export class Processor extends MarkdownIt {
 
 	/**
 	 * @param md markdown string to process
-	 * @param frontmatterSchema optional frontmatter [Standard Schema](https://github.com/standard-schema/standard-schema)
+	 * @param FrontmatterSchema optional frontmatter [Standard Schema](https://github.com/standard-schema/standard-schema)
 	 * @returns headings, article, frontmatter, html
 	 */
 	async process<T extends StandardSchemaV1>(
 		md: string,
-		frontmatterSchema?: T,
+		FrontmatterSchema?: T,
 	): Promise<Result<T>> {
 		const [, yaml, ...articleSegments] = md.split("---");
-		const processFrontmatter = yaml && frontmatterSchema;
+		const processFrontmatter = yaml && FrontmatterSchema;
 
 		const article = processFrontmatter ? articleSegments.join("---") : md;
 		const frontmatter = processFrontmatter
-			? await this.getFrontmatter(yaml, frontmatterSchema)
+			? await this.getFrontmatter(yaml, FrontmatterSchema)
 			: {};
 		const headings = this.getHeadings(article);
 		const html = this.render(article);

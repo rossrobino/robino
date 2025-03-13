@@ -29,7 +29,33 @@ const processor = new Processor({
 });
 ```
 
-## render
+### process
+
+The `process` method provides extra meta data in addition to the HTML result.
+
+```ts
+// example using zod, any Standard Schema validator is supported
+import { z } from "zod";
+
+const FrontmatterSchema = z
+	.object({
+		title: z.string(),
+		description: z.string(),
+		keywords: z
+			.string()
+			.transform((val) => val.split(",").map((s) => s.trim().toLowerCase())),
+		date: z.string(),
+	})
+	.strict();
+
+const result = await processor.process(md, FrontmatterSchema);
+
+result.html; // processed HTML article
+result.headings; // { id: string, name: string, level: number }[]
+result.frontmatter; // type-safe/validated frontmatter based on the schema
+```
+
+### render
 
 Use the `render` method to render highlighted HTML.
 
@@ -37,13 +63,13 @@ Use the `render` method to render highlighted HTML.
 const html = processor.render(md);
 ```
 
-## renderStream
+### renderStream
 
 `renderStream` streams the result of a markdown stream through the renderer/highlighter. You can easily render/highlight and stream the output from an LLM on the server.
 
 The result will come in chunks of elements instead of by word since the entire element needs to be present to render and highlight correctly. Use with [@robino/html](https://github.com/rossrobino/robino/tree/main/packages/html) to easily send the result as an HTML response.
 
-### ai-sdk
+#### ai-sdk
 
 ```ts
 import { openai } from "@ai-sdk/openai";
@@ -57,7 +83,7 @@ const { textStream } = streamText({
 const htmlStream = processor.renderStream(textStream);
 ```
 
-### openai
+#### openai
 
 ```ts
 import { OpenAI } from "openai";
@@ -90,28 +116,49 @@ const mdStream = new ReadableStream<string>({
 const htmlStream = processor.renderStream(mdStream);
 ```
 
-## process
-
-The `process` method provides extra meta data in addition to the HTML result.
+## Plugin
 
 ```ts
-// example using zod, any Standard Schema validator is supported
-import { z } from "zod";
+// vite.config.ts
+import { FrontmatterSchema } from "./src/lib/schema";
+import { md } from "@robino/md";
+import { defineConfig } from "vite";
 
-const frontmatterSchema = z
-	.object({
-		title: z.string(),
-		description: z.string(),
-		keywords: z
-			.string()
-			.transform((val) => val.split(",").map((s) => s.trim().toLowerCase())),
-		date: z.string(),
-	})
-	.strict();
+export default defineConfig({
+	plugins: [
+		md({
+			// markdown-it options
+			markdownIt: {
+				// ...
+			},
+			highlighter: {
+				// shiki langs
+				langs: [langJs],
+			},
+			FrontmatterSchema,
+		}),
+	],
+});
+```
 
-const result = await processor.process(md, frontmatterSchema);
+```ts
+// add a d.ts file
+declare module "*.md" {
+	import type { Heading } from "@robino/md";
 
-result.html; // processed HTML article
-result.headings; // { id: string, name: string, level: number }[]
-result.frontmatter; // type-safe/validated frontmatter based on the schema
+	export const html: string;
+	export const article: string;
+	export const headings: Heading[];
+	export const frontmatter: Frontmatter;
+}
+```
+
+```ts
+import { html, article, headings, frontmatter } from "./post.md";
+```
+
+```ts
+const content = import.meta.glob("./content/*.md", {
+	eager: true,
+}) as Record<string, Result<typeof FrontmatterSchema>>;
 ```
