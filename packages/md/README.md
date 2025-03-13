@@ -4,12 +4,18 @@
 npm i @robino/md
 ```
 
+- [`Processor`](#processor) - markdown processor
+- [`md`](#plugin) - Vite plugin
+
+## Overview
+
 An extended [markdown-it](https://github.com/markdown-it/markdown-it) instance with the following features.
 
-- `renderStream` function to render and highlight a stream of markdown
-- `process` markdown with frontmatter using a [Standard Schema](https://standardschema.dev/#what-schema-libraries-implement-the-spec) validator
+- [`process`](#process) markdown with frontmatter using a [Standard Schema](https://standardschema.dev/#what-schema-libraries-implement-the-spec) validator
 - Syntax highlighting with [shiki](https://shiki.style/) using the [CSS variables](https://shiki.style/guide/theme-colors#css-variables-theme) theme to style
 - Adds `<div style="overflow-x: auto;">...</div>` around each table element to prevent overflow
+- [Vite plugin](#plugin) to process markdown at build time
+- [`renderStream`](#renderstream) function to render and highlight a stream of markdown
 
 ## Processor
 
@@ -118,6 +124,10 @@ const htmlStream = processor.renderStream(mdStream);
 
 ## Plugin
 
+### Configuration
+
+Add the plugin to your `vite.config` to render markdown at build time.
+
 ```ts
 // vite.config.ts
 import { FrontmatterSchema } from "./src/lib/schema";
@@ -141,24 +151,36 @@ export default defineConfig({
 });
 ```
 
+### Usage
+
+Import a directory of processed markdown using a [glob](https://vite.dev/guide/features.html#glob-import) import.
+
 ```ts
-// add a d.ts file
+import { FrontmatterSchema } from "./schema";
+import type { Result } from "@robino/md";
+
+const content = import.meta.glob<Result<typeof FrontmatterSchema>>(
+	"./content/*.md",
+	{
+		eager: true,
+	},
+);
+```
+
+You can also import normally, add a `d.ts` file for type safety.
+
+```ts
+// d.ts
 declare module "*.md" {
 	import type { Heading } from "@robino/md";
 
 	export const html: string;
 	export const article: string;
 	export const headings: Heading[];
-	export const frontmatter: Frontmatter;
+	export const frontmatter: Frontmatter; // inferred output type from your schema
 }
 ```
 
 ```ts
 import { html, article, headings, frontmatter } from "./post.md";
-```
-
-```ts
-const content = import.meta.glob("./content/*.md", {
-	eager: true,
-}) as Record<string, Result<typeof FrontmatterSchema>>;
 ```
