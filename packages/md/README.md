@@ -131,6 +131,7 @@ Add the plugin to your `vite.config` to render markdown at build time.
 // vite.config.ts
 import { FrontmatterSchema } from "./src/lib/schema";
 import { md } from "@robino/md";
+import langJs from "@shikijs/langs/js";
 import { defineConfig } from "vite";
 
 export default defineConfig({
