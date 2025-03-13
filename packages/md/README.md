@@ -24,9 +24,8 @@ import { Processor } from "@robino/md";
 import langJs from "@shikijs/langs/js";
 
 const processor = new Processor({
-	// markdown-it options
 	markdownIt: {
-		// ...
+		// markdown-it options
 	},
 	highlighter: {
 		// shiki langs
@@ -137,9 +136,8 @@ import { defineConfig } from "vite";
 export default defineConfig({
 	plugins: [
 		md({
-			// markdown-it options
 			markdownIt: {
-				// ...
+				// markdown-it options
 			},
 			highlighter: {
 				// shiki langs
