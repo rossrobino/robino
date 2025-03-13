@@ -11,7 +11,7 @@ npm i @robino/md
 
 An extended [markdown-it](https://github.com/markdown-it/markdown-it) instance with the following features.
 
-- [`process`](#process) markdown with frontmatter using a [Standard Schema](https://standardschema.dev/#what-schema-libraries-implement-the-spec) validator
+- [`process`](#process) markdown with `headings` and `frontmatter` using a [Standard Schema](https://standardschema.dev/#what-schema-libraries-implement-the-spec) validator
 - Syntax highlighting with [shiki](https://shiki.style/) using the [CSS variables](https://shiki.style/guide/theme-colors#css-variables-theme) theme to style
 - Adds `<div style="overflow-x: auto;">...</div>` around each table element to prevent overflow
 - [Vite plugin](#plugin) to process markdown at build time
@@ -72,7 +72,7 @@ const html = processor.render(md);
 
 `renderStream` streams the result of a markdown stream through the renderer/highlighter. You can easily render/highlight and stream the output from an LLM on the server.
 
-The result will come in chunks of elements instead of by word since the entire element needs to be present to render and highlight correctly. Use with [@robino/html](https://github.com/rossrobino/robino/tree/main/packages/html) to easily send the result as an HTML response.
+The result will come in chunks of elements instead of by word since the entire element needs to be present to render and highlight correctly.
 
 #### ai-sdk
 
