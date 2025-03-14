@@ -97,8 +97,8 @@ const openai = new OpenAI({
 	apiKey: OPENAI_API_KEY,
 });
 
-const stream = await openai.chat.completions.create({
-	messages: [
+const response = await openai.responses.create({
+	input: [
 		{
 			role: "user",
 			content: "write some sample prose, a list, js code, table, etc.",
@@ -110,9 +110,10 @@ const stream = await openai.chat.completions.create({
 
 const mdStream = new ReadableStream<string>({
 	async start(c) {
-		for await (const chunk of stream) {
-			const content = chunk.choices[0]?.delta.content;
-			if (content) c.enqueue(content);
+		for await (const event of response) {
+			if (event.type === "response.output_text.delta") {
+				if (event.delta) c.enqueue(event.delta);
+			}
 		}
 		c.close();
 	},
