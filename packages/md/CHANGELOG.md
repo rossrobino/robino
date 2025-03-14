@@ -1,5 +1,12 @@
 # @robino/md
 
+## 3.2.1
+
+### Patch Changes
+
+- 8f9748a: fix: update plugin name
+- 2a0d92e: fix: make `Result` type arg optional
+
 ## 3.2.0
 
 ### Minor Changes
