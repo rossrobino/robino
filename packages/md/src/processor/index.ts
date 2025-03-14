@@ -26,7 +26,7 @@ export type Heading = {
 	name: string;
 };
 
-export type Result<T extends StandardSchemaV1> = {
+export type Result<T extends StandardSchemaV1 = StandardSchemaV1> = {
 	/** The markdown content, without the frontmatter if it is parsed. */
 	article: string;
 
