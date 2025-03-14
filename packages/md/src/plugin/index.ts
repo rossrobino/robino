@@ -15,7 +15,7 @@ export const md = (
 	const processor = new Processor(options);
 
 	return {
-		name: "local:md",
+		name: "@robino/md",
 		async transform(md, id) {
 			if (/\.(md)$/.test(id)) {
 				const { html, article, headings, frontmatter } =
