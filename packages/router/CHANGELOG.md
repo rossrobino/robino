@@ -1,5 +1,11 @@
 # @robino/router
 
+## 0.7.0
+
+### Minor Changes
+
+- d08c9c3: feat: add `c.res.etag`
+
 ## 0.6.1
 
 ### Patch Changes
