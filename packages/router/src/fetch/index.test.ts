@@ -202,3 +202,27 @@ test("html", async () => {
 	expect(res.status).toBe(200);
 	expect(text.startsWith("<")).toBe(true);
 });
+
+test("etag", async () => {
+	const r = new Router();
+	r.get("/etag", (c) => {
+		const text = "hello world";
+		const matched = c.res.etag(text);
+
+		if (matched) return;
+
+		c.res.text(text);
+	});
+
+	const res = await r.fetch(new Request("http://localhost:5173/etag"));
+	expect(res.status).toBe(200);
+	expect(await res.text()).toBe("hello world");
+
+	const etag = await r.fetch(
+		new Request("http://localhost:5173/etag", {
+			headers: { "if-none-match": res.headers.get("etag")! },
+		}),
+	);
+	expect(etag.status).toBe(304);
+	expect(await etag.text()).toBe("");
+});

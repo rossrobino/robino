@@ -88,23 +88,12 @@ type ExtractMultiParams<Patterns extends string[]> = Patterns extends [
 export class Router<State = null> {
 	/** Built tries per HTTP method */
 	#trieMap = new Map<Method, Node<Middleware<Params, State>[]>>();
-
 	/** Added routes per HTTP method */
 	#routesMap = new Map<Method, Route<Middleware<Params, State>[]>[]>();
-
-	/** `config.start` */
 	#start?: Start<State>;
-
-	/** `config.trailingSlash` */
 	#trailingSlash: TrailingSlash;
-
-	/** `config.html` */
 	#html?: string;
-
-	/** Middleware to run when route is not found. */
 	notFound?: NotFoundMiddleware<State>;
-
-	/** Handler to run when an Error is thrown.  */
 	error: ErrorMiddleware<State> | null;
 
 	constructor(
@@ -119,6 +108,9 @@ export class Router<State = null> {
 			 * @default "never"
 			 */
 			trailingSlash?: TrailingSlash;
+
+			/** Default `HTML` string to respond with or inject into with `c.res.html()`. */
+			html?: string;
 
 			/**
 			 * Assign a custom not found handler to run when
@@ -150,24 +142,21 @@ export class Router<State = null> {
 			 * @returns any state to access in middleware
 			 */
 			start?: Start<State>;
-
-			/** Default `HTML` string to respond with or inject into with `c.res.html()`. */
-			html?: string;
 		} = {},
 	) {
 		const {
 			trailingSlash = "never",
-			error = null,
-			notFound,
-			start,
 			html,
+			notFound,
+			error = null,
+			start,
 		} = config;
 
 		this.#trailingSlash = trailingSlash;
-		this.error = error;
-		this.notFound = notFound;
-		this.#start = start;
 		this.#html = html;
+		this.notFound = notFound;
+		this.error = error;
+		this.#start = start;
 
 		this.fetch = this.fetch.bind(this);
 	}

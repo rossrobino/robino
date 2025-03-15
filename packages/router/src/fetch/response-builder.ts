@@ -1,3 +1,4 @@
+import { hash } from "./hash.js";
 import type { NotFoundContext, NotFoundMiddleware } from "./index.js";
 import type { SuperRequest } from "./super-request.js";
 import { SuperHeaders, type SuperHeadersInit } from "@mjackson/headers";
@@ -21,14 +22,12 @@ export class ResponseBuilder<State> {
 	 */
 	headers = new SuperHeaders();
 
-	/** `config.notFound` */
-	#notFound: NotFoundMiddleware<State>;
-
 	/** created with `config` and `this` */
 	#notFoundContext: NotFoundContext<State>;
 
-	/** `config.html` */
+	#notFound: NotFoundMiddleware<State>;
 	#html?: string;
+	#req: SuperRequest;
 
 	constructor(config: {
 		req: SuperRequest;
@@ -54,6 +53,7 @@ export class ResponseBuilder<State> {
 		};
 		this.#html = html;
 		this.#notFound = notFound;
+		this.#req = req;
 	}
 
 	/**
@@ -174,6 +174,29 @@ export class ResponseBuilder<State> {
 	redirect(location: string | URL, status: 301 | 302 | 303 | 307 | 308 = 302) {
 		this.headers.location = location.toString();
 		this.status = status;
+	}
+
+	/**
+	 * Generates an etag from the values.
+	 * If the etag matches, sets the response to not modified.
+	 *
+	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag)
+	 *
+	 * @param values values to hash
+	 * @returns `true` if the etag matches, `false` otherwise
+	 */
+	etag(...values: (string | ArrayBufferView)[]) {
+		const etag = `"${hash(...values)}"`;
+		this.headers.etag = etag;
+
+		if (this.#req.headers.ifNoneMatch.matches(etag)) {
+			this.body = null;
+			this.status = 304;
+
+			return true;
+		}
+
+		return false;
 	}
 
 	/** Runs the `notFound` middleware. */
