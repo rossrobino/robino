@@ -27,7 +27,6 @@
 	},
 	"dependencies": {
 		"@mjackson/headers": "^0.10.0",
-		"@robino/html": "^0.9.0",
-		"devalue": "^5.1.1"
+		"@robino/html": "^0.9.0"
 	}
 }

@@ -207,7 +207,7 @@ test("etag", async () => {
 	const r = new Router();
 	r.get("/etag", (c) => {
 		const text = "hello world";
-		const matched = c.res.etag(new Map([["hello", text]]));
+		const matched = c.res.etag("hello");
 
 		if (matched) return;
 
