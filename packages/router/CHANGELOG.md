@@ -1,5 +1,11 @@
 # @robino/router
 
+## 0.8.0
+
+### Minor Changes
+
+- a0cfd3f: etags strings
+
 ## 0.7.0
 
 ### Minor Changes
