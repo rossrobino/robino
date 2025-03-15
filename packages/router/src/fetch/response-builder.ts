@@ -1,8 +1,8 @@
-import { hash } from "./hash.js";
 import type { NotFoundContext, NotFoundMiddleware } from "./index.js";
 import type { SuperRequest } from "./super-request.js";
 import { SuperHeaders, type SuperHeadersInit } from "@mjackson/headers";
 import { Page } from "@robino/html";
+import { stringify } from "devalue";
 
 type Inject = (page: Page) => void;
 
@@ -177,7 +177,9 @@ export class ResponseBuilder<State> {
 	}
 
 	/**
-	 * Generates an etag from the values.
+	 * Generates an etag from the stringified values with
+	 * [`devalue.stringify`](https://github.com/Rich-Harris/devalue).
+	 *
 	 * If the etag matches, sets the response to not modified.
 	 *
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag)
@@ -185,8 +187,19 @@ export class ResponseBuilder<State> {
 	 * @param values values to hash
 	 * @returns `true` if the etag matches, `false` otherwise
 	 */
-	etag(...values: (string | ArrayBufferView)[]) {
-		const etag = `"${hash(...values)}"`;
+	etag(...values: unknown[]) {
+		// Fast hashing algorithm for generating etags http://www.cse.yorku.ca/~oz/hash.html
+		// Adapted from SvelteKit: https://github.com/sveltejs/kit/blob/25d459104814b0c2dc6b4cf73b680378a29d8200/packages/kit/src/runtime/hash.js
+		let hash = 5381;
+
+		for (const value of values) {
+			const str = stringify(value);
+			let i = str.length;
+			while (i) hash = (hash * 33) ^ str.charCodeAt(--i);
+		}
+
+		const etag = `"${(hash >>> 0).toString(36)}"`;
+
 		this.headers.etag = etag;
 
 		if (this.#req.headers.ifNoneMatch.matches(etag)) {
