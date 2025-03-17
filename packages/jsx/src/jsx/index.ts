@@ -1,5 +1,41 @@
-import type { Props, ElementProps, FC, Children, JSX } from "../types/index.js";
-import { serialize } from "@robino/html";
+import type { Props, ElementProps, FC, JSX } from "../types/index.js";
+
+/**
+ * @param attrs attributes
+ * @returns string of attributes
+ */
+const serializeAttrs = (attrs?: Record<string, unknown>) => {
+	let str = "";
+
+	for (const key in attrs) {
+		if (attrs[key] === true) {
+			// if true don't put the value
+			str += ` ${key}`;
+		} else if (typeof attrs[key] === "string") {
+			str += ` ${key}=${JSON.stringify(attrs[key])}`;
+		}
+		// otherwise, don't include the attribute
+	}
+
+	return str;
+};
+
+// https://developer.mozilla.org/en-US/docs/Glossary/Void_element#self-closing_tags
+const voidElements = new Set([
+	"area",
+	"base",
+	"br",
+	"col",
+	"embed",
+	"hr",
+	"img",
+	"input",
+	"link",
+	"meta",
+	"source",
+	"track",
+	"wbr",
+]);
 
 /**
  * The main function of the jsx transform cycle, each time jsx is encountered
@@ -7,60 +43,129 @@ import { serialize } from "@robino/html";
  *
  * @param tag string or function that refers to the component or element type
  * @param props object containing all the properties and attributes passed to the element or component
- * @returns a string of HTML
+ * @returns an async generator that yields parts of HTML
  */
 export const jsx: {
-	(tag: FC, props: Props): JSX.Element;
-	(tag: string, props: ElementProps): JSX.Element;
-} = async (tag, props) => {
+	(tag: FC, props: Props): Awaited<JSX.Element>;
+	(tag: string, props: ElementProps): Awaited<JSX.Element>;
+} = async function* (tag, props) {
+	// Fragment
 	if (typeof tag === "function") {
-		// Fragment
-		return tag(props);
+		yield* Fragment({ children: tag(props) });
+		return;
 	}
 
 	// element
 	const { children, ...attrs } = props as ElementProps;
 
-	// @ts-expect-error - `serialize` will ignore attrs that don't work,
-	// but the type will be correct for `serialize` users
-	return serialize({
-		name: tag,
-		attrs,
-		children: await Fragment({ children }),
-	});
+	yield `<${tag}${serializeAttrs(attrs)}>`;
+
+	if (voidElements.has(tag)) return;
+
+	if (children) yield* Fragment({ children });
+
+	yield `</${tag}>`;
 };
 
 /**
- * Resolves then concatenates children into a string.
+ * Resolves then streams children as an async generator.
  *
  * jsx requires a `Fragment` export to resolve <></>
  *
  * @param props containing children to render
- * @returns string of concatenated children
+ * @returns async generator that yields concatenated children
  */
-export const Fragment = async (
+export async function* Fragment(
 	props: {
-		children?: Children;
+		children?: JSX.Element;
 	} = {},
-): Promise<string> => {
-	if (props.children instanceof Array) {
-		return (
-			await Promise.all(
-				props.children.map((children) => Fragment({ children })),
-			)
-		).join("");
-	}
+): AsyncIterable<string> {
+	if (props.children instanceof Promise) props.children = await props.children;
 
-	if (props.children instanceof Promise) {
-		props.children = await props.children;
-	}
+	if (props.children == null || props.children === false) return;
 
-	if (props.children == null || props.children === false) {
+	if (typeof props.children === "object") {
+		if (Symbol.asyncIterator in props.children) {
+			for await (const children of props.children)
+				yield* Fragment({ children });
+		} else if (Symbol.iterator in props.children) {
+			const generators: AsyncIterable<string>[] = [];
+
+			for (const children of props.children)
+				generators.push(Fragment({ children }));
+
+			const queue: string[] = new Array(generators.length).fill("");
+			const completed = new Set<number>();
+
+			let current = 0;
+			for await (const { index, value, done } of mergeAsyncIterables(
+				generators,
+			)) {
+				if (done) {
+					completed.add(index);
+
+					if (index === current) {
+						while (++current < generators.length) {
+							if (queue[current]) {
+								yield queue[current]!;
+								queue[current] = "";
+							}
+
+							if (!completed.has(current)) break;
+						}
+					}
+				} else if (index === current) {
+					yield value;
+				} else {
+					queue[index] += value;
+				}
+			}
+
+			yield queue.join("");
+		} else {
+			yield JSON.stringify(props.children);
+		}
+	} else {
 		// undefined, null, or false should render ""
-		return "";
+		yield String(props.children); // primitive
 	}
+}
 
-	return String(props.children);
-};
+async function* mergeAsyncIterables<T>(iterables: AsyncIterable<T>[]) {
+	const entries = iterables.map((iterable, index) => {
+		const iterator = iterable[Symbol.asyncIterator]();
+		return {
+			index,
+			iterator,
+			promise: iterator.next().then((result) => ({ result, index })),
+		};
+	});
+
+	while (entries.length) {
+		// wait for the next resolved promise from any iterator
+		const { result, index } = await Promise.race(
+			entries.map((entry) => entry.promise),
+		);
+
+		if (result.done) {
+			// iterator is finished, remove entry
+			const entryIndex = entries.findIndex((entry) => entry.index === index);
+
+			if (entryIndex !== -1) entries.splice(entryIndex, 1);
+
+			yield { index, done: true as const };
+		} else {
+			yield { index, value: result.value, done: false as const };
+
+			// ask this iterator for its next chunk
+			const entry = entries.find((entry) => entry.index === index);
+			if (entry) {
+				entry.promise = entry.iterator
+					.next()
+					.then((result) => ({ result, index }));
+			}
+		}
+	}
+}
 
 export { jsx as jsxs, jsx as jsxDEV };

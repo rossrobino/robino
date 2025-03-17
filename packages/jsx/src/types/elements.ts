@@ -1,9 +1,9 @@
 // cspell: disable
-import type { Children, ElementProps } from "./index.js";
+import type { JSX, ElementProps } from "./index.js";
 
 // https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes
 type Attributes<T extends ElementProps = ElementProps> = Partial<{
-	children: Children;
+	children: JSX.Element;
 	accesskey: string;
 	anchor: string;
 	autocapitalize: "on" | "off" | "characters" | "words" | "sentences";

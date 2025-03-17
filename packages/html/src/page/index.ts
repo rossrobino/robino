@@ -6,6 +6,7 @@ import type {
 	TagInput,
 	Tags,
 } from "../types/index.js";
+import { Fragment } from "@robino/jsx";
 
 export class Page {
 	/** Initial HTML string to inject content into. */
@@ -80,7 +81,7 @@ export class Page {
 	 * @param tags html tags
 	 * @returns `<page-defer>` custom element
 	 */
-	#pageDefer(inj: Injection, tags: Tags) {
+	pageDefer(inj: Injection, tags: Tags) {
 		return serialize({
 			name: "page-defer",
 			attrs: {
@@ -105,46 +106,11 @@ export class Page {
 			yield `<page-stream style="display: contents" data-id="${inj.id}" data-clear>`;
 		}
 
-		if (typeof inj.tagInput === "function") inj.tagInput = inj.tagInput();
+		if (typeof inj.tagInput === "function") inj.tagInput = inj.tagInput({});
 
-		if (typeof inj.tagInput === "object" && "next" in inj.tagInput) {
-			if (Symbol.asyncIterator in inj.tagInput) {
-				while (true) {
-					const { value, done } = await inj.tagInput.next();
-					if (value) {
-						if (inj.defer) yield this.#pageDefer(inj, value);
-						else yield serialize(value);
-					}
-					if (done) break;
-				}
-			} else {
-				while (true) {
-					const { value, done } = inj.tagInput.next();
-					if (value) {
-						if (inj.defer) yield this.#pageDefer(inj, value);
-						else yield serialize(value);
-					}
-					if (done) break;
-				}
-			}
-		} else if (inj.tagInput instanceof ReadableStream) {
-			const reader = inj.tagInput.getReader();
-			while (true) {
-				const { value, done } = await reader.read();
-				if (value) {
-					if (inj.defer) yield this.#pageDefer(inj, value);
-					else yield serialize(value);
-				}
-				if (done) break;
-			}
-		} else if (inj.tagInput instanceof Promise) {
-			inj.tagInput = await inj.tagInput;
-			if (inj.defer) yield this.#pageDefer(inj, inj.tagInput);
-			else yield serialize(inj.tagInput);
-		} else {
-			if (inj.defer) yield this.#pageDefer(inj, inj.tagInput);
-			else yield serialize(inj.tagInput);
-		}
+		if (inj.tagInput instanceof Promise) inj.tagInput = await inj.tagInput;
+
+		yield* Fragment({ children: inj.tagInput });
 
 		if (inj.loading) yield "</page-stream>";
 

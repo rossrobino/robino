@@ -1,3 +1,5 @@
+import type { FC, JSX } from "@robino/jsx";
+
 /** An object that describes a tag and its children. */
 export type TagDescriptor = {
 	/**
@@ -37,14 +39,7 @@ export type TagDescriptor = {
 export type Tags = string | TagDescriptor | TagDescriptor[];
 
 /** The expected input into the Page methods. */
-export type TagInput =
-	| Tags
-	| Promise<Tags>
-	| (() => Tags)
-	| (() => Promise<Tags>)
-	| Generator<Tags, Tags, never>
-	| AsyncGenerator<Tags, Tags, never>
-	| ReadableStream<string>;
+export type TagInput = FC | JSX.Element;
 
 export type Injection = {
 	/**

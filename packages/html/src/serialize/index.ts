@@ -4,7 +4,7 @@ import type { TagDescriptor } from "../types/index.js";
  * @param attrs attributes - type is `unknown` because at runtime (jsx package) these could be something else.
  * @returns string of attributes
  */
-const serializeAttrs = (attrs?: Record<string, unknown>) => {
+export const serializeAttrs = (attrs?: Record<string, unknown>) => {
 	let str = "";
 
 	for (const key in attrs) {
@@ -21,7 +21,7 @@ const serializeAttrs = (attrs?: Record<string, unknown>) => {
 };
 
 // https://developer.mozilla.org/en-US/docs/Glossary/Void_element#self-closing_tags
-const voidElements = new Set([
+export const voidElements = new Set([
 	"area",
 	"base",
 	"br",
@@ -41,7 +41,7 @@ const voidElements = new Set([
  * @param tag `TagDescriptor`
  * @returns an HTML string of the tag
  */
-const serializeTag = (tag: TagDescriptor) => {
+export const serializeTag = (tag: TagDescriptor) => {
 	if (voidElements.has(tag.name)) {
 		return `<${tag.name}${serializeAttrs(tag.attrs)}>`;
 	}

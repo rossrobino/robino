@@ -7,6 +7,9 @@ export type Params = Record<string, string>;
 export type StartContext = Pick<Context, "req">;
 export type Start<State> = (context: StartContext) => State;
 
+export type HtmlContext<State> = Pick<Context<{}, State>, "req" | "state">;
+export type Html<State> = (context: HtmlContext<State>) => string;
+
 export type NotFoundContext<State> = Pick<
 	Context<Params, State>,
 	"req" | "res" | "state"
@@ -92,7 +95,7 @@ export class Router<State = null> {
 	#routesMap = new Map<Method, Route<Middleware<Params, State>[]>[]>();
 	#start?: Start<State>;
 	#trailingSlash: TrailingSlash;
-	#html?: string;
+	#html?: Html<State>;
 	notFound?: NotFoundMiddleware<State>;
 	error: ErrorMiddleware<State> | null;
 
@@ -110,7 +113,7 @@ export class Router<State = null> {
 			trailingSlash?: TrailingSlash;
 
 			/** Default `HTML` string to respond with or inject into with `c.res.html()`. */
-			html?: string;
+			html?: Html<State>;
 
 			/**
 			 * Assign a custom not found handler to run when
@@ -291,7 +294,7 @@ export class Router<State = null> {
 		const res = new ResponseBuilder({
 			req,
 			state,
-			html: this.#html,
+			html: this.#html ? this.#html({ state, req }) : undefined,
 			notFound: this.notFound,
 		});
 

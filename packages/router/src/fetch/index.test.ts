@@ -6,6 +6,9 @@ const router = new Router({
 	start() {
 		return { foo: "bar" };
 	},
+	html(c) {
+		return `<html><body>${c.state.foo}</body></html>`;
+	},
 });
 
 const get = (pathname: string) =>
