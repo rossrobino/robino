@@ -32,8 +32,6 @@ page
 		// this is streamed in after the head is sent
 		// return Tags
 	})
-	// Tag or array of Tags
-	.head({ name: "script", attrs: { type: "module", src: "./script.js" } })
 	// other tags (need to be present in the initial HTML)
 	.inject("some-other-tag", "tags")
 	// generators
@@ -41,9 +39,7 @@ page
 		yield "<p>first</p>";
 		// await...
 		yield "<p>next</p>";
-	})
-	// streams
-	.body(new ReadableStream<string>());
+	});
 ```
 
 The Injections will be sorted and resolved concurrently upon calling one of the following methods.

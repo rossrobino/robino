@@ -52,7 +52,7 @@ describe("toStream", () => {
 });
 
 test("head", async () => {
-	const page = new Page().head({ name: "append-head" });
+	const page = new Page().head("<append-head></append-head>");
 
 	expect(await page.toString()).toBe(
 		`<!doctype html><html><head><append-head></append-head></head><body></body></html>`,
@@ -60,7 +60,7 @@ test("head", async () => {
 });
 
 test("body", async () => {
-	const page = new Page().body([{ name: "append-body" }]);
+	const page = new Page().body(["<append-body></append-body>"]);
 
 	expect(await page.toString()).toBe(
 		`<!doctype html><html><head></head><body><append-body></append-body></body></html>`,
@@ -170,13 +170,11 @@ describe("generator", async () => {
 			yield "starting 2 ";
 			await delay(50);
 			expect(check).toBe(false); // occurs first
-			yield [
-				{ name: "p", attrs: { class: "bg-blue-500" }, children: "done 2" },
-			];
+			yield ['<p class="bg-blue-500">done 2</p>'];
 		})
 		.head(function* () {
 			yield "YIELD HEAD";
-			return " RETURN HEAD";
+			yield " RETURN HEAD";
 		});
 
 	test("parallel", async () => {

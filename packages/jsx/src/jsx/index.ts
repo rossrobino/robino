@@ -1,29 +1,47 @@
 import type { Props, ElementProps, FC, JSX } from "../types/index.js";
 
 /**
- * @param attrs attributes
- * @returns string of attributes
+ * The main function of the jsx transform cycle, each time jsx is encountered
+ * it is passed into this function to be resolved.
+ *
+ * @param tag string or function that refers to the component or element type
+ * @param props object containing all the properties and attributes passed to the element or component
+ * @returns an async generator that yields parts of HTML
  */
-const serializeAttrs = (attrs?: Record<string, unknown>) => {
-	let str = "";
-
-	for (let key in attrs) {
-		const value = attrs[key];
-
-		if (key === "className") key = "class";
-		else if (key === "htmlFor") key = "for";
-
-		if (value === true) {
-			// if true don't put the value
-			str += ` ${key}`;
-		} else if (typeof value === "string") {
-			str += ` ${key}=${JSON.stringify(value)}`;
-		}
-		// otherwise, don't include the attribute
+export const jsx: {
+	(tag: FC, props: Props): Awaited<JSX.Element>;
+	(tag: string, props: ElementProps): Awaited<JSX.Element>;
+} = async function* (tag, props) {
+	if (typeof tag === "function") {
+		yield* generator(tag(props));
+		return;
 	}
 
-	return str;
+	// element
+	const { children, ...attrs } = props as ElementProps;
+
+	yield `<${tag}${serializeAttrs(attrs)}>`;
+
+	if (voidElements.has(tag)) return;
+
+	if (children) yield* generator(children);
+
+	yield `</${tag}>`;
 };
+
+/**
+ * jsx requires a `Fragment` export to resolve <></>
+ *
+ * @param props containing `children` to render
+ * @returns async generator that yields concatenated children
+ */
+export async function* Fragment(
+	props: {
+		children?: JSX.Element;
+	} = {},
+) {
+	yield* generator(props.children);
+}
 
 // https://developer.mozilla.org/en-US/docs/Glossary/Void_element#self-closing_tags
 const voidElements = new Set([
@@ -43,61 +61,52 @@ const voidElements = new Set([
 ]);
 
 /**
- * The main function of the jsx transform cycle, each time jsx is encountered
- * it is passed into this function to be resolved.
- *
- * @param tag string or function that refers to the component or element type
- * @param props object containing all the properties and attributes passed to the element or component
- * @returns an async generator that yields parts of HTML
+ * @param attrs attributes
+ * @returns string of attributes
  */
-export const jsx: {
-	(tag: FC, props: Props): Awaited<JSX.Element>;
-	(tag: string, props: ElementProps): Awaited<JSX.Element>;
-} = async function* (tag, props) {
-	// Fragment
-	if (typeof tag === "function") {
-		yield* Fragment({ children: tag(props) });
-		return;
+function serializeAttrs(attrs?: Props) {
+	let str = "";
+
+	for (let key in attrs) {
+		const value = attrs[key];
+
+		if (key === "className") key = "class";
+		else if (key === "htmlFor") key = "for";
+
+		if (value === true) {
+			// just put the key without the value
+			str += ` ${key}`;
+		} else if (
+			typeof value === "string" ||
+			typeof value === "number" ||
+			typeof value === "bigint"
+		) {
+			str += ` ${key}=${JSON.stringify(value)}`;
+		}
+		// otherwise, don't include the attribute
 	}
 
-	// element
-	const { children, ...attrs } = props as ElementProps;
-
-	yield `<${tag}${serializeAttrs(attrs)}>`;
-
-	if (voidElements.has(tag)) return;
-
-	if (children) yield* Fragment({ children });
-
-	yield `</${tag}>`;
-};
+	return str;
+}
 
 /**
- * Resolves then streams children as an async generator.
- *
- * jsx requires a `Fragment` export to resolve <></>
- *
- * @param props containing children to render
+ * @param element any `JSX.Element`
  * @returns async generator that yields concatenated children
  */
-export async function* Fragment(
-	props: {
-		children?: JSX.Element;
-	} = {},
-): AsyncIterable<string> {
-	if (props.children instanceof Promise) props.children = await props.children;
+export async function* generator(element: JSX.Element): AsyncIterable<string> {
+	if (typeof element === "function") element = element();
+	if (element instanceof Promise) element = await element;
 
-	if (props.children == null || props.children === false) return;
+	// undefined, null, or false should render ""
+	if (element == null || element === false) return;
 
-	if (typeof props.children === "object") {
-		if (Symbol.asyncIterator in props.children) {
-			for await (const children of props.children)
-				yield* Fragment({ children });
-		} else if (Symbol.iterator in props.children) {
+	if (typeof element === "object") {
+		if (Symbol.asyncIterator in element) {
+			for await (const children of element) yield* generator(children);
+		} else if (Symbol.iterator in element) {
 			const generators: AsyncIterable<string>[] = [];
 
-			for (const children of props.children)
-				generators.push(Fragment({ children }));
+			for (const children of element) generators.push(generator(children));
 
 			const queue: string[] = new Array(generators.length).fill("");
 			const completed = new Set<number>();
@@ -128,12 +137,23 @@ export async function* Fragment(
 
 			yield queue.join("");
 		} else {
-			yield JSON.stringify(props.children);
+			yield JSON.stringify(element);
 		}
 	} else {
-		// undefined, null, or false should render ""
-		yield String(props.children); // primitive
+		yield String(element); // primitive
 	}
+}
+
+/**
+ * Asynchronously converts a `JSX.Element` into its fully concatenated string representation.
+ *
+ * @param element - `JSX.Element` to stringify.
+ * @returns A promise that resolves to the concatenated string.
+ */
+export async function stringify(element: JSX.Element) {
+	let buffer = "";
+	for await (const value of generator(element)) buffer += value;
+	return buffer;
 }
 
 async function* mergeAsyncIterables<T>(iterables: AsyncIterable<T>[]) {

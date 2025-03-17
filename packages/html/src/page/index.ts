@@ -1,12 +1,5 @@
-import { escape } from "../escape/index.js";
-import { serialize } from "../serialize/index.js";
-import type {
-	Injection,
-	MatchedInjection,
-	TagInput,
-	Tags,
-} from "../types/index.js";
-import { Fragment } from "@robino/jsx";
+import type { Injection, MatchedInjection } from "../types/index.js";
+import { generator } from "@robino/jsx";
 
 export class Page {
 	/** Initial HTML string to inject content into. */
@@ -15,17 +8,8 @@ export class Page {
 	/** Injections to process when a response is generated. */
 	#injections: Injection[] = [];
 
-	/** Completed injection ids used to check if deferred can be sent. */
-	#completed = new Set<string>();
-
-	/** Deferred injections to stream out of order. */
-	#deferred: Injection[] = [];
-
-	/** If the out of order client side stream script has been added. */
-	#scriptAdded = false;
-
 	/** Tag names that have been used -- to avoid sending the same match multiple times. */
-	#targets: Set<string> = new Set();
+	#targets = new Set<string>();
 
 	/**
 	 * @param html The HTML string.
@@ -41,79 +25,12 @@ export class Page {
 			html ?? "<!doctype html><html><head></head><body></body></html>";
 	}
 
-	/** @returns client side script for out of order streaming */
-	#outOfOrderScript() {
-		return serialize({
-			name: "script",
-			children:
-				"(" +
-				(() => {
-					if (!customElements.get("page-defer"))
-						customElements.define(
-							"page-defer",
-							class extends HTMLElement {
-								connectedCallback() {
-									const h = this.dataset.html ?? "";
-									if (this.hasAttribute("data-head")) {
-										document.head.innerHTML += h;
-									} else {
-										const t = document.querySelector<HTMLElement>(
-											"[data-id='" + this.dataset.id + "']",
-										);
-										if (t) {
-											if (t.hasAttribute("data-clear")) {
-												t.removeAttribute("data-clear");
-												t.innerHTML = "";
-											}
-											t.innerHTML += h;
-										}
-									}
-								}
-							},
-						);
-				}).toString() +
-				")()",
-		});
-	}
-
-	/**
-	 * @param inj injection
-	 * @param tags html tags
-	 * @returns `<page-defer>` custom element
-	 */
-	pageDefer(inj: Injection, tags: Tags) {
-		return serialize({
-			name: "page-defer",
-			attrs: {
-				style: "display: none",
-				"data-id": inj.id,
-				"data-html": escape(serialize(tags), true),
-				"data-head": inj.head,
-			},
-		});
-	}
-
 	/**
 	 * @param inj injection to resolve
 	 * @returns the content with the match
 	 */
 	async *#resolveInjection(inj: Injection) {
-		if (inj.loading) {
-			if (!this.#scriptAdded) {
-				this.#scriptAdded = true;
-				yield this.#outOfOrderScript();
-			}
-			yield `<page-stream style="display: contents" data-id="${inj.id}" data-clear>`;
-		}
-
-		if (typeof inj.tagInput === "function") inj.tagInput = inj.tagInput({});
-
-		if (inj.tagInput instanceof Promise) inj.tagInput = await inj.tagInput;
-
-		yield* Fragment({ children: inj.tagInput });
-
-		if (inj.loading) yield "</page-stream>";
-
+		yield* generator(inj.element);
 		if (inj.match) yield inj.match;
 	}
 
@@ -126,61 +43,31 @@ export class Page {
 
 	/**
 	 * @param target tag to inject into, for example `"main"`
-	 * @param tagInput tags to inject
+	 * @param element element to inject
 	 * @param loading provide loading tags to stream the result out of order
 	 */
-	inject(target: string, tagInput: TagInput, loading?: TagInput) {
-		if (loading !== undefined) {
-			const id = crypto.randomUUID().split("-").at(0)!;
-			const head = target === "head";
-
-			if (!head) {
-				this.#injections.push({
-					target,
-					tagInput: loading,
-					content: "",
-					defer: false,
-					loading: true,
-					id,
-				});
-			}
-			this.#deferred.push({
-				target,
-				tagInput,
-				content: "",
-				defer: true,
-				loading: false,
-				id,
-				head,
-			});
-		} else {
-			this.#injections.push({
-				target,
-				tagInput,
-				content: "",
-				defer: false,
-				loading: false,
-				id: "",
-			});
-		}
+	inject(target: string, element: Injection["element"]) {
+		this.#injections.push({
+			target,
+			element,
+			content: "",
+		});
 
 		return this;
 	}
 
 	/**
-	 * @param tagInput tags to inject into the `<head>` element
-	 * @param stream whether or not the tags should be streamed into the `<head>`
+	 * @param element element to inject into the `<head>` element
 	 */
-	head(tagInput: TagInput, stream?: boolean) {
-		return this.inject("head", tagInput, stream ? "stream" : undefined);
+	head(element: Injection["element"]) {
+		return this.inject("head", element);
 	}
 
 	/**
-	 * @param tagInput tags to inject into the `<body>` element
-	 * @param loading provide loading tags to stream the result out of order
+	 * @param element element to inject into the `<body>` element
 	 */
-	body(tagInput: TagInput, loading?: TagInput) {
-		return this.inject("body", tagInput, loading);
+	body(element: Injection["element"]) {
+		return this.inject("body", element);
 	}
 
 	/**
@@ -255,7 +142,6 @@ export class Page {
 							}
 						}
 
-						if (streamed) this.#completed.add(inj.id);
 						inj.waiting = true;
 
 						if (i === queueIndex) {
@@ -266,7 +152,6 @@ export class Page {
 									// send the first if not already streamed
 									// always send the others
 									c.enqueue(current.content);
-									this.#completed.add(current.id);
 								}
 
 								// sent the match with the content/stream, increment
@@ -282,36 +167,6 @@ export class Page {
 								}
 							}
 						}
-
-						// clear the waiting deferred injections
-						for (const def of this.#deferred) {
-							if (def.waiting) {
-								c.enqueue(def.content);
-								def.waiting = false;
-							}
-						}
-					})();
-
-					tasks.push(promise);
-				}
-
-				for (const inj of this.#deferred) {
-					const promise = (async () => {
-						let streamed = false;
-						for await (const str of this.#resolveInjection(inj)) {
-							if (this.#completed.has(inj.id) || inj.head) {
-								if (!streamed) {
-									streamed = true;
-									if (inj.content) {
-										c.enqueue(inj.content);
-									}
-								}
-								c.enqueue(str);
-							} else {
-								inj.content += str;
-							}
-						}
-						if (!streamed) inj.waiting = true;
 					})();
 
 					tasks.push(promise);

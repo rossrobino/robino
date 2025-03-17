@@ -25,6 +25,10 @@ const Delay = async function* (props: { ms: number }) {
 
 	yield new Set([props.ms]);
 
+	yield async () => {
+		return "hello";
+	};
+
 	yield (
 		<ul>
 			<li className="hello">1</li>
