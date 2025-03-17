@@ -77,18 +77,22 @@ async function* Gen() {
 }
 ```
 
-You can `return` or `yield` most data types from a component, they will be rendered
+You can `return` or `yield` most data types from a component, they will be rendered as you might expect.
 
 ```tsx
 function* DataTypes() {
-	yield "string"; // "string"
-	yield 1; // "1";
 	yield null; // ""
 	yield undefined; // ""
 	yield false; // ""
+
+	yield "string"; // "string"
+	yield 0; // "0";
+	yield BigInt(9007199254740991); // "9007199254740991"
 	yield true; // "true"
 	yield { foo: "bar" }; // '{ "foo": "bar" }'
 	yield <p>jsx</p>; // "<p>jsx</p>"
 	yield ["any-", "iterable", 1, null]; // "any-iterable1"
+	yield () => "function"; // "function"
+	yield async () => "async"; // "async"
 }
 ```
