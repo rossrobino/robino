@@ -7,12 +7,17 @@ import type { Props, ElementProps, FC, JSX } from "../types/index.js";
 const serializeAttrs = (attrs?: Record<string, unknown>) => {
 	let str = "";
 
-	for (const key in attrs) {
-		if (attrs[key] === true) {
+	for (let key in attrs) {
+		const value = attrs[key];
+
+		if (key === "className") key = "class";
+		else if (key === "htmlFor") key = "for";
+
+		if (value === true) {
 			// if true don't put the value
 			str += ` ${key}`;
-		} else if (typeof attrs[key] === "string") {
-			str += ` ${key}=${JSON.stringify(attrs[key])}`;
+		} else if (typeof value === "string") {
+			str += ` ${key}=${JSON.stringify(value)}`;
 		}
 		// otherwise, don't include the attribute
 	}

@@ -10,6 +10,7 @@ type Attributes<T extends ElementProps = ElementProps> = Partial<{
 	autocorrect: "on" | "off";
 	autofocus: boolean;
 	class: string;
+	className: string;
 	contenteditable: string;
 	dir: string;
 	draggable: boolean;
@@ -461,6 +462,7 @@ type InsAttributes = Attributes<{
 
 type LabelAttributes = Attributes<{
 	for: string;
+	htmlFor: string;
 }>;
 
 type LiAttributes = Attributes<{
@@ -593,6 +595,7 @@ type OptionAttributes = Attributes<{
 
 type OutputAttributes = Attributes<{
 	for: string;
+	htmlFor: string;
 	form: string;
 	name: string;
 }>;

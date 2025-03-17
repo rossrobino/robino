@@ -27,7 +27,7 @@ const Delay = async function* (props: { ms: number }) {
 
 	yield (
 		<ul>
-			<li>1</li>
+			<li className="hello">1</li>
 			<li>2</li>
 			<li>3</li>
 		</ul>
