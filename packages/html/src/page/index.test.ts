@@ -135,23 +135,10 @@ describe("streaming", async () => {
 	});
 });
 
-test("error", () => {
-	const page = new Page();
+test("error", async () => {
+	const res = new Page().inject("title", "title").toResponse();
 
-	expect(() => page.inject("title", "title").toResponse()).toThrowError();
-});
-
-describe("empty", () => {
-	const page = new Page();
-
-	test("should be empty", () => {
-		expect(page.empty).toBe(true);
-	});
-
-	test("should not be empty", () => {
-		page.body("not empty");
-		expect(page.empty).toBe(false);
-	});
+	await expect(res.text()).rejects.toThrowError();
 });
 
 describe("generator", async () => {

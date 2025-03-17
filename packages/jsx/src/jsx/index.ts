@@ -93,7 +93,9 @@ function serializeAttrs(attrs?: Props) {
  * @param element any `JSX.Element`
  * @returns async generator that yields concatenated children
  */
-export async function* generator(element: JSX.Element): AsyncIterable<string> {
+export async function* generator(
+	element: JSX.Element,
+): AsyncGenerator<string, void, unknown> {
 	if (typeof element === "function") element = element();
 	if (element instanceof Promise) element = await element;
 

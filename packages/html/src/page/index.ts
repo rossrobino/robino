@@ -1,5 +1,5 @@
 import type { Injection, MatchedInjection } from "../types/index.js";
-import { generator } from "@robino/jsx";
+import { generator, stringify, type JSX } from "@robino/jsx";
 
 export class Page {
 	/** Initial HTML string to inject content into. */
@@ -8,7 +8,7 @@ export class Page {
 	/** Injections to process when a response is generated. */
 	#injections: Injection[] = [];
 
-	/** Tag names that have been used -- to avoid sending the same match multiple times. */
+	/** Tag names that have been used - to avoid sending the same match multiple times. */
 	#targets = new Set<string>();
 
 	/**
@@ -26,22 +26,6 @@ export class Page {
 	}
 
 	/**
-	 * @param inj injection to resolve
-	 * @returns the content with the match
-	 */
-	async *#resolveInjection(inj: Injection) {
-		yield* generator(inj.element);
-		if (inj.match) yield inj.match;
-	}
-
-	/**
-	 * @returns `true` if there are no injections, `false` otherwise
-	 */
-	get empty() {
-		return this.#injections.length === 0;
-	}
-
-	/**
 	 * @param target tag to inject into, for example `"main"`
 	 * @param element element to inject
 	 * @param loading provide loading tags to stream the result out of order
@@ -50,7 +34,6 @@ export class Page {
 		this.#injections.push({
 			target,
 			element,
-			content: "",
 		});
 
 		return this;
@@ -70,29 +53,22 @@ export class Page {
 		return this.inject("body", element);
 	}
 
-	/**
-	 * @returns a `ReadableStream<string>` that streams the HTML in order as
-	 * each `TagInput` resolves
-	 */
-	toStream() {
+	#createElements() {
 		const matched: MatchedInjection[] = this.#injections
 			// create a regular expression and run it over the html to determine the order
-			.map((injection) => {
-				const result = this.#html.match(
-					new RegExp(`<\/${injection.target}>`, "i"),
-				);
+			.map((inj) => {
+				const result = this.#html.match(new RegExp(`<\/${inj.target}>`, "i"));
 
 				if (!result?.index)
 					throw new Error(
-						`Tag not found: </${injection.target}> did not match in initial` +
-							` HTML, ensure ${injection.target} element exists.\n\n${this.#html}\n`,
+						`Tag not found: </${inj.target}> did not match in initial` +
+							` HTML, ensure ${inj.target} element exists.\n\n${this.#html}\n`,
 					);
 
-				injection.index = result.index;
-				injection.match = result.at(0);
-				injection.waiting = false;
+				inj.index = result.index;
+				inj.match = result[0];
 
-				return injection as MatchedInjection; // `as` because index and result are now set
+				return inj as MatchedInjection; // `as` because index and result are now set
 			})
 			// sort by location of the match -- for example, head might come before body
 			.sort((a, b) => a.index - b.index);
@@ -100,81 +76,41 @@ export class Page {
 		// If two matches have the same target, the match string does not need to be sent twice.
 		// For example, </body>...</body> if two injections are targeted to body
 		for (let i = matched.length - 1; i >= 0; i--) {
-			const injection = matched.at(i)!;
+			const inj = matched[i]!;
 
-			if (this.#targets.has(injection.target)) {
-				injection.match = "";
+			if (this.#targets.has(inj.target)) {
+				inj.match = "";
 			} else {
-				this.#targets.add(injection.target);
+				this.#targets.add(inj.target);
 			}
 		}
 
+		const elements: JSX.Element[] = [this.#html.slice(0, matched[0]?.index)];
+
+		for (let i = 0; i < matched.length; i++) {
+			const inj = matched[i]!;
+			elements.push(inj.element);
+			elements.push(this.#html.slice(inj.index, matched[i + 1]?.index));
+		}
+
+		return elements;
+	}
+
+	/**
+	 * @returns a `AsyncGenerator` that yields the HTML in order as each `Element` resolves
+	 */
+	toGenerator() {
+		return generator(this.#createElements());
+	}
+
+	/**
+	 * @returns a `ReadableStream<string>` that streams the HTML in order as
+	 * each `Element` resolves
+	 */
+	toStream() {
 		return new ReadableStream<string>({
 			start: async (c) => {
-				const first = this.#html.slice(0, matched.at(0)?.index);
-				c.enqueue(first);
-
-				/** Number of characters of the initial html that have been sent */
-				let charsSent = first.length;
-				let queueIndex = 0;
-
-				/** Resolved injections waiting to be sent in the correct order */
-				const queue: MatchedInjection[] = [];
-				const tasks: Promise<void>[] = [];
-
-				for (let i = 0; i < matched.length; i++) {
-					const inj: MatchedInjection = matched.at(i)!;
-					queue.push(inj);
-
-					const promise = (async () => {
-						let streamed = false;
-						for await (const str of this.#resolveInjection(inj)) {
-							if (i !== queueIndex) {
-								inj.content += str;
-							} else {
-								if (!streamed) {
-									streamed = true;
-									if (inj.content) {
-										c.enqueue(inj.content); // send what's done
-									}
-								}
-								c.enqueue(str); // stream the rest
-							}
-						}
-
-						inj.waiting = true;
-
-						if (i === queueIndex) {
-							let current: MatchedInjection | undefined = inj;
-
-							while (current?.waiting) {
-								if (!streamed || current !== inj) {
-									// send the first if not already streamed
-									// always send the others
-									c.enqueue(current.content);
-								}
-
-								// sent the match with the content/stream, increment
-								charsSent += current.match.length;
-								// set to next injection in the queue
-								current = queue.at(++queueIndex);
-
-								if (current) {
-									// send between chunk immediately, even if current hasn't resolved yet
-									const chunk = this.#html.slice(charsSent, current.index);
-									if (chunk) c.enqueue(chunk);
-									charsSent = current.index;
-								}
-							}
-						}
-					})();
-
-					tasks.push(promise);
-				}
-
-				await Promise.all(tasks);
-
-				c.enqueue(this.#html.slice(charsSent)); // last
+				for await (const value of this.toGenerator()) c.enqueue(value);
 				c.close();
 			},
 		});
@@ -190,11 +126,10 @@ export class Page {
 	/**
 	 * @param init [ResponseInit](https://developer.mozilla.org/en-US/docs/Web/API/Response/Response#options),
 	 * defaults to have content-type HTML header
-	 * @returns a `Response` that streams the HTML in order as each `TagInput`  resolves
+	 * @returns a `Response` that streams the HTML in order as each `Element` resolves
 	 */
 	toResponse(init: ResponseInit = {}) {
 		init.headers ??= { "content-type": "text/html; charset=utf-8" };
-
 		return new Response(this.toByteStream(), init);
 	}
 
@@ -205,14 +140,7 @@ export class Page {
 	 *
 	 * @returns a string of HTML from the readable stream.
 	 */
-	async toString() {
-		const reader = this.toStream().getReader();
-		let html = "";
-
-		while (true) {
-			const { value, done } = await reader.read();
-			if (done) return html;
-			html += value;
-		}
+	toString() {
+		return stringify(this.#createElements());
 	}
 }
