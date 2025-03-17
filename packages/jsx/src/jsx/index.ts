@@ -13,7 +13,7 @@ export const jsx: {
 	(tag: string, props: ElementProps): Awaited<JSX.Element>;
 } = async function* (tag, props) {
 	if (typeof tag === "function") {
-		yield* generator(tag(props));
+		yield* toGenerator(tag(props));
 		return;
 	}
 
@@ -24,10 +24,12 @@ export const jsx: {
 
 	if (voidElements.has(tag)) return;
 
-	if (children) yield* generator(children);
+	if (children) yield* toGenerator(children);
 
 	yield `</${tag}>`;
 };
+
+export { jsx as jsxs, jsx as jsxDEV };
 
 /**
  * jsx requires a `Fragment` export to resolve <></>
@@ -40,7 +42,7 @@ export async function* Fragment(
 		children?: JSX.Element;
 	} = {},
 ) {
-	yield* generator(props.children);
+	yield* toGenerator(props.children);
 }
 
 // https://developer.mozilla.org/en-US/docs/Glossary/Void_element#self-closing_tags
@@ -64,7 +66,7 @@ const voidElements = new Set([
  * @param attrs attributes
  * @returns string of attributes
  */
-function serializeAttrs(attrs?: Props) {
+const serializeAttrs = (attrs?: Props) => {
 	let str = "";
 
 	for (let key in attrs) {
@@ -87,13 +89,50 @@ function serializeAttrs(attrs?: Props) {
 	}
 
 	return str;
+};
+
+async function* mergeAsyncIterables<T>(iterables: AsyncIterable<T>[]) {
+	const entries = iterables.map((iterable, index) => {
+		const iterator = iterable[Symbol.asyncIterator]();
+		return {
+			index,
+			iterator,
+			promise: iterator.next().then((result) => ({ result, index })),
+		};
+	});
+
+	while (entries.length) {
+		// wait for the next resolved promise from any iterator
+		const { result, index } = await Promise.race(
+			entries.map((entry) => entry.promise),
+		);
+
+		if (result.done) {
+			// iterator is finished, remove entry
+			const entryIndex = entries.findIndex((entry) => entry.index === index);
+
+			if (entryIndex !== -1) entries.splice(entryIndex, 1);
+
+			yield { index, done: true as const };
+		} else {
+			yield { index, value: result.value, done: false as const };
+
+			// ask this iterator for its next chunk
+			const entry = entries.find((entry) => entry.index === index);
+			if (entry) {
+				entry.promise = entry.iterator
+					.next()
+					.then((result) => ({ result, index }));
+			}
+		}
+	}
 }
 
 /**
- * @param element any `JSX.Element`
+ * @param element
  * @returns async generator that yields concatenated children
  */
-export async function* generator(
+export async function* toGenerator(
 	element: JSX.Element,
 ): AsyncGenerator<string, void, unknown> {
 	if (typeof element === "function") element = element();
@@ -104,11 +143,11 @@ export async function* generator(
 
 	if (typeof element === "object") {
 		if (Symbol.asyncIterator in element) {
-			for await (const children of element) yield* generator(children);
+			for await (const children of element) yield* toGenerator(children);
 		} else if (Symbol.iterator in element) {
 			const generators: AsyncIterable<string>[] = [];
 
-			for (const children of element) generators.push(generator(children));
+			for (const children of element) generators.push(toGenerator(children));
 
 			const queue: string[] = new Array(generators.length).fill("");
 			const completed = new Set<number>();
@@ -149,50 +188,41 @@ export async function* generator(
 /**
  * Asynchronously converts a `JSX.Element` into its fully concatenated string representation.
  *
- * @param element - `JSX.Element` to stringify.
+ * @param element
  * @returns A promise that resolves to the concatenated string.
  */
-export async function stringify(element: JSX.Element) {
+export const toString = async (element: JSX.Element) => {
 	let buffer = "";
-	for await (const value of generator(element)) buffer += value;
+	for await (const value of toGenerator(element)) buffer += value;
 	return buffer;
-}
+};
 
-async function* mergeAsyncIterables<T>(iterables: AsyncIterable<T>[]) {
-	const entries = iterables.map((iterable, index) => {
-		const iterator = iterable[Symbol.asyncIterator]();
-		return {
-			index,
-			iterator,
-			promise: iterator.next().then((result) => ({ result, index })),
-		};
+/**
+ * @param element
+ * @returns a `ReadableStream<string>` that streams the HTML in order
+ */
+export const toStream = (element: JSX.Element) =>
+	new ReadableStream<string>({
+		start: async (c) => {
+			for await (const value of toGenerator(element)) c.enqueue(value);
+			c.close();
+		},
 	});
 
-	while (entries.length) {
-		// wait for the next resolved promise from any iterator
-		const { result, index } = await Promise.race(
-			entries.map((entry) => entry.promise),
-		);
+/**
+ * @param element
+ * @returns `toStream` piped through a `TextEncoderStream`
+ */
+export const toByteStream = (element: JSX.Element) =>
+	toStream(element).pipeThrough(new TextEncoderStream());
 
-		if (result.done) {
-			// iterator is finished, remove entry
-			const entryIndex = entries.findIndex((entry) => entry.index === index);
-
-			if (entryIndex !== -1) entries.splice(entryIndex, 1);
-
-			yield { index, done: true as const };
-		} else {
-			yield { index, value: result.value, done: false as const };
-
-			// ask this iterator for its next chunk
-			const entry = entries.find((entry) => entry.index === index);
-			if (entry) {
-				entry.promise = entry.iterator
-					.next()
-					.then((result) => ({ result, index }));
-			}
-		}
-	}
-}
-
-export { jsx as jsxs, jsx as jsxDEV };
+/**
+ * @param element
+ * @param init [ResponseInit](https://developer.mozilla.org/en-US/docs/Web/API/Response/Response#options),
+ * defaults to have content-type HTML header
+ * @returns a `Response` that streams the HTML in order as each `Element` resolves
+ */
+export const toResponse = (element: JSX.Element, init: ResponseInit = {}) => {
+	init.headers ??= { "content-type": "text/html; charset=utf-8" };
+	return new Response(toByteStream(element), init);
+};

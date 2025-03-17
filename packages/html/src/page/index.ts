@@ -1,5 +1,5 @@
 import type { Injection, MatchedInjection } from "../types/index.js";
-import { generator, stringify, type JSX } from "@robino/jsx";
+import { toGenerator, toString, type JSX } from "@robino/jsx";
 
 export class Page {
 	/** Initial HTML string to inject content into. */
@@ -53,7 +53,7 @@ export class Page {
 		return this.inject("body", element);
 	}
 
-	#createElements() {
+	create() {
 		const matched: MatchedInjection[] = this.#injections
 			// create a regular expression and run it over the html to determine the order
 			.map((inj) => {
@@ -100,7 +100,7 @@ export class Page {
 	 * @returns a `AsyncGenerator` that yields the HTML in order as each `Element` resolves
 	 */
 	toGenerator() {
-		return generator(this.#createElements());
+		return toGenerator(this.create());
 	}
 
 	/**
@@ -141,6 +141,6 @@ export class Page {
 	 * @returns a string of HTML from the readable stream.
 	 */
 	toString() {
-		return stringify(this.#createElements());
+		return toString(this.create());
 	}
 }
