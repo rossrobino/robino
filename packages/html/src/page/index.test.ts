@@ -1,4 +1,5 @@
 import { Page } from "./index.js";
+import { toResponse, toStream, toString } from "@robino/jsx";
 import { describe, expect, test } from "vitest";
 
 const delay = (ms: number) => {
@@ -13,7 +14,7 @@ describe("toResponse", () => {
 		})
 		.head("head");
 
-	const res = page.toResponse();
+	const res = toResponse(page.create());
 	test("should create Response", () => {
 		expect(res).toBeInstanceOf(Response);
 	});
@@ -29,7 +30,7 @@ describe("toResponse", () => {
 		);
 	});
 	test("custom headers", () => {
-		const custom = new Page().toResponse({
+		const custom = toResponse(new Page().create(), {
 			headers: { "content-type": "application/js" },
 		});
 
@@ -37,7 +38,7 @@ describe("toResponse", () => {
 	});
 
 	test("custom status", () => {
-		const custom = new Page().toResponse({ status: 404 });
+		const custom = toResponse(new Page().create(), { status: 404 });
 
 		expect(custom.headers.get("content-type")).toBe("text/html; charset=utf-8");
 		expect(custom.status).toBe(404);
@@ -47,14 +48,14 @@ describe("toResponse", () => {
 describe("toStream", () => {
 	const page = new Page();
 	test("should create ReadableStream", () => {
-		expect(page.toStream()).toBeInstanceOf(ReadableStream);
+		expect(toStream(page.create())).toBeInstanceOf(ReadableStream);
 	});
 });
 
 test("head", async () => {
 	const page = new Page().head("<append-head></append-head>");
 
-	expect(await page.toString()).toBe(
+	expect(await toString(page.create())).toBe(
 		`<!doctype html><html><head><append-head></append-head></head><body></body></html>`,
 	);
 });
@@ -62,7 +63,7 @@ test("head", async () => {
 test("body", async () => {
 	const page = new Page().body(["<append-body></append-body>"]);
 
-	expect(await page.toString()).toBe(
+	expect(await toString(page.create())).toBe(
 		`<!doctype html><html><head></head><body><append-body></append-body></body></html>`,
 	);
 });
@@ -70,15 +71,17 @@ test("body", async () => {
 test("multiple", async () => {
 	const page = new Page();
 
-	const html = await page
-		.body(async () => {
-			await delay(50);
-			return "delay body";
-		})
-		.body("1")
-		.body("2")
-		.head("head")
-		.toString();
+	const html = await toString(
+		page
+			.body(async () => {
+				await delay(50);
+				return "delay body";
+			})
+			.body("1")
+			.body("2")
+			.head("head")
+			.create(),
+	);
 
 	expect(html).toBe(
 		"<!doctype html><html><head>head</head><body>delay body12</body></html>",
@@ -90,9 +93,7 @@ describe("streaming", async () => {
 
 	const page = new Page(
 		"<!doctype html><html><head></head><body><main><custom-element></custom-element></main></body></html>",
-	);
-
-	const res = page
+	)
 		.inject("custom-element", "custom content")
 		.body(async () => {
 			await delay(200);
@@ -107,8 +108,9 @@ describe("streaming", async () => {
 			await delay(300);
 			return "delay body 3";
 		})
-		.head("head")
-		.toResponse();
+		.head("head");
+
+	const res = toResponse(page.create());
 
 	const reader = res.body!.getReader();
 
@@ -136,9 +138,9 @@ describe("streaming", async () => {
 });
 
 test("error", async () => {
-	const res = new Page().inject("title", "title").toResponse();
-
-	await expect(res.text()).rejects.toThrowError();
+	await expect(async () =>
+		new Page().inject("title", "title").create(),
+	).rejects.toThrowError();
 });
 
 describe("generator", async () => {
@@ -165,7 +167,7 @@ describe("generator", async () => {
 		});
 
 	test("parallel", async () => {
-		const text = await page.toString();
+		const text = await toString(page.create());
 		expect(text).toBe(
 			'<!doctype html><html><head>YIELD HEAD RETURN HEAD</head><body>starting 1 done 1 starting 2 <p class="bg-blue-500">done 2</p></body></html>',
 		);

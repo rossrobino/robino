@@ -1,3 +1,4 @@
+import { toByteStream } from "../../../jsx/dist/jsx/index.js";
 import type { NotFoundContext, NotFoundMiddleware } from "./index.js";
 import type { SuperRequest } from "./super-request.js";
 import { SuperHeaders, type SuperHeadersInit } from "@mjackson/headers";
@@ -119,14 +120,14 @@ export class ResponseBuilder<State> {
 		if (typeof bodyOrInject === "function") {
 			const page = new Page(this.#html);
 			bodyOrInject(page);
-			body = page.toByteStream();
+			body = toByteStream(page.create());
 		} else if (
 			typeof bodyOrInject === "string" &&
 			typeof statusOrInject === "function"
 		) {
 			const page = new Page(bodyOrInject);
 			statusOrInject(page);
-			body = page.toByteStream();
+			body = toByteStream(page.create());
 		} else if (bodyOrInject !== undefined) {
 			body = bodyOrInject;
 		} else if (this.#html) {

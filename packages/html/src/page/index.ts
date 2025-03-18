@@ -1,5 +1,5 @@
 import type { Injection, MatchedInjection } from "../types/index.js";
-import { toGenerator, toString, type JSX } from "@robino/jsx";
+import { type JSX } from "@robino/jsx";
 
 export class Page {
 	/** Initial HTML string to inject content into. */
@@ -94,53 +94,5 @@ export class Page {
 		}
 
 		return elements;
-	}
-
-	/**
-	 * @returns a `AsyncGenerator` that yields the HTML in order as each `Element` resolves
-	 */
-	toGenerator() {
-		return toGenerator(this.create());
-	}
-
-	/**
-	 * @returns a `ReadableStream<string>` that streams the HTML in order as
-	 * each `Element` resolves
-	 */
-	toStream() {
-		return new ReadableStream<string>({
-			start: async (c) => {
-				for await (const value of this.toGenerator()) c.enqueue(value);
-				c.close();
-			},
-		});
-	}
-
-	/**
-	 * @returns `toStream` piped through a `TextEncoderStream`
-	 */
-	toByteStream() {
-		return this.toStream().pipeThrough(new TextEncoderStream());
-	}
-
-	/**
-	 * @param init [ResponseInit](https://developer.mozilla.org/en-US/docs/Web/API/Response/Response#options),
-	 * defaults to have content-type HTML header
-	 * @returns a `Response` that streams the HTML in order as each `Element` resolves
-	 */
-	toResponse(init: ResponseInit = {}) {
-		init.headers ??= { "content-type": "text/html; charset=utf-8" };
-		return new Response(this.toByteStream(), init);
-	}
-
-	/**
-	 * WARNING - This method will negate the streaming benefits of the Page.
-	 * All promises will be resolved to generate the result. It's better to use
-	 * `toResponse` or `toStream` when possible.
-	 *
-	 * @returns a string of HTML from the readable stream.
-	 */
-	toString() {
-		return toString(this.create());
 	}
 }
