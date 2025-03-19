@@ -186,7 +186,9 @@ export async function* toGenerator(
 }
 
 /**
- * Asynchronously converts a `JSX.Element` into its fully concatenated string representation.
+ * Converts a `JSX.Element` into its fully concatenated string representation.
+ *
+ * WARNING - this negates streaming benefits and buffers the result into a string.
  *
  * @param element
  * @returns A promise that resolves to the concatenated string.
@@ -225,4 +227,43 @@ export const toByteStream = (element: JSX.Element) =>
 export const toResponse = (element: JSX.Element, init: ResponseInit = {}) => {
 	init.headers ??= { "content-type": "text/html; charset=utf-8" };
 	return new Response(toByteStream(element), init);
+};
+
+/**
+ * @param html string of HTML to inject elements into
+ * @param options page options
+ * @returns HTML stream response
+ */
+export const page = (
+	html = '<!doctype html><html><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /></head><body></body></html>',
+	options: { head?: JSX.Element; body?: JSX.Element } = {},
+) => {
+	const elements: JSX.Element[] = [];
+
+	if (options.head) {
+		const tag = "</head>";
+		const parts = html.split(tag);
+		if (!parts[1]) tagNotFound(tag);
+		elements.push(parts[0], options.head, parts[1]);
+	}
+
+	if (options.body) {
+		const tag = "</body>";
+		if (options.head) {
+			const parts = (elements[2] as string).split(tag); // know it's a string since it's set above
+			if (!parts[1]) tagNotFound(tag);
+			elements[2] = parts[0];
+			elements.push(options.body, parts[1]);
+		} else {
+			const parts = html.split(tag);
+			if (!parts[1]) tagNotFound(tag);
+			elements.push(parts[0], options.body, parts[1]);
+		}
+	}
+
+	return toResponse(elements);
+};
+
+const tagNotFound = (tag: string) => {
+	throw new Error(`No closing ${tag} tag found`);
 };
