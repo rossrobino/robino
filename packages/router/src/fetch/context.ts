@@ -4,7 +4,7 @@ import type {
 	NotFoundMiddleware,
 	Params,
 	TrailingSlash,
-} from "./index.js";
+} from "../types.js";
 import { page, type JSX } from "@robino/jsx";
 
 type Layout = (props: { children: JSX.Element }) => JSX.Element;

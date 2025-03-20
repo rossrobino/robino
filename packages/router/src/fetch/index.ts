@@ -1,69 +1,25 @@
 import { Node, Route } from "../trie/index.js";
+import type {
+	ErrorMiddleware,
+	ExtractMultiParams,
+	ExtractParams,
+	Method,
+	Middleware,
+	NotFoundMiddleware,
+	Page,
+	Params,
+	StateFunction,
+	TrailingSlash,
+} from "../types.js";
 import { Context } from "./context.js";
-
-export type Params = Record<string, string>;
-
-export type StateFunction<State> = (
-	context: Omit<Context<State, Params>, "state">,
-) => State;
-
-type UnmatchedContext<State> = Omit<Context<State, Params>, "params" | "route">;
-
-export type NotFoundMiddleware<State> = (
-	context: UnmatchedContext<State>,
-) => any;
-
-export type ErrorMiddleware<State> = (
-	context: UnmatchedContext<State>,
-	error: Error,
-) => any;
-
-export type Page<State> =
-	| string
-	| ((context: Context<State, Params>) => string);
-
-export type Middleware<State = null, P extends Params = Params> = (
-	context: Context<State, P>,
-	next: () => Promise<void>,
-) => any;
-
-export type Method =
-	| "GET"
-	| "HEAD"
-	| "POST"
-	| "PUT"
-	| "DELETE"
-	| "CONNECT"
-	| "OPTIONS"
-	| "TRACE"
-	| "PATCH"
-	| (string & {});
-
-export type TrailingSlash = "always" | "never" | "ignore";
-
-type ExtractParams<Pattern extends string = string> =
-	Pattern extends `${infer _Start}:${infer Param}/${infer Rest}`
-		? { [k in Param | keyof ExtractParams<Rest>]: string }
-		: Pattern extends `${infer _Start}:${infer Param}`
-			? { [k in Param]: string }
-			: Pattern extends `${infer _Rest}*`
-				? { "*": string }
-				: {};
-
-type ExtractMultiParams<Patterns extends string[]> = Patterns extends [
-	infer First extends string,
-	...infer Rest extends string[],
-]
-	? Rest["length"] extends 0
-		? ExtractParams<First>
-		: ExtractParams<First> | ExtractMultiParams<Rest>
-	: never;
 
 export class Router<State = null> {
 	/** Built tries per HTTP method */
 	#trieMap = new Map<Method, Node<Middleware<State, Params>[]>>();
+
 	/** Added routes per HTTP method */
 	#routesMap = new Map<Method, Route<Middleware<State, Params>[]>[]>();
+
 	#state?: StateFunction<State>;
 	#trailingSlash: TrailingSlash;
 	#page?: Page<State>;
@@ -82,8 +38,18 @@ export class Router<State = null> {
 			 * @default "never"
 			 */
 			trailingSlash?: TrailingSlash;
-			/** Base `HTML` string to inject into with `c.page`. */
+
+			/**
+			 * Base `HTML` string to inject into with `c.page`.
+			 *
+			 * @default
+			 *
+			 * ```html
+			 * <!doctype html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body></body></html>
+			 * ```
+			 */
 			page?: Page<State>;
+
 			/**
 			 * Assign a custom not found handler to run when
 			 * a matching route is not found.
@@ -98,6 +64,7 @@ export class Router<State = null> {
 			 * ```
 			 */
 			notFound?: NotFoundMiddleware<State>;
+
 			/**
 			 * Assign a handler to run when an Error is thrown.
 			 *
@@ -107,11 +74,13 @@ export class Router<State = null> {
 			 * @default null
 			 */
 			error?: ErrorMiddleware<State>;
+
 			/**
 			 * Sets the initial state before middleware runs.
 			 *
 			 * @param context request context
 			 * @returns any state to access in middleware
+			 * @default null
 			 */
 			state?: StateFunction<State>;
 		} = {},
@@ -246,11 +215,11 @@ export class Router<State = null> {
 	}
 
 	/**
-	 * @param req [Request](https://developer.mozilla.org/en-US/docs/Web/API/Request)
-	 * @returns [Response](https://developer.mozilla.org/en-US/docs/Web/API/Response)
+	 * @param req [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/API/Request)
+	 * @returns [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/API/Response)
 	 */
 	async fetch(req: Request): Promise<Response> {
-		const c = new Context({
+		const c = new Context<State, Params>({
 			req,
 			url: new URL(req.url),
 			notFound: this.notFound,
@@ -310,10 +279,11 @@ export class Router<State = null> {
 	}
 
 	/**
-	 * adapted from [koa-compose](https://github.com/koajs/compose/blob/master/index.js)
+	 * Combines all middleware into a single function.
+	 * Adapted from [koa-compose](https://github.com/koajs/compose/blob/master/index.js)
 	 *
 	 * @param middleware
-	 * @returns single function comprised of all middleware
+	 * @returns single function middleware function
 	 */
 	#compose(middleware: Middleware<State, Params>[]): Middleware<State, Params> {
 		return (c, next) => {
