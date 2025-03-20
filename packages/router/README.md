@@ -9,7 +9,7 @@ A [lightweight](https://bundlephobia.com/package/@robino/router) radix [trie](ht
 - [Trie](#trie) data structure
 - HTTP [router](#router) built on the Fetch API.
 
-This project is forked and adapted from [memoirist](https://github.com/SaltyAom/memoirist) and [@medley/router](https://github.com/medleyjs/router), middleware is based on [koa-compose](https://github.com/koajs/compose).
+The `Trie` is forked and adapted from [memoirist](https://github.com/SaltyAom/memoirist) and [@medley/router](https://github.com/medleyjs/router). `Router` middleware is based on [koa-compose](https://github.com/koajs/compose).
 
 ## Trie
 
@@ -49,14 +49,12 @@ More specific matches are prioritized. First, the static match is found, then th
 
 ## Router
 
-Straightforward HTTP routing.
-
 ```ts
 import { Router } from "@robino/router";
 
 const router = new Router();
 
-router.get("/", (c) => c.res.set("Hello world"));
+router.get("/", (c) => c.res("Hello world"));
 ```
 
 ### Configuration
@@ -69,10 +67,10 @@ const router = new Router({
 	trailingSlash: "always",
 
 	// customize the not found response
-	notFound: (c) => c.res.set("custom", { status: 404 }),
+	notFound: (c) => c.res("custom", { status: 404 }),
 
 	// add an error handler
-	error: (c) => c.res.set(c.error.message, { status: 500 }),
+	error: (c) => c.res(c.error.message, { status: 500 }),
 
 	// run at the start of each request, return state to use in middleware
 	start: (c) => ({ foo: "bar" }),
@@ -85,11 +83,18 @@ const router = new Router({
 
 ```ts
 router.get("/api/:id", (c) => {
-	c.req; // enhanced Request
-	c.res; // ResponseBuilder (set in previous middleware)
+	c.req; // Request
+	c.url; // URL
 	c.params; // type safe params: "/api/123" => { id: "123" }
 	c.route; // Matched Route
 	c.state; // whatever is returned from `config.start`, for example an auth helper or a key/value store
+	c.res; // create a response
+	c.html; // html helper
+	c.json; // json helper
+	c.text; // text helper
+	c.page; // create a page response with elements
+	c.head; // elements to inject into head
+	c.layout; // add layout around the page
 });
 ```
 
@@ -98,7 +103,7 @@ router.get("/api/:id", (c) => {
 #### Basic
 
 ```ts
-router.get("/", (c) => c.res.set("Hello world"));
+router.get("/", (c) => c.res("Hello world"));
 ```
 
 #### Param
@@ -143,12 +148,12 @@ router.get(
 	},
 	(c) => {
 		console.log("final"); // 2
-		c.res.set("hello world");
+		c.text("hello world");
 	},
 );
 ```
 
-`Context` is passed between between each middleware that is stored in the matched `Route`. After all the handlers have been run, the `Context.res` will `build` and return the final response.
+`Context` is passed between between each middleware that is stored in the matched `Route`. After all the handlers have been run, the `Context` will `build` and return the final response.
 
 #### Multiple patterns
 
@@ -189,7 +194,7 @@ const app = new Router();
 
 const hello = new Router();
 
-hello.get("/world", (c) => c.res.set("hello world"));
+hello.get("/world", (c) => c.text("hello world"));
 
 app.mount("/hello", hello); // "/hello/world"
 ```

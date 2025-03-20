@@ -2,4 +2,4 @@
 "@robino/jsx": minor
 ---
 
-feat: components are AsyncIterable
+feat: Components are `AsyncIterable`

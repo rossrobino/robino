@@ -219,23 +219,12 @@ export const toByteStream = (element: JSX.Element) =>
 	toStream(element).pipeThrough(new TextEncoderStream());
 
 /**
- * @param element
- * @param init [ResponseInit](https://developer.mozilla.org/en-US/docs/Web/API/Response/Response#options),
- * defaults to have content-type HTML header
- * @returns a `Response` that streams the HTML in order as each `Element` resolves
- */
-export const toResponse = (element: JSX.Element, init: ResponseInit = {}) => {
-	init.headers ??= { "content-type": "text/html; charset=utf-8" };
-	return new Response(toByteStream(element), init);
-};
-
-/**
  * @param html string of HTML to inject elements into
  * @param options page options
- * @returns HTML stream response
+ * @returns HTML stream
  */
 export const page = (
-	html = '<!doctype html><html><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /></head><body></body></html>',
+	html = '<!doctype html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body></body></html>',
 	options: { head?: JSX.Element; body?: JSX.Element } = {},
 ) => {
 	const elements: JSX.Element[] = [];
@@ -243,27 +232,30 @@ export const page = (
 	if (options.head) {
 		const tag = "</head>";
 		const parts = html.split(tag);
-		if (!parts[1]) tagNotFound(tag);
-		elements.push(parts[0], options.head, parts[1]);
+		if (!parts[1]) throw new TagNotFound(tag);
+		elements.push(parts[0], options.head, tag + parts[1]);
 	}
 
 	if (options.body) {
 		const tag = "</body>";
 		if (options.head) {
 			const parts = (elements[2] as string).split(tag); // know it's a string since it's set above
-			if (!parts[1]) tagNotFound(tag);
+			if (!parts[1]) throw new TagNotFound(tag);
 			elements[2] = parts[0];
-			elements.push(options.body, parts[1]);
+			elements.push(options.body, tag + parts[1]);
 		} else {
 			const parts = html.split(tag);
-			if (!parts[1]) tagNotFound(tag);
-			elements.push(parts[0], options.body, parts[1]);
+			if (!parts[1]) throw new TagNotFound(tag);
+			elements.push(parts[0], options.body, tag + parts[1]);
 		}
 	}
 
-	return toResponse(elements);
+	return toByteStream(elements);
 };
 
-const tagNotFound = (tag: string) => {
-	throw new Error(`No closing ${tag} tag found`);
-};
+class TagNotFound extends Error {
+	constructor(tag: string) {
+		super(`No closing ${tag} tag found`);
+		this.name = "TagNotFound";
+	}
+}

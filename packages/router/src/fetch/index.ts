@@ -1,58 +1,29 @@
 import { Node, Route } from "../trie/index.js";
-import { ResponseBuilder } from "./response-builder.js";
-import { SuperRequest } from "./super-request.js";
+import { Context } from "./context.js";
 
 export type Params = Record<string, string>;
 
-export type StartContext = Pick<Context, "req">;
-export type Start<State> = (context: StartContext) => State;
+export type StateFunction<State> = (
+	context: Omit<Context<State, Params>, "state">,
+) => State;
 
-export type HtmlContext<State> = Pick<Context<{}, State>, "req" | "state">;
-export type Html<State> = (context: HtmlContext<State>) => string;
+type UnmatchedContext<State> = Omit<Context<State, Params>, "params" | "route">;
 
-export type NotFoundContext<State> = Pick<
-	Context<Params, State>,
-	"req" | "res" | "state"
->;
 export type NotFoundMiddleware<State> = (
-	context: NotFoundContext<State>,
+	context: UnmatchedContext<State>,
 ) => any;
 
-export type ErrorContext<State> = Pick<Context<{}, State>, "req" | "res"> & {
-	error: Error;
-};
-export type ErrorMiddleware<State> = (context: ErrorContext<State>) => any;
+export type ErrorMiddleware<State> = (
+	context: UnmatchedContext<State>,
+	error: Error,
+) => any;
 
-export type Context<P extends Params = Params, State = null> = {
-	/** Request context with enhanced `Headers` and URL. */
-	req: SuperRequest;
+export type Page<State> =
+	| string
+	| ((context: Context<State, Params>) => string);
 
-	/** Builds the final `Response` after middleware has processed. */
-	res: ResponseBuilder<State>;
-
-	/**
-	 * Route pattern parameters
-	 *
-	 * Given the route pattern `/posts/:slug` is added, a request made to
-	 * `/posts/my-post` would create a `params` object `{ slug: "my-post" }`.
-	 *
-	 * @example { slug: "my-post" }
-	 */
-	params: P;
-
-	/** The matched `Route` instance. */
-	route: Route<Middleware<Params, State>[]>;
-
-	/**
-	 * `state` returned from `config.start` during each request
-	 *
-	 * @default null
-	 */
-	state: State;
-};
-
-export type Middleware<P extends Params = Params, State = null> = (
-	context: Context<P, State>,
+export type Middleware<State = null, P extends Params = Params> = (
+	context: Context<State, P>,
 	next: () => Promise<void>,
 ) => any;
 
@@ -68,7 +39,7 @@ export type Method =
 	| "PATCH"
 	| (string & {});
 
-type TrailingSlash = "always" | "never" | null;
+export type TrailingSlash = "always" | "never" | null;
 
 type ExtractParams<Pattern extends string = string> =
 	Pattern extends `${infer _Start}:${infer Param}/${infer Rest}`
@@ -90,12 +61,12 @@ type ExtractMultiParams<Patterns extends string[]> = Patterns extends [
 
 export class Router<State = null> {
 	/** Built tries per HTTP method */
-	#trieMap = new Map<Method, Node<Middleware<Params, State>[]>>();
+	#trieMap = new Map<Method, Node<Middleware<State, Params>[]>>();
 	/** Added routes per HTTP method */
-	#routesMap = new Map<Method, Route<Middleware<Params, State>[]>[]>();
-	#start?: Start<State>;
+	#routesMap = new Map<Method, Route<Middleware<State, Params>[]>[]>();
+	#state?: StateFunction<State>;
 	#trailingSlash: TrailingSlash;
-	#html?: Html<State>;
+	#page?: Page<State>;
 	notFound?: NotFoundMiddleware<State>;
 	error: ErrorMiddleware<State> | null;
 
@@ -112,8 +83,8 @@ export class Router<State = null> {
 			 */
 			trailingSlash?: TrailingSlash;
 
-			/** Default `HTML` string to respond with or inject into with `c.res.html()`. */
-			html?: Html<State>;
+			/** Base `HTML` string to inject into with `c.page`. */
+			page?: Page<State>;
 
 			/**
 			 * Assign a custom not found handler to run when
@@ -121,10 +92,12 @@ export class Router<State = null> {
 			 *
 			 * @default
 			 *
+			 * ```ts
 			 * (c) => c.res.set("Not found", {
 			 * 	status: 404,
 			 * 	headers: { contentType: "text/html" },
 			 * })
+			 * ```
 			 */
 			notFound?: NotFoundMiddleware<State>;
 
@@ -139,27 +112,27 @@ export class Router<State = null> {
 			error?: ErrorMiddleware<State>;
 
 			/**
-			 * Runs at the start of each request.
+			 * Sets the initial state before middleware runs.
 			 *
 			 * @param context request context
 			 * @returns any state to access in middleware
 			 */
-			start?: Start<State>;
+			state?: StateFunction<State>;
 		} = {},
 	) {
 		const {
 			trailingSlash = "never",
-			html,
+			page,
 			notFound,
 			error = null,
-			start,
+			state,
 		} = config;
 
 		this.#trailingSlash = trailingSlash;
-		this.#html = html;
+		this.#page = page;
 		this.notFound = notFound;
 		this.error = error;
-		this.#start = start;
+		this.#state = state;
 
 		this.fetch = this.fetch.bind(this);
 	}
@@ -173,7 +146,7 @@ export class Router<State = null> {
 	on<Pattern extends string>(
 		method: Method,
 		pattern: Pattern,
-		...middleware: Middleware<ExtractParams<Pattern>, State>[]
+		...middleware: Middleware<State, ExtractParams<Pattern>>[]
 	): this;
 	/**
 	 * @param method HTTP method
@@ -184,12 +157,12 @@ export class Router<State = null> {
 	on<Patterns extends string[]>(
 		method: Method,
 		patterns: [...Patterns],
-		...middleware: Middleware<ExtractMultiParams<Patterns>, State>[]
+		...middleware: Middleware<State, ExtractMultiParams<Patterns>>[]
 	): this;
 	on<PatternOrPatterns extends string | string[]>(
 		method: Method,
 		pattern: PatternOrPatterns,
-		...middleware: Middleware<Params, State>[]
+		...middleware: Middleware<State, Params>[]
 	) {
 		let patterns: string[];
 		if (!Array.isArray(pattern)) patterns = [pattern];
@@ -216,7 +189,7 @@ export class Router<State = null> {
 	 */
 	get<Pattern extends string>(
 		pattern: Pattern,
-		...middleware: Middleware<ExtractParams<Pattern>, State>[]
+		...middleware: Middleware<State, ExtractParams<Pattern>>[]
 	): this;
 	/**
 	 * @param patterns array of route patterns
@@ -225,11 +198,11 @@ export class Router<State = null> {
 	 */
 	get<Patterns extends string[]>(
 		patterns: [...Patterns],
-		...middleware: Middleware<ExtractMultiParams<Patterns>, State>[]
+		...middleware: Middleware<State, ExtractMultiParams<Patterns>>[]
 	): this;
 	get<PatternOrPatterns extends string | string[]>(
 		patternOrPatterns: PatternOrPatterns,
-		...middleware: Middleware<Params, State>[]
+		...middleware: Middleware<State, Params>[]
 	) {
 		return this.on("GET", patternOrPatterns as string, ...middleware);
 	}
@@ -241,7 +214,7 @@ export class Router<State = null> {
 	 */
 	post<Pattern extends string>(
 		pattern: Pattern,
-		...middleware: Middleware<ExtractParams<Pattern>, State>[]
+		...middleware: Middleware<State, ExtractParams<Pattern>>[]
 	): this;
 	/**
 	 * @param patterns array of route patterns
@@ -250,11 +223,11 @@ export class Router<State = null> {
 	 */
 	post<Patterns extends string[]>(
 		patterns: [...Patterns],
-		...middleware: Middleware<ExtractMultiParams<Patterns>, State>[]
+		...middleware: Middleware<State, ExtractMultiParams<Patterns>>[]
 	): this;
 	post<PatternOrPatterns extends string | string[]>(
 		patternOrPatterns: PatternOrPatterns,
-		...middleware: Middleware<Params, State>[]
+		...middleware: Middleware<State, Params>[]
 	) {
 		return this.on("POST", patternOrPatterns as string, ...middleware);
 	}
@@ -285,17 +258,15 @@ export class Router<State = null> {
 	}
 
 	/**
-	 * @param request [Request](https://developer.mozilla.org/en-US/docs/Web/API/Request)
+	 * @param req [Request](https://developer.mozilla.org/en-US/docs/Web/API/Request)
 	 * @returns [Response](https://developer.mozilla.org/en-US/docs/Web/API/Response)
 	 */
-	async fetch(request: Request): Promise<Response> {
-		const req = new SuperRequest(request);
-		const state = this.#start ? this.#start({ req }) : (null as State);
-		const res = new ResponseBuilder({
+	async fetch(req: Request): Promise<Response> {
+		const c = new Context({
 			req,
-			state,
-			html: this.#html ? this.#html({ state, req }) : undefined,
+			url: new URL(req.url),
 			notFound: this.notFound,
+			trailingSlash: this.#trailingSlash,
 		});
 
 		try {
@@ -306,57 +277,33 @@ export class Router<State = null> {
 
 				if (routes) {
 					// build trie
-					trie = new Node<Middleware<Params, State>[]>();
+					trie = new Node<Middleware<State, Params>[]>();
 					for (const route of routes) trie.add(route);
 					this.#trieMap.set(req.method, trie);
 				}
 			}
 
-			const context: NotFoundContext<State> & Partial<Context<Params, State>> =
-				{
-					req,
-					res,
-					state,
-				};
-
 			if (trie) {
-				const match = trie.find(req.url.pathname);
+				const match = trie.find(c.url.pathname);
 
 				if (match) {
-					context.params = match.params;
-					context.route = match.route;
+					c.route = match.route;
+					c.params = match.params;
 
-					const composed = this.#compose(match.route.store);
+					if (this.#state) c.state = this.#state(c);
 
-					await composed(context as Context<Params, State>, () =>
-						Promise.resolve(),
-					);
-				}
+					c.basePage =
+						typeof this.#page === "function" ? this.#page(c) : this.#page;
 
-				if (
-					(!context.res.status || context.res.status === 404) &&
-					this.#trailingSlash
-				) {
-					const last = req.url.pathname.at(-1);
-
-					if (this.#trailingSlash === "always" && last !== "/") {
-						req.url.pathname += "/";
-						context.res.redirect(req.url, 308);
-					} else if (
-						this.#trailingSlash === "never" &&
-						req.url.pathname !== "/" &&
-						last === "/"
-					) {
-						req.url.pathname = req.url.pathname.slice(0, -1);
-						context.res.redirect(req.url, 308);
-					}
+					await this.#compose(match.route.store)(c, () => Promise.resolve());
 				}
 			}
 
-			return context.res.build();
+			return c.build();
 		} catch (e) {
 			if (this.error) {
 				let error: Error;
+
 				if (e instanceof Error) {
 					error = e;
 				} else {
@@ -365,9 +312,9 @@ export class Router<State = null> {
 					);
 				}
 
-				this.error({ req, error, res });
+				this.error(c, error);
 
-				return res.build();
+				return c.build();
 			}
 
 			throw e;
@@ -380,7 +327,7 @@ export class Router<State = null> {
 	 * @param middleware
 	 * @returns single function comprised of all middleware
 	 */
-	#compose(middleware: Middleware<Params, State>[]): Middleware<Params, State> {
+	#compose(middleware: Middleware<State, Params>[]): Middleware<State, Params> {
 		return (c, next) => {
 			let index = -1;
 
