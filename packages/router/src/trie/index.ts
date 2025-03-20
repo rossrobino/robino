@@ -18,13 +18,13 @@ export class Route<T> {
 }
 
 class ParamNode<T> {
-	/** name of the parameter (without the colon ":") */
+	/** Name of the parameter (without the colon ":") */
 	name: string;
 
-	/** matched route */
+	/** Matched route */
 	route: Route<T> | null = null;
 
-	/** static child node */
+	/** Static child node */
 	staticChild: Node<T> | null = null;
 
 	constructor(name: string) {
@@ -33,19 +33,19 @@ class ParamNode<T> {
 }
 
 export class Node<T> {
-	/** unique segment of the pattern trie */
+	/** Unique segment of the pattern trie */
 	segment: string;
 
-	/** static child node map, key is the first character in the segment */
+	/** Static child node map, key is the first character in the segment */
 	staticMap: Map<number, Node<T>> | null = null;
 
-	/** parametric child node */
+	/** Parametric child node */
 	paramChild: ParamNode<T> | null = null;
 
-	/** matched route */
+	/** Matched route */
 	route: Route<T> | null = null;
 
-	/** matched wildcard route */
+	/** Matched wildcard route */
 	wildcardRoute: Route<T> | null = null;
 
 	/**
@@ -80,9 +80,9 @@ export class Node<T> {
 	}
 
 	/**
-	 * if the current segment is "api/posts"
+	 * If the current segment is "api/posts"
 	 * and "api/movies" is added,
-	 * the node will need to be reassigned to "api/" and create two static children
+	 * the node will need to be reassigned to "api/" and create two static children.
 	 *
 	 * @param charIndex	where to split the node
 	 * @param segment new segment to use
@@ -246,6 +246,10 @@ export class Node<T> {
 		return this;
 	}
 
+	/**
+	 * @param pathname Path to find
+	 * @returns `Route` and the matched `params` if found, otherwise `null`
+	 */
 	find(pathname: string): {
 		route: Route<T>;
 		params: Record<string, string>;
