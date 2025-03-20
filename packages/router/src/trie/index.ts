@@ -1,8 +1,8 @@
 export class Route<Store> {
-	/** the route pattern */
+	/** Route pattern */
 	pattern: string;
 
-	/** value store returned when route is found */
+	/** Store returned when route is found */
 	store: Store;
 
 	constructor(pattern: string, store: Store) {
