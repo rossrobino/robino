@@ -39,7 +39,7 @@ export type Method =
 	| "PATCH"
 	| (string & {});
 
-export type TrailingSlash = "always" | "never" | null;
+export type TrailingSlash = "always" | "never" | "ignore";
 
 type ExtractParams<Pattern extends string = string> =
 	Pattern extends `${infer _Start}:${infer Param}/${infer Rest}`
@@ -75,17 +75,15 @@ export class Router<State = null> {
 			/**
 			 * - `"never"` - Not found requests with a trailing slash will be redirected to the same path without a trailing slash
 			 * - `"always"` - Not found requests without a trailing slash will be redirected to the same path with a trailing slash
-			 * - `null` - no redirects (not recommended, bad for SEO)
+			 * - `"ignore"` - no redirects (not recommended, bad for SEO)
 			 *
 			 * [Trailing Slash for Frameworks by Bjorn Lu](https://bjornlu.com/blog/trailing-slash-for-frameworks)
 			 *
 			 * @default "never"
 			 */
 			trailingSlash?: TrailingSlash;
-
 			/** Base `HTML` string to inject into with `c.page`. */
 			page?: Page<State>;
-
 			/**
 			 * Assign a custom not found handler to run when
 			 * a matching route is not found.
@@ -100,7 +98,6 @@ export class Router<State = null> {
 			 * ```
 			 */
 			notFound?: NotFoundMiddleware<State>;
-
 			/**
 			 * Assign a handler to run when an Error is thrown.
 			 *
@@ -110,7 +107,6 @@ export class Router<State = null> {
 			 * @default null
 			 */
 			error?: ErrorMiddleware<State>;
-
 			/**
 			 * Sets the initial state before middleware runs.
 			 *
@@ -120,19 +116,11 @@ export class Router<State = null> {
 			state?: StateFunction<State>;
 		} = {},
 	) {
-		const {
-			trailingSlash = "never",
-			page,
-			notFound,
-			error = null,
-			state,
-		} = config;
-
-		this.#trailingSlash = trailingSlash;
-		this.#page = page;
-		this.notFound = notFound;
-		this.error = error;
-		this.#state = state;
+		this.#trailingSlash = config.trailingSlash ?? "never";
+		this.#page = config.page;
+		this.notFound = config.notFound;
+		this.error = config.error ?? null;
+		this.#state = config.state;
 
 		this.fetch = this.fetch.bind(this);
 	}

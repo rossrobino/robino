@@ -217,7 +217,10 @@ export class Context<State, P extends Params> {
 	 * @returns the constructed Response
 	 */
 	build() {
-		if ((!this.status || this.status === 404) && this.#trailingSlash) {
+		if (
+			(!this.status || this.status === 404) &&
+			this.#trailingSlash !== "ignore"
+		) {
 			const last = this.url.pathname.at(-1);
 
 			if (this.#trailingSlash === "always" && last !== "/") {

@@ -1,11 +1,13 @@
+import type { JSX } from "@robino/jsx";
 import { Router } from "@robino/router";
 import { html } from "client:page";
 
-const app = new Router({ html: () => html });
+const app = new Router({ page: html });
 
-app.get("/", (c) => {
-	c.res.html((p) =>
-		p.body(
+app.get("/", (c) =>
+	c.page(
+		<>
+			<h2>Stream</h2>
 			<p>
 				<Delay ms={100} />
 				<Delay ms={300} />
@@ -14,10 +16,10 @@ app.get("/", (c) => {
 				<Delay ms={700} />
 				<Delay ms={100} />
 				<Delay ms={800} />
-			</p>,
-		),
-	);
-});
+			</p>
+		</>,
+	),
+);
 
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 

@@ -1,5 +1,5 @@
 import { Router } from "./index.js";
-import { expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 
 const router = new Router({
 	trailingSlash: "always",
@@ -148,41 +148,43 @@ test("GET /error/ (custom)", async () => {
 	expect(await res.text()).toBe("An error occurred");
 });
 
-test("trailing slash - always", async () => {
-	const res = await get("/api/123");
+describe("trailing slash", () => {
+	test("always", async () => {
+		const res = await get("/api/123");
 
-	expect(res.status).toBe(308);
-	expect(res.headers.get("location")).toBe("http://localhost:5173/api/123/");
-});
+		expect(res.status).toBe(308);
+		expect(res.headers.get("location")).toBe("http://localhost:5173/api/123/");
+	});
 
-test("trailing slash - never", async () => {
-	const nev = new Router();
-	nev.get("/test", (c) => c.text("test"));
+	test("never", async () => {
+		const nev = new Router();
+		nev.get("/test", (c) => c.text("test"));
 
-	const res = await nev.fetch(new Request("http://localhost:5173/test/"));
+		const res = await nev.fetch(new Request("http://localhost:5173/test/"));
 
-	expect(res.status).toBe(308);
-	expect(res.headers.get("location")).toBe("http://localhost:5173/test");
-});
+		expect(res.status).toBe(308);
+		expect(res.headers.get("location")).toBe("http://localhost:5173/test");
+	});
 
-test("trailing slash - null", async () => {
-	const nul = new Router({ trailingSlash: null });
-	nul.get("/nope", (c) => c.text("nope"));
-	nul.get("/yup/", (c) => c.text("yup"));
+	test("null", async () => {
+		const nul = new Router({ trailingSlash: "ignore" });
+		nul.get("/nope", (c) => c.text("nope"));
+		nul.get("/yup/", (c) => c.text("yup"));
 
-	expect(
-		(await nul.fetch(new Request("http://localhost:5173/nope"))).status,
-	).toBe(200);
-	expect(
-		(await nul.fetch(new Request("http://localhost:5173/nope/"))).status,
-	).toBe(404);
+		expect(
+			(await nul.fetch(new Request("http://localhost:5173/nope"))).status,
+		).toBe(200);
+		expect(
+			(await nul.fetch(new Request("http://localhost:5173/nope/"))).status,
+		).toBe(404);
 
-	expect(
-		(await nul.fetch(new Request("http://localhost:5173/yup"))).status,
-	).toBe(404);
-	expect(
-		(await nul.fetch(new Request("http://localhost:5173/yup/"))).status,
-	).toBe(200);
+		expect(
+			(await nul.fetch(new Request("http://localhost:5173/yup"))).status,
+		).toBe(404);
+		expect(
+			(await nul.fetch(new Request("http://localhost:5173/yup/"))).status,
+		).toBe(200);
+	});
 });
 
 test("mount", async () => {
