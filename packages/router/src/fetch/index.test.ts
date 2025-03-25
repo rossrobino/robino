@@ -71,8 +71,8 @@ test("context", () => {
 
 		c.head("<meta name='description' content='desc'>");
 
-		c.layout(function* ({ children }) {
-			yield `nested ${children} nested`;
+		c.layout(function ({ children }) {
+			return `nested ${children} nested`;
 		});
 
 		c.page("page");
@@ -101,13 +101,13 @@ test("GET /wild/*", async () => {
 });
 
 test("POST /post/", async () => {
-	const formData = new FormData();
-	formData.append("key", "value");
+	const body = new FormData();
+	body.append("key", "value");
 
 	const res = await router.fetch(
 		new Request("http://localhost:5173/post/", {
 			method: "post",
-			body: formData,
+			body,
 		}),
 	);
 
@@ -121,8 +121,8 @@ test("GET /multi/param & /pattern/another", async () => {
 	const mText = await multi.text();
 	expect(mText).toBe("multi");
 
-	const patt = await get("/pattern/another/");
-	const pText = await patt.text();
+	const pat = await get("/pattern/another/");
+	const pText = await pat.text();
 	expect(pText).toBe("pattern");
 });
 
@@ -141,7 +141,7 @@ test("GET /error/", async () => {
 test("GET /error/ (custom)", async () => {
 	router.error = (c, error) => {
 		expect(error).toBeInstanceOf(Error);
-		c.res(error.message, { status: 500 });
+		c.text(error.message, 500);
 	};
 
 	const res = await get("/error/");
@@ -166,23 +166,23 @@ describe("trailing slash", () => {
 		expect(res.headers.get("location")).toBe("http://localhost:5173/test");
 	});
 
-	test("null", async () => {
-		const nul = new Router({ trailingSlash: "ignore" });
-		nul.get("/nope", (c) => c.text("nope"));
-		nul.get("/yup/", (c) => c.text("yup"));
+	test("ignore", async () => {
+		const ignore = new Router({ trailingSlash: "ignore" });
+		ignore.get("/nope", (c) => c.text("nope"));
+		ignore.get("/yup/", (c) => c.text("yup"));
 
 		expect(
-			(await nul.fetch(new Request("http://localhost:5173/nope"))).status,
+			(await ignore.fetch(new Request("http://localhost:5173/nope"))).status,
 		).toBe(200);
 		expect(
-			(await nul.fetch(new Request("http://localhost:5173/nope/"))).status,
+			(await ignore.fetch(new Request("http://localhost:5173/nope/"))).status,
 		).toBe(404);
 
 		expect(
-			(await nul.fetch(new Request("http://localhost:5173/yup"))).status,
+			(await ignore.fetch(new Request("http://localhost:5173/yup"))).status,
 		).toBe(404);
 		expect(
-			(await nul.fetch(new Request("http://localhost:5173/yup/"))).status,
+			(await ignore.fetch(new Request("http://localhost:5173/yup/"))).status,
 		).toBe(200);
 	});
 });

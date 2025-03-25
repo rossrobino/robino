@@ -14,19 +14,18 @@ export const jsx: {
 } = async function* (tag, props) {
 	if (typeof tag === "function") {
 		yield* toGenerator(tag(props));
-		return;
+	} else {
+		// element
+		const { children, ...attrs } = props as ElementProps;
+
+		yield `<${tag}${serializeAttrs(attrs)}>`;
+
+		if (voidElements.has(tag)) return;
+
+		if (children) yield* toGenerator(children);
+
+		yield `</${tag}>`;
 	}
-
-	// element
-	const { children, ...attrs } = props as ElementProps;
-
-	yield `<${tag}${serializeAttrs(attrs)}>`;
-
-	if (voidElements.has(tag)) return;
-
-	if (children) yield* toGenerator(children);
-
-	yield `</${tag}>`;
 };
 
 export { jsx as jsxs, jsx as jsxDEV };
@@ -219,19 +218,28 @@ export const toByteStream = (element: JSX.Element) =>
 	toStream(element).pipeThrough(new TextEncoderStream());
 
 /**
- * @param html string of HTML to inject elements into
  * @param options page options
  * @returns HTML stream
  */
 export const page = (
-	html = '<!doctype html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body></body></html>',
-	options: { head?: JSX.Element; body?: JSX.Element } = {},
+	options: {
+		/** Base string of HTML to inject elements into. */
+		base?: string;
+
+		/** Elements to inject into the `<head>`. */
+		head?: JSX.Element;
+
+		/** Elements to inject into the `<body>`. */
+		body?: JSX.Element;
+	} = {},
 ) => {
+	options.base ??=
+		'<!doctype html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body></body></html>';
 	const elements: JSX.Element[] = [];
 
 	if (options.head) {
 		const tag = "</head>";
-		const parts = html.split(tag);
+		const parts = options.base.split(tag);
 		if (!parts[1]) throw new TagNotFound(tag);
 		elements.push(parts[0], options.head, tag + parts[1]);
 	}
@@ -244,7 +252,7 @@ export const page = (
 			elements[2] = parts[0];
 			elements.push(options.body, tag + parts[1]);
 		} else {
-			const parts = html.split(tag);
+			const parts = options.base.split(tag);
 			if (!parts[1]) throw new TagNotFound(tag);
 			elements.push(parts[0], options.body, tag + parts[1]);
 		}

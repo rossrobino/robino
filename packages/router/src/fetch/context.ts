@@ -175,7 +175,8 @@ export class Context<State, P extends Params> {
 			Page = this.#layouts[i]!({ children: Page });
 
 		this.html(
-			page(this.basePage, {
+			page({
+				base: this.basePage,
 				head: this.#headElements.length ? this.#headElements : undefined,
 				body: Page,
 			}),
