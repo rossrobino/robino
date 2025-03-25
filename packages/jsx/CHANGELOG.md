@@ -1,5 +1,12 @@
 # @robino/html
 
+## 0.3.0
+
+### Minor Changes
+
+- f3f6b7c: feat: add `className` and `htmlFor` as options - since autocomplete defaults to these
+- f3f6b7c: feat: Components are `AsyncIterable`
+
 ## 0.2.6
 
 ### Patch Changes

@@ -1,5 +1,17 @@
 # @robino/html
 
+## 0.10.0
+
+### Minor Changes
+
+- f3f6b7c: deprecate package - moved into @robino/jsx
+
+### Patch Changes
+
+- Updated dependencies [f3f6b7c]
+- Updated dependencies [f3f6b7c]
+  - @robino/jsx@0.3.0
+
 ## 0.9.0
 
 ### Minor Changes

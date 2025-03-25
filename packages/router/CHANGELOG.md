@@ -1,5 +1,27 @@
 # @robino/router
 
+## 0.9.0
+
+### Minor Changes
+
+- f3f6b7c: Remove enhanced headers dependency
+- f3f6b7c: feat: update router to rely on `@robino/jsx` instead of `@robino/html`
+- f3f6b7c: move `c.res` methods to `c`
+
+  ```diff
+  app.get("/", (c) => {
+  -	c.res.text("hello");
+  +	c.text("hello");
+  });
+  ```
+
+### Patch Changes
+
+- f3f6b7c: change `config.trailingSlash` from `null` to `"ignore"` for removal of the redirect
+- Updated dependencies [f3f6b7c]
+- Updated dependencies [f3f6b7c]
+  - @robino/jsx@0.3.0
+
 ## 0.8.0
 
 ### Minor Changes
