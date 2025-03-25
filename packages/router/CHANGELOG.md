@@ -1,5 +1,11 @@
 # @robino/router
 
+## 0.9.1
+
+### Patch Changes
+
+- a04e1d4: add status to c.page
+
 ## 0.9.0
 
 ### Minor Changes
