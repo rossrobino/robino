@@ -177,8 +177,9 @@ export class Context<State, P extends Params> {
 	 * Creates an HTML response based on the `head` elements, `Layout`(s), and `Page` provided.
 	 *
 	 * @param Page `JSX.Element` to inject into the `<body>`
+	 * @param status [HTTP response status code](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status)
 	 */
-	page(Page: JSX.Element) {
+	page(Page: JSX.Element, status?: number) {
 		for (let i = this.#layouts.length - 1; i >= 0; i--)
 			Page = this.#layouts[i]!({ children: Page });
 
@@ -203,6 +204,7 @@ export class Context<State, P extends Params> {
 					c.close();
 				},
 			}).pipeThrough(new TextEncoderStream()),
+			status,
 		);
 	}
 
