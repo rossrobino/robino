@@ -1,4 +1,23 @@
 import type { Props, ElementProps, FC, JSX } from "../types/index.js";
+import { mergeAsyncIterables } from "./merge-async-iterables.js";
+import { serializeAttr } from "./serialize-attr.js";
+
+// https://developer.mozilla.org/en-US/docs/Glossary/Void_element#self-closing_tags
+const voidElements = new Set([
+	"area",
+	"base",
+	"br",
+	"col",
+	"embed",
+	"hr",
+	"img",
+	"input",
+	"link",
+	"meta",
+	"source",
+	"track",
+	"wbr",
+]);
 
 /**
  * The main function of the jsx transform cycle, each time jsx is encountered
@@ -18,7 +37,7 @@ export const jsx: {
 		// element
 		const { children, ...attrs } = props as ElementProps;
 
-		yield `<${tag}${serializeAttrs(attrs)}>`;
+		yield `<${tag}${serializeAttr(attrs)}>`;
 
 		if (voidElements.has(tag)) return;
 
@@ -42,89 +61,6 @@ export async function* Fragment(
 	} = {},
 ) {
 	yield* toGenerator(props.children);
-}
-
-// https://developer.mozilla.org/en-US/docs/Glossary/Void_element#self-closing_tags
-const voidElements = new Set([
-	"area",
-	"base",
-	"br",
-	"col",
-	"embed",
-	"hr",
-	"img",
-	"input",
-	"link",
-	"meta",
-	"source",
-	"track",
-	"wbr",
-]);
-
-/**
- * @param attrs attributes
- * @returns string of attributes
- */
-const serializeAttrs = (attrs?: Props) => {
-	let str = "";
-
-	for (let key in attrs) {
-		const value = attrs[key];
-
-		if (key === "className") key = "class";
-		else if (key === "htmlFor") key = "for";
-
-		if (value === true) {
-			// just put the key without the value
-			str += ` ${key}`;
-		} else if (
-			typeof value === "string" ||
-			typeof value === "number" ||
-			typeof value === "bigint"
-		) {
-			str += ` ${key}=${JSON.stringify(value)}`;
-		}
-		// otherwise, don't include the attribute
-	}
-
-	return str;
-};
-
-async function* mergeAsyncIterables<T>(iterables: AsyncIterable<T>[]) {
-	const entries = iterables.map((iterable, index) => {
-		const iterator = iterable[Symbol.asyncIterator]();
-		return {
-			index,
-			iterator,
-			promise: iterator.next().then((result) => ({ result, index })),
-		};
-	});
-
-	while (entries.length) {
-		// wait for the next resolved promise from any iterator
-		const { result, index } = await Promise.race(
-			entries.map((entry) => entry.promise),
-		);
-
-		if (result.done) {
-			// iterator is finished, remove entry
-			const entryIndex = entries.findIndex((entry) => entry.index === index);
-
-			if (entryIndex !== -1) entries.splice(entryIndex, 1);
-
-			yield { index, done: true as const };
-		} else {
-			yield { index, value: result.value, done: false as const };
-
-			// ask this iterator for its next chunk
-			const entry = entries.find((entry) => entry.index === index);
-			if (entry) {
-				entry.promise = entry.iterator
-					.next()
-					.then((result) => ({ result, index }));
-			}
-		}
-	}
 }
 
 /**
@@ -161,23 +97,25 @@ export async function* toGenerator(
 					if (index === current) {
 						while (++current < generators.length) {
 							if (queue[current]) {
+								// yield whatever is in the next queue even if it hasn't completed yet
 								yield queue[current]!;
 								queue[current] = "";
 							}
 
+							// if it hasn't completed, stop iterating to the next
 							if (!completed.has(current)) break;
 						}
 					}
 				} else if (index === current) {
-					yield value;
+					yield value; // stream the current value directly
 				} else {
-					queue[index] += value;
+					queue[index] += value; // queue the value for later
 				}
 			}
 
-			yield queue.join("");
+			yield queue.join(""); // clear the queue
 		} else {
-			yield JSON.stringify(element);
+			yield JSON.stringify(element); // avoids things like [object Object]
 		}
 	} else {
 		yield String(element); // primitive
