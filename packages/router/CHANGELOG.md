@@ -1,5 +1,11 @@
 # @robino/router
 
+## 0.10.0
+
+### Minor Changes
+
+- 8d163c3: add `start`
+
 ## 0.9.1
 
 ### Patch Changes
