@@ -6,15 +6,19 @@ class IterableHandler<T> {
 	constructor(index: number, iterable: AsyncIterable<T>) {
 		this.index = index;
 		this.iterator = iterable[Symbol.asyncIterator]();
-		this.promise = this.advance();
+		this.promise = this.next();
 	}
 
-	advance() {
+	next() {
 		return (this.promise = this.iterator.next().then((result) => ({
 			result,
 			handler: this,
 		})));
 	}
+}
+
+function* getPromises<T>(handlers: Iterable<IterableHandler<T>>) {
+	for (const handler of handlers) yield handler.promise;
 }
 
 /**
@@ -26,22 +30,15 @@ export async function* mergeAsyncIterables<T>(iterables: AsyncIterable<T>[]) {
 	for (let i = 0; i < iterables.length; i++)
 		handlers.add(new IterableHandler<T>(i, iterables[i]!));
 
-	const promises: Array<
-		Promise<{ result: IteratorResult<T>; handler: IterableHandler<T> }>
-	> = [];
-
 	while (handlers.size) {
-		promises.length = 0;
-		for (const handler of handlers) promises.push(handler.promise);
-
-		const { result, handler } = await Promise.race(promises);
+		const { result, handler } = await Promise.race(getPromises(handlers));
 
 		if (result.done) {
 			handlers.delete(handler);
 			yield { index: handler.index, done: true as const };
 		} else {
 			yield { index: handler.index, value: result.value, done: false as const };
-			handler.advance();
+			handler.next();
 		}
 	}
 }
