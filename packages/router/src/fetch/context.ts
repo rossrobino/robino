@@ -5,9 +5,16 @@ import type {
 	Params,
 	TrailingSlash,
 } from "../types.js";
-import { page, type JSX } from "@robino/jsx";
+import { toGenerator, type JSX } from "@robino/jsx";
 
 type Layout = (props: { children: JSX.Element }) => JSX.Element;
+
+class TagNotFound extends Error {
+	constructor(tag: string) {
+		super(`No closing ${tag} tag found`);
+		this.name = "TagNotFound";
+	}
+}
 
 export class Context<State, P extends Params> {
 	/** [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/API/Request) */
@@ -175,12 +182,24 @@ export class Context<State, P extends Params> {
 		for (let i = this.#layouts.length - 1; i >= 0; i--)
 			Page = this.#layouts[i]!({ children: Page });
 
-		const generator = page(this.basePage, this.#headElements, Page);
+		const headClose = "</head>";
+		const bodyClose = "</body>";
+
+		const elements: JSX.Element[] = this.basePage.split(headClose);
+		if (!elements[1]) throw new TagNotFound(headClose);
+
+		elements.splice(1, 0, this.#headElements, headClose);
+
+		const bodyParts = (elements[3] as string).split(bodyClose);
+		if (!bodyParts[1]) throw new TagNotFound(bodyClose);
+
+		elements[3] = bodyParts[0];
+		elements.push(Page, bodyClose + bodyParts[1]);
 
 		this.html(
 			new ReadableStream<string>({
 				start: async (c) => {
-					for await (const value of generator) c.enqueue(value);
+					for await (const value of toGenerator(elements)) c.enqueue(value);
 					c.close();
 				},
 			}).pipeThrough(new TextEncoderStream()),
