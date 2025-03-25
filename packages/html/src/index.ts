@@ -1,3 +1,5 @@
-export { escape } from "./escape/index.js";
-export { Page } from "./page/index.js";
-export type * from "./types/index.js";
+console.warn(
+	"@robino/html package has been deprecated and moved into @robino/jsx",
+);
+
+export {};
