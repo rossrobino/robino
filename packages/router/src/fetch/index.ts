@@ -21,6 +21,7 @@ export class Router<State = null> {
 	#routesMap = new Map<Method, Route<Middleware<State, Params>[]>[]>();
 
 	#state?: StateFunction<State>;
+	#start?: Middleware<State, Params>;
 	#trailingSlash: TrailingSlash;
 	#page?: Page<State>;
 	notFound?: NotFoundMiddleware<State>;
@@ -83,6 +84,9 @@ export class Router<State = null> {
 			 * @default null
 			 */
 			state?: StateFunction<State>;
+
+			/** Middleware to run before all other middleware. */
+			start?: Middleware<State, Params>;
 		} = {},
 	) {
 		this.#trailingSlash = config.trailingSlash ?? "never";
@@ -90,6 +94,7 @@ export class Router<State = null> {
 		this.notFound = config.notFound;
 		this.error = config.error ?? null;
 		this.#state = config.state;
+		this.#start = config.start;
 
 		this.fetch = this.fetch.bind(this);
 	}
@@ -288,6 +293,8 @@ export class Router<State = null> {
 	 * @returns single function middleware function
 	 */
 	#compose(middleware: Middleware<State, Params>[]): Middleware<State, Params> {
+		if (this.#start) middleware.unshift(this.#start);
+
 		return (c, next) => {
 			let index = -1;
 
