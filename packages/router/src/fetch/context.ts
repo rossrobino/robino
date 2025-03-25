@@ -50,7 +50,8 @@ export class Context<State, P extends Params> {
 	headers = new Headers();
 
 	/** Base page to inject the `head` and `body` into, set initially in `config.page`. */
-	basePage?: string;
+	basePage =
+		'<!doctype html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body></body></html>';
 
 	#notFound: NotFoundMiddleware<State>;
 	#layouts: Layout[] = [];
@@ -174,12 +175,15 @@ export class Context<State, P extends Params> {
 		for (let i = this.#layouts.length - 1; i >= 0; i--)
 			Page = this.#layouts[i]!({ children: Page });
 
+		const generator = page(this.basePage, this.#headElements, Page);
+
 		this.html(
-			page({
-				base: this.basePage,
-				head: this.#headElements.length ? this.#headElements : undefined,
-				body: Page,
-			}),
+			new ReadableStream<string>({
+				start: async (c) => {
+					for await (const value of generator) c.enqueue(value);
+					c.close();
+				},
+			}).pipeThrough(new TextEncoderStream()),
 		);
 	}
 

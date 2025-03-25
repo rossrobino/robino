@@ -249,8 +249,10 @@ export class Router<State = null> {
 
 					if (this.#state) c.state = this.#state(c);
 
-					c.basePage =
-						typeof this.#page === "function" ? this.#page(c) : this.#page;
+					if (this.#page) {
+						c.basePage =
+							typeof this.#page === "function" ? this.#page(c) : this.#page;
+					}
 
 					await this.#compose(match.route.store)(c, () => Promise.resolve());
 				}

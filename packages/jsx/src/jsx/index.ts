@@ -137,66 +137,36 @@ export const toString = async (element: JSX.Element) => {
 };
 
 /**
- * @param element
- * @returns a `ReadableStream<string>` that streams the HTML in order
+ * @param base Base string of HTML to inject elements into.
+ * @param head Elements to inject into the `<head>`.
+ * @param body Elements to inject into the `<body>`.
+ * @returns HTML byte stream
  */
-export const toStream = (element: JSX.Element) =>
-	new ReadableStream<string>({
-		start: async (c) => {
-			for await (const value of toGenerator(element)) c.enqueue(value);
-			c.close();
-		},
-	});
-
-/**
- * @param element
- * @returns `toStream` piped through a `TextEncoderStream`
- */
-export const toByteStream = (element: JSX.Element) =>
-	toStream(element).pipeThrough(new TextEncoderStream());
-
-/**
- * @param options page options
- * @returns HTML stream
- */
-export const page = (
-	options: {
-		/** Base string of HTML to inject elements into. */
-		base?: string;
-
-		/** Elements to inject into the `<head>`. */
-		head?: JSX.Element;
-
-		/** Elements to inject into the `<body>`. */
-		body?: JSX.Element;
-	} = {},
-) => {
-	options.base ??=
-		'<!doctype html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body></body></html>';
+export const page = (base: string, head: JSX.Element, body: JSX.Element) => {
 	const elements: JSX.Element[] = [];
 
-	if (options.head) {
+	if (head) {
 		const tag = "</head>";
-		const parts = options.base.split(tag);
+		const parts = base.split(tag);
 		if (!parts[1]) throw new TagNotFound(tag);
-		elements.push(parts[0], options.head, tag + parts[1]);
+		elements.push(parts[0], head, tag + parts[1]);
 	}
 
-	if (options.body) {
+	if (body) {
 		const tag = "</body>";
-		if (options.head) {
+		if (head) {
 			const parts = (elements[2] as string).split(tag); // know it's a string since it's set above
 			if (!parts[1]) throw new TagNotFound(tag);
 			elements[2] = parts[0];
-			elements.push(options.body, tag + parts[1]);
+			elements.push(body, tag + parts[1]);
 		} else {
-			const parts = options.base.split(tag);
+			const parts = base.split(tag);
 			if (!parts[1]) throw new TagNotFound(tag);
-			elements.push(parts[0], options.body, tag + parts[1]);
+			elements.push(parts[0], body, tag + parts[1]);
 		}
 	}
 
-	return toByteStream(elements);
+	return toGenerator(elements);
 };
 
 class TagNotFound extends Error {
