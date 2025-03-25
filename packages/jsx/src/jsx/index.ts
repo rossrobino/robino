@@ -1,6 +1,5 @@
 import type { Props, ElementProps, FC, JSX } from "../types/index.js";
 import { mergeAsyncIterables } from "./merge-async-iterables.js";
-import { serializeAttr } from "./serialize-attr.js";
 
 // https://developer.mozilla.org/en-US/docs/Glossary/Void_element#self-closing_tags
 const voidElements = new Set([
@@ -37,7 +36,28 @@ export const jsx: {
 		// element
 		const { children, ...attrs } = props as ElementProps;
 
-		yield `<${tag}${serializeAttr(attrs)}>`;
+		let attrStr = "";
+
+		for (let key in attrs) {
+			const value = attrs[key];
+
+			if (key === "className") key = "class";
+			else if (key === "htmlFor") key = "for";
+
+			if (value === true) {
+				// just put the key without the value
+				attrStr += ` ${key}`;
+			} else if (
+				typeof value === "string" ||
+				typeof value === "number" ||
+				typeof value === "bigint"
+			) {
+				attrStr += ` ${key}=${JSON.stringify(value)}`;
+			}
+			// otherwise, don't include the attribute
+		}
+
+		yield `<${tag}${attrStr}>`;
 
 		if (voidElements.has(tag)) return;
 
