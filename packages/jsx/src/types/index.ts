@@ -1,17 +1,27 @@
 import type { Elements } from "./elements.js";
 
+type MaybePromise<T> = T | Promise<T>;
+type MaybeFunction<T> = T | (() => T);
+
 export namespace JSX {
 	export type IntrinsicElements = Elements;
-	export type Element = Promise<string>;
+	export type Element = MaybeFunction<
+		MaybePromise<
+			| string
+			| number
+			| bigint
+			| boolean
+			| object
+			| null
+			| undefined
+			| Symbol
+			| Iterable<Element>
+			| AsyncIterable<Element>
+		>
+	>;
 }
 
-type MaybePromise<T> = T | Promise<T>;
-
-export type Children = MaybePromise<
-	string | number | bigint | boolean | Array<Children> | null | undefined
->;
-
-export type ElementProps = Record<string, Children>;
+export type ElementProps = Record<string, JSX.Element>;
 
 export type Props = Record<string, unknown>;
 

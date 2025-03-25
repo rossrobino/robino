@@ -1,5 +1,3 @@
-import type { Children } from "@robino/jsx";
-
 export const App = () => {
 	return (
 		<div

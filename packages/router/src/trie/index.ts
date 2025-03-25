@@ -1,10 +1,11 @@
-export class Route<T> {
-	/** the route pattern */
+export class Route<Store> {
+	/** Route pattern */
 	pattern: string;
-	/** value store returned when route is found */
-	store: T;
 
-	constructor(pattern: string, store: T) {
+	/** Store returned when route is found */
+	store: Store;
+
+	constructor(pattern: string, store: Store) {
 		if (pattern[0] !== "/") {
 			throw new Error(
 				`Invalid route: ${pattern} - route pattern must begin with "/"`,
@@ -16,36 +17,42 @@ export class Route<T> {
 	}
 }
 
-class ParamNode<T> {
-	/** name of the parameter (without the colon ":") */
+class ParamNode<Store> {
+	/** Name of the parameter (without the colon ":") */
 	name: string;
-	/** matched route */
-	route: Route<T> | null = null;
-	/** static child node */
-	staticChild: Node<T> | null = null;
+
+	/** Matched route */
+	route: Route<Store> | null = null;
+
+	/** Static child node */
+	staticChild: Node<Store> | null = null;
 
 	constructor(name: string) {
 		this.name = name;
 	}
 }
 
-export class Node<T> {
-	/** unique segment of the pattern trie */
+export class Node<Store> {
+	/** Unique segment of the pattern trie */
 	segment: string;
-	/** static child node map, key is the first character in the segment */
-	staticMap: Map<number, Node<T>> | null = null;
-	/** parametric child node */
-	paramChild: ParamNode<T> | null = null;
-	/** matched route */
-	route: Route<T> | null = null;
-	/** matched wildcard route */
-	wildcardRoute: Route<T> | null = null;
+
+	/** Static child node map, key is the first character in the segment */
+	staticMap: Map<number, Node<Store>> | null = null;
+
+	/** Parametric child node */
+	paramChild: ParamNode<Store> | null = null;
+
+	/** Matched route */
+	route: Route<Store> | null = null;
+
+	/** Matched wildcard route */
+	wildcardRoute: Route<Store> | null = null;
 
 	/**
 	 * @param segment pattern segment
 	 * @param staticChildren static children nodes to add to staticMap
 	 */
-	constructor(segment = "/", staticChildren?: Node<T>[]) {
+	constructor(segment = "/", staticChildren?: Node<Store>[]) {
 		this.segment = segment;
 
 		if (staticChildren?.length) {
@@ -73,9 +80,9 @@ export class Node<T> {
 	}
 
 	/**
-	 * if the current segment is "api/posts"
-	 * and "api/movies" is added,
-	 * the node will need to be reassigned to "api/" and create two static children
+	 * If the current segment is "api/posts/"
+	 * and "api/movies/" is added,
+	 * the node will need to be reassigned to "api/" and create two static children.
 	 *
 	 * @param charIndex	where to split the node
 	 * @param segment new segment to use
@@ -83,7 +90,7 @@ export class Node<T> {
 	 */
 	fork(charIndex: number, segment: string) {
 		const existingChild = this.clone(this.segment.slice(charIndex)); // "posts/"
-		const newChild = new Node<T>(segment.slice(charIndex)); // "movies/"
+		const newChild = new Node<Store>(segment.slice(charIndex)); // "movies/"
 
 		Object.assign(
 			this,
@@ -119,15 +126,15 @@ export class Node<T> {
 			);
 		}
 
-		return (this.paramChild ??= new ParamNode<T>(name));
+		return (this.paramChild ??= new ParamNode<Store>(name));
 	}
 
 	/**
 	 * @param route route return when pattern is matched
 	 * @returns this - the Node
 	 */
-	add(route: Route<T>) {
-		let current: Node<T> = this;
+	add(route: Route<Store>) {
+		let current: Node<Store> = this;
 		let pattern = route.pattern; // created to not modify the original
 
 		const endsWithWildcard = pattern.endsWith("*");
@@ -160,7 +167,7 @@ export class Node<T> {
 
 				if (!paramChild.staticChild) {
 					// new - create node with the next static segment
-					current = paramChild.staticChild = new Node<T>(staticSegment);
+					current = paramChild.staticChild = new Node<Store>(staticSegment);
 					continue; // next segment - no need to check since it's new
 				}
 
@@ -202,7 +209,7 @@ export class Node<T> {
 					}
 
 					// otherwise, add new staticChild
-					const staticChild = new Node<T>(staticSegment.slice(charIndex));
+					const staticChild = new Node<Store>(staticSegment.slice(charIndex));
 					current.staticMap.set(
 						staticSegment.charCodeAt(charIndex),
 						staticChild,
@@ -239,8 +246,12 @@ export class Node<T> {
 		return this;
 	}
 
+	/**
+	 * @param pathname Path to find
+	 * @returns `Route` and the matched `params` if found, otherwise `null`
+	 */
 	find(pathname: string): {
-		route: Route<T>;
+		route: Route<Store>;
 		params: Record<string, string>;
 	} | null {
 		if (

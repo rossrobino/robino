@@ -1,4 +1,4 @@
-import type { Children, JSX } from "@robino/jsx";
+import type { JSX } from "@robino/jsx";
 
 export const H1 = (props: JSX.IntrinsicElements["h1"]) => {
 	return <h1 class="bg-blue">{props.children}</h1>;

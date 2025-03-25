@@ -29,12 +29,12 @@ export const escape = (v: unknown, attr?: boolean) => {
 
 		result +=
 			// everything that didn't match during this test
-			s.substring(start, i) +
+			s.slice(start, i) +
 			// replacement
 			(match === "&" ? "&amp;" : match === '"' ? "&quot;" : "&lt;");
 
 		start = regex.lastIndex;
 	}
 
-	return result + s.substring(start);
+	return result + s.slice(start);
 };

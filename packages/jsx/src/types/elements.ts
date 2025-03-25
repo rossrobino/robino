@@ -1,15 +1,16 @@
 // cspell: disable
-import type { Children, ElementProps } from "./index.js";
+import type { JSX, ElementProps } from "./index.js";
 
 // https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes
 type Attributes<T extends ElementProps = ElementProps> = Partial<{
-	children: Children;
+	children: JSX.Element;
 	accesskey: string;
 	anchor: string;
 	autocapitalize: "on" | "off" | "characters" | "words" | "sentences";
 	autocorrect: "on" | "off";
 	autofocus: boolean;
 	class: string;
+	className: string;
 	contenteditable: string;
 	dir: string;
 	draggable: boolean;
@@ -461,6 +462,7 @@ type InsAttributes = Attributes<{
 
 type LabelAttributes = Attributes<{
 	for: string;
+	htmlFor: string;
 }>;
 
 type LiAttributes = Attributes<{
@@ -593,6 +595,7 @@ type OptionAttributes = Attributes<{
 
 type OutputAttributes = Attributes<{
 	for: string;
+	htmlFor: string;
 	form: string;
 	name: string;
 }>;
