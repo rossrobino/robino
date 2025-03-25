@@ -85,7 +85,7 @@ export class Router<State = null> {
 			 */
 			state?: StateFunction<State>;
 
-			/** Middleware to run before all other middleware. */
+			/** Global middleware to run before all other middleware. */
 			start?: Middleware<State, Params>;
 		} = {},
 	) {
