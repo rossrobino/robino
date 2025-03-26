@@ -1,5 +1,11 @@
 # @robino/router
 
+## 0.11.1
+
+### Patch Changes
+
+- 77a11c2: export `Context`
+
 ## 0.11.0
 
 ### Minor Changes
