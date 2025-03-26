@@ -2,7 +2,11 @@ import type { JSX } from "@robino/jsx";
 import { Router } from "@robino/router";
 import { html } from "client:page";
 
-const app = new Router({ page: html });
+const app = new Router({
+	start(c) {
+		c.base = html;
+	},
+});
 
 app.get("/", (c) =>
 	c.page(

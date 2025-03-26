@@ -54,7 +54,7 @@ import { Router } from "@robino/router";
 
 const router = new Router();
 
-router.get("/", (c) => c.res("Hello world"));
+router.get("/", (c) => c.text("Hello world"));
 ```
 
 ### Configuration
@@ -66,17 +66,21 @@ const router = new Router({
 	// redirect trailing slash preference
 	trailingSlash: "always",
 
-	// customize the not found response
-	notFound: (c) => c.res("custom", { status: 404 }),
+	// runs at the start of each request
+	start(c) {
+		// customize the not found response
+		c.notFound = (c) => c.res("custom", { status: 404 });
 
-	// add an error handler
-	error: (c) => c.res(c.error.message, { status: 500 }),
+		// add a global error handler
+		c.error = (c, error) => c.res(error.message, { status: 500 });
 
-	// run at the start of each request, return state to use in middleware
-	start: (c) => ({ foo: "bar" }),
+		// base HTML to inject head and body elements into, this is the default
+		c.base =
+			'<!doctype html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body></body></html>';
 
-	// base `Page` to inject elements into, this is the default
-	page: '<!doctype html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body></body></html>',
+		// return state to use in middleware
+		return { foo: "bar" };
+	},
 });
 ```
 
@@ -86,17 +90,20 @@ const router = new Router({
 
 ```ts
 router.get("/api/:id", (c) => {
+	// values
 	c.req; // Request
 	c.url; // URL
 	c.params; // type safe params: "/api/123" => { id: "123" }
 	c.route; // Matched Route
 	c.state; // whatever is returned from `config.start`, for example an auth helper or a key/value store
+
+	// methods
 	c.res; // create a response
 	c.html; // html helper
 	c.json; // json helper
 	c.text; // text helper
 	c.page; // create a page response with elements
-	c.head; // elements to inject into head
+	c.head; // inject elements into head
 	c.layout; // add layout around the page
 });
 ```
@@ -106,7 +113,7 @@ router.get("/api/:id", (c) => {
 #### Basic
 
 ```ts
-router.get("/", (c) => c.res("Hello world"));
+router.get("/", (c) => c.text("Hello world"));
 ```
 
 #### Param
@@ -146,7 +153,9 @@ router.get(
 	async (c, next) => {
 		// middleware
 		console.log("pre"); // 1
+
 		await next(); // calls the next middleware below
+
 		console.log("post"); // 3
 	},
 	(c) => {

@@ -1,9 +1,11 @@
 import type { Route } from "../trie/index.js";
 import type {
+	ErrorMiddleware,
+	MaybePromise,
 	Middleware,
-	NotFoundMiddleware,
 	Params,
 	TrailingSlash,
+	UnmatchedContext,
 } from "../types.js";
 import { toGenerator, type JSX } from "@robino/jsx";
 
@@ -20,15 +22,11 @@ export class Context<State, P extends Params> {
 	/** [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/API/Request) */
 	req: Request;
 
-	/**
-	 * `new URL(req.url)`
-	 *
-	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/API/URL)
-	 */
+	/** [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/API/URL) */
 	url: URL;
 
 	/**
-	 * `state` returned from `config.state` and possibly modified by middleware.
+	 * `state` returned from `config.start`, possibly modified by previous middleware.
 	 *
 	 * @default null
 	 */
@@ -38,7 +36,7 @@ export class Context<State, P extends Params> {
 	 * Route pattern parameters
 	 *
 	 * Given the route pattern `/posts/:slug` is added, a request made to
-	 * `/posts/my-post` would create a `params` object `{ slug: "my-post" }`.
+	 * `/posts/my-post` creates a `params` object `{ slug: "my-post" }`.
 	 *
 	 * @example { slug: "my-post" }
 	 */
@@ -56,30 +54,51 @@ export class Context<State, P extends Params> {
 	/** [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/API/Headers) */
 	headers = new Headers();
 
-	/** Base page to inject the `head` and `body` into, set initially in `config.page`. */
-	basePage =
+	/**
+	 * Base HTML to inject the `head` and `page` elements into.
+	 *
+	 * @default
+	 *
+	 * ```html
+	 * <!doctype html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body></body></html>
+	 * ```
+	 */
+	base =
 		'<!doctype html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body></body></html>';
 
-	#notFound: NotFoundMiddleware<State>;
+	/**
+	 * Assign a handler to run when an `Error` is thrown.
+	 *
+	 * If not set, `Error` will be thrown. This might be desired
+	 * if your server already includes error handling. Set in `config.start`
+	 * to handle errors globally.
+	 *
+	 * @default null
+	 */
+	error: ErrorMiddleware<State> | null = null;
+
 	#layouts: Layout[] = [];
 	#headElements: JSX.Element[] = [];
 	#trailingSlash: TrailingSlash;
 
-	constructor(options: {
-		req: Request;
-		url: URL;
-		notFound?: NotFoundMiddleware<State>;
-		trailingSlash: TrailingSlash;
-	}) {
-		this.req = options.req;
-		this.url = options.url;
-		this.#notFound = options.notFound ?? (() => this.html("Not found", 404));
-		this.#trailingSlash = options.trailingSlash;
+	constructor(req: Request, url: URL, trailingSlash: TrailingSlash) {
+		this.req = req;
+		this.url = url;
+		this.#trailingSlash = trailingSlash;
 	}
 
-	/** Runs the `notFound` middleware. */
-	notFound() {
-		this.#notFound(this);
+	/**
+	 * Middleware to run when no `body` or `status` has been set on the `context`.
+	 * Set to a new function to override the default.
+	 *
+	 * @default
+	 *
+	 * ```ts
+	 * () => this.html("Not found", 404)
+	 * ```
+	 */
+	notFound(_context: UnmatchedContext<State, P>): MaybePromise<void> {
+		this.html("Not found", 404);
 	}
 
 	/**
@@ -186,7 +205,7 @@ export class Context<State, P extends Params> {
 		const headClose = "</head>";
 		const bodyClose = "</body>";
 
-		const elements: JSX.Element[] = this.basePage.split(headClose);
+		const elements: JSX.Element[] = this.base.split(headClose);
 		if (!elements[1]) throw new TagNotFound(headClose);
 
 		elements.splice(1, 0, this.#headElements, headClose);
@@ -240,7 +259,7 @@ export class Context<State, P extends Params> {
 	}
 
 	/**
-	 * @returns the constructed Response
+	 * @returns the constructed `Response`
 	 */
 	build() {
 		if (
@@ -262,7 +281,7 @@ export class Context<State, P extends Params> {
 			}
 		}
 
-		if (!this.body && !this.status) this.notFound();
+		if (!this.body && !this.status) this.notFound(this);
 
 		return new Response(this.body, {
 			status: this.status,

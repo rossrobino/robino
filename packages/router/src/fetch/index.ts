@@ -1,14 +1,11 @@
 import { Node, Route } from "../trie/index.js";
 import type {
-	ErrorMiddleware,
 	ExtractMultiParams,
 	ExtractParams,
 	Method,
 	Middleware,
-	NotFoundMiddleware,
-	Page,
 	Params,
-	StateFunction,
+	Start,
 	TrailingSlash,
 } from "../types.js";
 import { Context } from "./context.js";
@@ -20,12 +17,8 @@ export class Router<State = null> {
 	/** Added routes per HTTP method */
 	#routesMap = new Map<Method, Route<Middleware<State, Params>[]>[]>();
 
-	#state?: StateFunction<State>;
-	#start?: Middleware<State, Params>;
+	#start?: Start<State>;
 	#trailingSlash: TrailingSlash;
-	#page?: Page<State>;
-	notFound?: NotFoundMiddleware<State>;
-	error: ErrorMiddleware<State> | null;
 
 	constructor(
 		config: {
@@ -41,61 +34,17 @@ export class Router<State = null> {
 			trailingSlash?: TrailingSlash;
 
 			/**
-			 * Base `HTML` string to inject into with `c.page`.
-			 *
-			 * @default
-			 *
-			 * ```html
-			 * <!doctype html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body></body></html>
-			 * ```
-			 */
-			page?: Page<State>;
-
-			/**
-			 * Assign a custom not found handler to run when
-			 * a matching route is not found.
-			 *
-			 * @default
-			 *
-			 * ```ts
-			 * (c) => c.res.set("Not found", {
-			 * 	status: 404,
-			 * 	headers: { contentType: "text/html" },
-			 * })
-			 * ```
-			 */
-			notFound?: NotFoundMiddleware<State>;
-
-			/**
-			 * Assign a handler to run when an Error is thrown.
-			 *
-			 * If not set, Error will be thrown. This might be desired
-			 * if your server already includes error handling.
-			 *
-			 * @default null
-			 */
-			error?: ErrorMiddleware<State>;
-
-			/**
-			 * Sets the initial state before middleware runs.
+			 * Runs before middleware, return a value to set the initial state.
 			 *
 			 * @param context request context
 			 * @returns any state to access in middleware
 			 * @default null
 			 */
-			state?: StateFunction<State>;
-
-			/** Global middleware to run before all other middleware. */
-			start?: Middleware<State, Params>;
+			start?: Start<State>;
 		} = {},
 	) {
 		this.#trailingSlash = config.trailingSlash ?? "never";
-		this.#page = config.page;
-		this.notFound = config.notFound;
-		this.error = config.error ?? null;
-		this.#state = config.state;
 		this.#start = config.start;
-
 		this.fetch = this.fetch.bind(this);
 	}
 
@@ -132,13 +81,10 @@ export class Router<State = null> {
 
 		for (const p of patterns) {
 			const route = new Route(p, middleware);
-			const existing = this.#routesMap.get(method);
+			const routes = this.#routesMap.get(method);
 
-			if (existing) {
-				existing.push(route);
-			} else {
-				this.#routesMap.set(method, [route]);
-			}
+			if (routes) routes.push(route);
+			else this.#routesMap.set(method, [route]);
 		}
 
 		return this;
@@ -220,18 +166,19 @@ export class Router<State = null> {
 	}
 
 	/**
-	 * @param req [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/API/Request)
-	 * @returns [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/API/Response)
+	 * @param req [`Request` Reference](https://developer.mozilla.org/en-US/docs/Web/API/Request)
+	 * @returns [`Response` Reference](https://developer.mozilla.org/en-US/docs/Web/API/Response)
 	 */
 	async fetch(req: Request): Promise<Response> {
-		const c = new Context<State, Params>({
+		const c = new Context<State, Params>(
 			req,
-			url: new URL(req.url),
-			notFound: this.notFound,
-			trailingSlash: this.#trailingSlash,
-		});
+			new URL(req.url),
+			this.#trailingSlash,
+		);
 
 		try {
+			if (this.#start) c.state = this.#start(c);
+
 			let trie = this.#trieMap.get(req.method);
 
 			if (!trie) {
@@ -249,40 +196,17 @@ export class Router<State = null> {
 				const match = trie.find(c.url.pathname);
 
 				if (match) {
-					c.route = match.route;
-					c.params = match.params;
-
-					if (this.#state) c.state = this.#state(c);
-
-					if (this.#page) {
-						c.basePage =
-							typeof this.#page === "function" ? this.#page(c) : this.#page;
-					}
+					Object.assign(c, match);
 
 					await this.#compose(match.route.store)(c, () => Promise.resolve());
 				}
 			}
-
-			return c.build();
-		} catch (e) {
-			if (this.error) {
-				let error: Error;
-
-				if (e instanceof Error) {
-					error = e;
-				} else {
-					error = new Error(
-						`Something other than an \`Error\` was thrown:\n\n${e}`,
-					);
-				}
-
-				this.error(c, error);
-
-				return c.build();
-			}
-
-			throw e;
+		} catch (error) {
+			if (c.error) c.error(c, error);
+			else throw error;
 		}
+
+		return c.build();
 	}
 
 	/**
@@ -293,8 +217,6 @@ export class Router<State = null> {
 	 * @returns single function middleware function
 	 */
 	#compose(middleware: Middleware<State, Params>[]): Middleware<State, Params> {
-		if (this.#start) middleware.unshift(this.#start);
-
 		return (c, next) => {
 			let index = -1;
 

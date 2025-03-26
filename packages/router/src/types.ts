@@ -1,30 +1,28 @@
 import type { Context } from "./fetch/context.js";
 
+export type MaybePromise<T> = T | Promise<T>;
+
 export type Params = Record<string, string>;
 
-export type StateFunction<State> = (
-	context: Omit<Context<State, Params>, "state">,
+export type UnmatchedContext<State, P extends Params> = Omit<
+	Context<State, P>,
+	"route"
+> &
+	Partial<Pick<Context<State, P>, "route">>;
+
+export type Start<State> = (
+	context: Omit<UnmatchedContext<any, Params>, "state" | "route" | "params">,
 ) => State;
 
-type UnmatchedContext<State> = Omit<Context<State, Params>, "params" | "route">;
-
-export type NotFoundMiddleware<State> = (
-	context: UnmatchedContext<State>,
-) => any;
-
 export type ErrorMiddleware<State> = (
-	context: UnmatchedContext<State>,
-	error: Error,
-) => any;
-
-export type Page<State> =
-	| string
-	| ((context: Context<State, Params>) => string);
+	context: UnmatchedContext<State, Params>,
+	error: unknown,
+) => MaybePromise<void>;
 
 export type Middleware<State = null, P extends Params = Params> = (
 	context: Context<State, P>,
 	next: () => Promise<void>,
-) => any;
+) => MaybePromise<void>;
 
 export type Method =
 	| "GET"

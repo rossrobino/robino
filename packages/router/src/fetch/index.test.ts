@@ -3,7 +3,7 @@ import { describe, expect, test } from "vitest";
 
 const router = new Router({
 	trailingSlash: "always",
-	state() {
+	start(c) {
 		return { foo: "bar" };
 	},
 });
@@ -56,7 +56,12 @@ test("context", () => {
 		c.json(formData.get("key"));
 	});
 
-	router.get("/error/", () => {
+	router.get("/error/", (c) => {
+		c.error = (c, error) => {
+			expect(error).toBeInstanceOf(Error);
+			c.text((error as Error).message, 500);
+		};
+
 		throw new Error("An error occurred");
 	});
 
@@ -134,16 +139,7 @@ test("GET /not-found/", async () => {
 	expect(res.status).toBe(404);
 });
 
-test("GET /error/", async () => {
-	await expect(() => get("/error/")).rejects.toThrowError();
-});
-
 test("GET /error/ (custom)", async () => {
-	router.error = (c, error) => {
-		expect(error).toBeInstanceOf(Error);
-		c.text(error.message, 500);
-	};
-
 	const res = await get("/error/");
 	expect(await res.text()).toBe("An error occurred");
 });
