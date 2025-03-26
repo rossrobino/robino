@@ -1,3 +1,4 @@
-export * from "./trie/index.js";
-export * from "./fetch/index.js";
+export { Context } from "./fetch/context.js";
+export { Router } from "./fetch/index.js";
+export { Node, Route } from "./trie/index.js";
 export type * from "./types.js";
