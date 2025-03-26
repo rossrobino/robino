@@ -1,5 +1,13 @@
 # @robino/router
 
+## 0.11.0
+
+### Minor Changes
+
+- 2254eeb: Removes `config.notFound`, `config.error`, and `config.base`. Merges `config.state` with `config.start`.
+
+  All of these can now be set within `config.start` or within middleware, and `c.state` will be set to the return value of `config.start`.
+
 ## 0.10.0
 
 ### Minor Changes
