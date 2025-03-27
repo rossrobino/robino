@@ -1,5 +1,13 @@
 # @robino/router
 
+## 0.11.2
+
+### Patch Changes
+
+- 84d69bf: no notable changes
+- Updated dependencies [84d69bf]
+  - @robino/jsx@0.3.1
+
 ## 0.11.1
 
 ### Patch Changes
