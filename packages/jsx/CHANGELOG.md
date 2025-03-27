@@ -1,5 +1,11 @@
 # @robino/html
 
+## 0.3.1
+
+### Patch Changes
+
+- 84d69bf: no notable changes
+
 ## 0.3.0
 
 ### Minor Changes
