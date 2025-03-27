@@ -181,8 +181,8 @@ export class Context<State, P extends Params> {
 	/**
 	 * @param Element `JSX.Element` to add to the head
 	 */
-	head(Element: JSX.Element) {
-		this.#headElements.push(Element);
+	head(...Element: JSX.Element[]) {
+		this.#headElements.push(...Element);
 	}
 
 	/**
@@ -283,9 +283,6 @@ export class Context<State, P extends Params> {
 
 		if (!this.body && !this.status) this.notFound(this);
 
-		return new Response(this.body, {
-			status: this.status,
-			headers: this.headers,
-		});
+		return new Response(this.body, this);
 	}
 }
