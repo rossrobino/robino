@@ -10,7 +10,7 @@
 		"name": "Ross Robino",
 		"url": "https://robino.dev"
 	},
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"files": [
 		"tsc.json",
 		"bundler.json",
