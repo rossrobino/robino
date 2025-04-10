@@ -24,11 +24,11 @@
 		"build": "tsc"
 	},
 	"dependencies": {
-		"@shikijs/core": "^3.2.1",
-		"@shikijs/engine-javascript": "^3.2.1",
-		"@shikijs/langs": "^3.2.1",
-		"@shikijs/markdown-it": "^3.2.1",
-		"@shikijs/transformers": "^3.2.1",
+		"@shikijs/core": "^3.2.2",
+		"@shikijs/engine-javascript": "^3.2.2",
+		"@shikijs/langs": "^3.2.2",
+		"@shikijs/markdown-it": "^3.2.2",
+		"@shikijs/transformers": "^3.2.2",
 		"@standard-schema/spec": "^1.0.0",
 		"@types/markdown-it": "^14.1.2",
 		"js-yaml": "^4.1.0",

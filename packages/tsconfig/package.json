@@ -20,6 +20,6 @@
 		"typescript": ">=5.5.0"
 	},
 	"dependencies": {
-		"@types/node": "^22.13.14"
+		"@types/node": "^22.14.0"
 	}
 }
