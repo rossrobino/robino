@@ -9,9 +9,7 @@ npm i -D @robino/prettier
 ## package.json
 
 ```json
-{
-	"prettier": "@robino/prettier"
-}
+{ "prettier": "@robino/prettier" }
 ```
 
 ## prettier.config.js

@@ -11,9 +11,7 @@ import { z } from "zod";
 const processor = new Processor({
 	highlighter: {
 		langs: [langHtml, langMd, langTsx, langLua],
-		langAlias: {
-			ts: "tsx",
-		},
+		langAlias: { ts: "tsx" },
 	},
 });
 

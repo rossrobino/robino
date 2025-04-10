@@ -93,9 +93,7 @@ const htmlStream = processor.renderStream(textStream);
 ```ts
 import { OpenAI } from "openai";
 
-const openai = new OpenAI({
-	apiKey: OPENAI_API_KEY,
-});
+const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 
 const response = await openai.responses.create({
 	input: [
@@ -161,9 +159,7 @@ import type { Result } from "@robino/md";
 
 const content = import.meta.glob<Result<typeof FrontmatterSchema>>(
 	"./content/*.md",
-	{
-		eager: true,
-	},
+	{ eager: true },
 );
 ```
 

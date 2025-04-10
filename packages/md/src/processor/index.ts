@@ -75,11 +75,7 @@ export class Processor extends MarkdownIt {
 
 	constructor(options: Options = {}) {
 		super(
-			(options.markdownIt ??= {
-				typographer: true,
-				linkify: true,
-				html: true,
-			}),
+			(options.markdownIt ??= { typographer: true, linkify: true, html: true }),
 		);
 
 		this.#highlighter = createHighlighterCoreSync({
@@ -89,9 +85,9 @@ export class Processor extends MarkdownIt {
 			langAlias: options.highlighter?.langAlias,
 		}) as HighlighterGeneric<any, any>;
 
-		this.use(Anchor, {
-			permalink: Anchor.permalink.headerLink(),
-		}).use(tableOverflow);
+		this.use(Anchor, { permalink: Anchor.permalink.headerLink() }).use(
+			tableOverflow,
+		);
 
 		if (options.highlighter?.langs) {
 			this.use(

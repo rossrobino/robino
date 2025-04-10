@@ -34,9 +34,7 @@
   ```ts
   import { OpenAI } from "openai";
 
-  const openai = new OpenAI({
-  	apiKey: OPENAI_API_KEY,
-  });
+  const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 
   const stream = await openai.chat.completions.create({
   	messages: [
