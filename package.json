@@ -10,14 +10,8 @@
 	"license": "MIT",
 	"packageManager": "npm@10.9.2",
 	"workspaces": [
-		"packages/*",
-		"test",
-		"test-app"
+		"packages/*"
 	],
-	"author": {
-		"name": "Ross Robino",
-		"url": "https://robino.dev"
-	},
 	"scripts": {
 		"test": "vitest run",
 		"test:dev": "vitest",

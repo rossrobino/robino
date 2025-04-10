@@ -6,6 +6,10 @@
 		"type": "git",
 		"url": "git+https://github.com/rossrobino/robino.git"
 	},
+	"author": {
+		"name": "Ross Robino",
+		"url": "https://robino.dev"
+	},
 	"version": "1.0.2",
 	"files": [
 		"tsc.json",
