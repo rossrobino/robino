@@ -56,6 +56,9 @@ export type Options = {
 	 */
 	markdownIt?: MarkdownItOptions;
 
+	/** Set to `false` to disable the markdown-it-anchor plugin for headings. */
+	anchor?: boolean;
+
 	/** Shiki highlighter options. */
 	highlighter?: {
 		/** Custom shiki grammars to load */
@@ -85,9 +88,12 @@ export class Processor extends MarkdownIt {
 			langAlias: options.highlighter?.langAlias,
 		}) as HighlighterGeneric<any, any>;
 
-		this.use(Anchor, { permalink: Anchor.permalink.headerLink() }).use(
-			tableOverflow,
-		);
+		if (options.anchor !== false) {
+			// true or undefined ok
+			this.use(Anchor, { permalink: Anchor.permalink.headerLink() });
+		}
+
+		this.use(tableOverflow);
 
 		if (options.highlighter?.langs) {
 			this.use(
