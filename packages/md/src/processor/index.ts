@@ -150,7 +150,7 @@ export class Processor extends MarkdownIt {
 
 			if (!codeBlockMatch) return notComplete;
 
-			const endPos = codeBlockMatch.index! + codeBlockMatch[0].length - 1;
+			const endPos = codeBlockMatch.index! + codeBlockMatch[0].length;
 
 			return {
 				html: this.render(md.slice(0, endPos)),
