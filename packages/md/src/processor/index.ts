@@ -77,9 +77,12 @@ export class Processor extends MarkdownIt {
 	#highlighter;
 
 	constructor(options: Options = {}) {
-		super(
-			(options.markdownIt ??= { typographer: true, linkify: true, html: true }),
-		);
+		options.markdownIt ??= {};
+		options.markdownIt.typographer ??= true;
+		options.markdownIt.linkify ??= true;
+		options.markdownIt.html ??= true;
+
+		super(options.markdownIt);
 
 		this.#highlighter = createHighlighterCoreSync({
 			themes: [createCssVariablesTheme()],
@@ -144,9 +147,10 @@ export class Processor extends MarkdownIt {
 			const codeBlockMatch = md.match(
 				/^```\s*(\w+)?\n([\s\S]*?)\n```(?:\n|$)/m,
 			);
+
 			if (!codeBlockMatch) return notComplete;
 
-			const endPos = codeBlockMatch.index! + codeBlockMatch[0].length;
+			const endPos = codeBlockMatch.index! + codeBlockMatch[0].length - 1;
 
 			return {
 				html: this.render(md.slice(0, endPos)),
@@ -156,14 +160,12 @@ export class Processor extends MarkdownIt {
 
 		const double = "\n\n";
 		const parts = md.split(double);
-		if (parts.length > 1) {
-			return {
-				html: this.render(parts[0] + double),
-				remaining: parts.slice(1).join(double),
-			};
-		}
+		let html = "";
 
-		return notComplete;
+		for (let i = 0; i < parts.length - 1; i++)
+			html += this.render(parts[i]! + double);
+
+		return { html, remaining: parts.at(-1) ?? "" };
 	}
 
 	/**

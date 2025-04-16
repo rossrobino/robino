@@ -32,6 +32,8 @@ const processor = new Processor({
 		langs: [langJs],
 	},
 });
+
+processor.use(SomeOtherPlugin); // use other plugins
 ```
 
 ### process

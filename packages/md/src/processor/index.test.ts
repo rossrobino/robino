@@ -67,7 +67,35 @@ function hello_world()
   print("Hello, World!")
 end
 \`\`\`
+
+hello
+
+paragraph
+
+test
 `;
+
+test("render and stream produce same output", async () => {
+	const html = processor.render(md);
+
+	const stream = processor.renderStream(
+		new ReadableStream({
+			start(controller) {
+				controller.enqueue(md);
+				controller.close();
+			},
+		}),
+	);
+	let streamed = "";
+	const reader = stream.getReader();
+	while (true) {
+		const { value, done } = await reader.read();
+		if (value) streamed += value;
+		if (done) break;
+	}
+
+	expect(html).toEqual(streamed);
+});
 
 test("process", async () => {
 	const { article, headings, html, frontmatter } = await processor.process(md);
