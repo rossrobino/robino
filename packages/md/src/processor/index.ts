@@ -12,7 +12,7 @@ import { transformerMetaHighlight } from "@shikijs/transformers";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { load } from "js-yaml";
 import MarkdownIt from "markdown-it";
-import type { Options as MarkdownItOptions } from "markdown-it";
+import type { Options as MarkdownItOptions, PluginSimple } from "markdown-it";
 import Anchor from "markdown-it-anchor";
 
 export type Heading = {
@@ -71,6 +71,9 @@ export type Options = {
 		 */
 		langAlias?: HighlighterCoreOptions<true>["langAlias"];
 	};
+
+	/** Plugins to apply. */
+	plugins?: PluginSimple[];
 };
 
 export class Processor extends MarkdownIt {
@@ -81,8 +84,13 @@ export class Processor extends MarkdownIt {
 		options.markdownIt.typographer ??= true;
 		options.markdownIt.linkify ??= true;
 		options.markdownIt.html ??= true;
+		options.plugins ??= [];
 
 		super(options.markdownIt);
+
+		for (const plugin of options.plugins) {
+			this.use(plugin);
+		}
 
 		this.#highlighter = createHighlighterCoreSync({
 			themes: [createCssVariablesTheme()],
