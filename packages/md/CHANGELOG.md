@@ -1,5 +1,19 @@
 # @robino/md
 
+## 4.0.0
+
+### Major Changes
+
+- b6dfbf7: Rename `renderStream` to `stream`
+
+### Minor Changes
+
+- b6dfbf7: feat: Add `generate` function
+
+### Patch Changes
+
+- 9b7887a: update dependencies
+
 ## 3.2.1
 
 ### Patch Changes
