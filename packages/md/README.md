@@ -15,7 +15,7 @@ An extended [markdown-it](https://github.com/markdown-it/markdown-it) instance w
 - Syntax highlighting with [shiki](https://shiki.style/) using the [CSS variables](https://shiki.style/guide/theme-colors#css-variables-theme) theme to style
 - Adds `<div style="overflow-x: auto;">...</div>` around each table element to prevent overflow
 - [Vite plugin](#plugin) to process markdown at build time
-- [`renderStream`](#renderstream) function to render and highlight a stream of markdown
+- [`stream`](#stream) function to render and highlight a stream of markdown
 
 ## Processor
 
@@ -70,11 +70,13 @@ Use the `render` method to render highlighted HTML.
 const html = processor.render(md);
 ```
 
-### renderStream
+### stream
 
-`renderStream` streams the result of a markdown stream through the renderer/highlighter. You can easily render/highlight and stream the output from an LLM on the server.
+`stream` streams the result of a markdown stream through the renderer/highlighter. You can easily render/highlight and stream the output from an LLM on the server.
 
 The result will come in chunks of elements instead of by word since the entire element needs to be present to render and highlight correctly.
+
+`generate` is also available to transform a generator of markdown into a generator of HTML.
 
 #### ai-sdk
 
@@ -87,7 +89,7 @@ const { textStream } = streamText({
 	prompt: "write some js code",
 });
 
-const htmlStream = processor.renderStream(textStream);
+const htmlStream = processor.stream(textStream);
 ```
 
 #### openai
@@ -119,7 +121,7 @@ const mdStream = new ReadableStream<string>({
 	},
 });
 
-const htmlStream = processor.renderStream(mdStream);
+const htmlStream = processor.stream(mdStream);
 ```
 
 ## Plugin

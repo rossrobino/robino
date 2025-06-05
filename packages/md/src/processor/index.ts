@@ -177,10 +177,32 @@ export class Processor extends MarkdownIt {
 	}
 
 	/**
+	 * @param mdGenerator Markdown generator
+	 * @returns `AsyncGenerator<string>` of HTML
+	 */
+	async *generate(mdGenerator: Generator<string> | AsyncGenerator<string>) {
+		let buffer = "";
+
+		for await (const chunk of mdGenerator) {
+			buffer += chunk;
+			let result = this.#processCompleteElements(buffer);
+
+			while (result.html) {
+				yield result.html;
+				buffer = result.remaining;
+				if (!buffer) break;
+				result = this.#processCompleteElements(buffer);
+			}
+		}
+
+		if (buffer) yield this.render(buffer);
+	}
+
+	/**
 	 * @param mdStream `ReadableStream<string>` of markdown
 	 * @returns `ReadableStream<string>` of syntax highlighted HTML
 	 */
-	renderStream(mdStream: ReadableStream<string>) {
+	stream(mdStream: ReadableStream<string>) {
 		let buffer = "";
 
 		return mdStream.pipeThrough<string>(

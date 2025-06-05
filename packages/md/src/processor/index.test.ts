@@ -78,7 +78,7 @@ test
 test("render and stream produce same output", async () => {
 	const html = processor.render(md);
 
-	const stream = processor.renderStream(
+	const stream = processor.stream(
 		new ReadableStream({
 			start(controller) {
 				controller.enqueue(md);
@@ -94,7 +94,23 @@ test("render and stream produce same output", async () => {
 		if (done) break;
 	}
 
-	expect(html).toEqual(streamed);
+	expect(streamed).toEqual(html);
+});
+
+test("render and generator produce same output", async () => {
+	const html = processor.render(md);
+
+	const gen = (async function* () {
+		yield md;
+	})();
+
+	let streamed = "";
+
+	for await (const chunk of processor.generate(gen)) {
+		streamed += chunk;
+	}
+
+	expect(streamed).toEqual(html);
 });
 
 test("process", async () => {
