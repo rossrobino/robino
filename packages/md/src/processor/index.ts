@@ -177,13 +177,13 @@ export class Processor extends MarkdownIt {
 	}
 
 	/**
-	 * @param mdGenerator Markdown generator
+	 * @param mdIterable Markdown iterable
 	 * @returns `AsyncGenerator<string>` of HTML
 	 */
-	async *generate(mdGenerator: Generator<string> | AsyncGenerator<string>) {
+	async *generate(mdIterable: Iterable<string> | AsyncIterable<string>) {
 		let buffer = "";
 
-		for await (const chunk of mdGenerator) {
+		for await (const chunk of mdIterable) {
 			buffer += chunk;
 			let result = this.#processCompleteElements(buffer);
 
