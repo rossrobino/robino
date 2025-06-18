@@ -182,5 +182,5 @@ declare module "*.md" {
 ```
 
 ```ts
-import { html, article, headings, frontmatter } from "./post.md";
+import { article, frontmatter, headings, html } from "./post.md";
 ```

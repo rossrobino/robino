@@ -1,4 +1,4 @@
-import { Processor, type Options } from "../processor/index.js";
+import { type Options, Processor } from "../processor/index.js";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import type { Plugin } from "vite";
 

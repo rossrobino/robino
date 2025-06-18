@@ -1,9 +1,9 @@
 import { tableOverflow } from "../table-overflow/index.js";
 import {
+	type HighlighterCoreOptions,
+	type HighlighterGeneric,
 	createCssVariablesTheme,
 	createHighlighterCoreSync,
-	type HighlighterGeneric,
-	type HighlighterCoreOptions,
 } from "@shikijs/core";
 import { createJavaScriptRegexEngine } from "@shikijs/engine-javascript";
 import langMd from "@shikijs/langs/md";

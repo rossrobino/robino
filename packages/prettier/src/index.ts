@@ -4,6 +4,7 @@ const config: Config = {
 	useTabs: true,
 	htmlWhitespaceSensitivity: "ignore",
 	objectWrap: "collapse",
+	importOrderSortSpecifiers: true,
 	plugins: [
 		"@trivago/prettier-plugin-sort-imports",
 		"prettier-plugin-css-order",
