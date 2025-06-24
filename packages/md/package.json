@@ -25,11 +25,11 @@
 		"build": "tsc"
 	},
 	"dependencies": {
-		"@shikijs/core": "^3.6.0",
-		"@shikijs/engine-javascript": "^3.6.0",
-		"@shikijs/langs": "^3.6.0",
-		"@shikijs/markdown-it": "^3.6.0",
-		"@shikijs/transformers": "^3.6.0",
+		"@shikijs/core": "^3.7.0",
+		"@shikijs/engine-javascript": "^3.7.0",
+		"@shikijs/langs": "^3.7.0",
+		"@shikijs/markdown-it": "^3.7.0",
+		"@shikijs/transformers": "^3.7.0",
 		"@standard-schema/spec": "^1.0.0",
 		"@types/markdown-it": "^14.1.2",
 		"js-yaml": "^4.1.0",
@@ -42,7 +42,7 @@
 		"zod": "^3.25.67"
 	},
 	"peerDependencies": {
-		"vite": "^5.4.0 || ^6.0.0"
+		"vite": "^5.4.0 || ^6.0.0 || ^7.0.0"
 	},
 	"peerDependenciesMeta": {
 		"vite": {
