@@ -16,8 +16,9 @@ export const md = (
 
 	return {
 		name: "@robino/md",
-		async transform(md, id) {
-			if (/\.(md)$/.test(id)) {
+		transform: {
+			filter: { id: /\.md$/ },
+			async handler(md) {
 				const { html, article, headings, frontmatter } =
 					await processor.process(md, options?.FrontmatterSchema);
 
@@ -30,7 +31,7 @@ export const md = (
 			`.trim(),
 					map: null,
 				};
-			}
+			},
 		},
 	};
 };
