@@ -1,6 +1,7 @@
 {
 	"name": "@robino/tsconfig",
 	"description": "tsconfig",
+	"version": "1.1.1",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
@@ -10,16 +11,12 @@
 		"name": "Ross Robino",
 		"url": "https://robino.dev"
 	},
-	"version": "1.1.1",
 	"files": [
 		"tsc.json",
 		"bundler.json",
 		"README.md"
 	],
 	"peerDependencies": {
-		"typescript": ">=5.5.0"
-	},
-	"dependencies": {
-		"@types/node": "^25.0.2"
+		"typescript": "^6.0.0"
 	}
 }

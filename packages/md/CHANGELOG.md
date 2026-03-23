@@ -85,7 +85,6 @@
 ### Major Changes
 
 - 0613189: Breaking changes
-
   - Renamed
     - `MarkdownProcessor` => `Processor`
     - type `MdHeading` => `Heading`
@@ -95,7 +94,6 @@
   - Skips highlighting if there are no `highlighter.langs` provided
 
   Patch changes
-
   - improve `getHeadings` performance
 
 ### Patch Changes
@@ -143,7 +141,6 @@
 ### Major Changes
 
 - e28349e: v1.0.0
-
   - This package follows semantic versioning, so it will no longer have breaking changes on minor releases.
 
 ## 0.2.2
