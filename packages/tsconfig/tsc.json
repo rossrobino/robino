@@ -1,30 +1,14 @@
 {
 	"$schema": "https://json.schemastore.org/tsconfig",
+	"extends": "./check.json",
 	"compilerOptions": {
 		"rootDir": "${configDir}/src",
-		"outDir": "${configDir}/dist",
-		"target": "ESNext",
-		"module": "NodeNext",
-		"moduleResolution": "NodeNext",
-		"lib": ["ESNext", "DOM"],
-		"declaration": true,
-		"declarationMap": true,
-		"skipLibCheck": true,
-		"resolveJsonModule": true,
-		"moduleDetection": "force",
-		"verbatimModuleSyntax": true,
-		"noImplicitOverride": true,
-		"noUnusedLocals": true,
-		"noUnusedParameters": true,
-		"noUncheckedIndexedAccess": true,
-		"noFallthroughCasesInSwitch": true,
-		"erasableSyntaxOnly": true,
-		"allowJs": true,
-		"checkJs": true
+		"noEmit": false
 	},
-	"include": ["${configDir}/src", "${configDir}/**/*.test.*"],
 	"exclude": [
 		"${configDir}/**/*.test.*",
+		"${configDir}/*.js",
+		"${configDir}/*.ts",
 		"${configDir}/node_modules",
 		"${configDir}/dist"
 	]

@@ -1,0 +1,32 @@
+{
+	"$schema": "https://json.schemastore.org/tsconfig",
+	"compilerOptions": {
+		"rootDir": "${configDir}",
+		"outDir": "${configDir}/dist",
+		"target": "ESNext",
+		"module": "NodeNext",
+		"moduleResolution": "NodeNext",
+		"lib": ["ESNext", "DOM"],
+		"declaration": true,
+		"declarationMap": true,
+		"skipLibCheck": true,
+		"resolveJsonModule": true,
+		"moduleDetection": "force",
+		"verbatimModuleSyntax": true,
+		"noImplicitOverride": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noUncheckedIndexedAccess": true,
+		"noFallthroughCasesInSwitch": true,
+		"erasableSyntaxOnly": true,
+		"allowJs": true,
+		"checkJs": true,
+		"noEmit": true
+	},
+	"include": [
+		"${configDir}/src",
+		"${configDir}/*.js",
+		"${configDir}/*.ts"
+	],
+	"exclude": ["${configDir}/node_modules", "${configDir}/dist"]
+}

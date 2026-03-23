@@ -13,6 +13,7 @@
 	},
 	"files": [
 		"tsc.json",
+		"check.json",
 		"bundler.json",
 		"README.md"
 	],
