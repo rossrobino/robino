@@ -1,5 +1,20 @@
 # @robino/tsconfig
 
+## 2.0.0
+
+### Major Changes
+
+- 295b7b1: Upgrade to TypeScript 6
+  - Upgrades to ts6
+  - Erasable syntax only set to true
+  - Removed `@types/node` dependency, users must add themselves now, and also in to their `types: ["node"]` array
+
+### Minor Changes
+
+- 400de59: Use `check.json` as your standard `tsconfig.json`.
+
+  For builds, add a `tsconfig.build.json` that extends either `@robino/tsconfig/tsc.json` or `@robino/tsconfig/bundler.json`.
+
 ## 1.0.4
 
 ### Patch Changes
