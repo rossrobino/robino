@@ -1,3 +1,4 @@
+import { anchor, slug } from "../anchor/index.js";
 import { tableOverflow } from "../table-overflow/index.js";
 import {
 	type HighlighterCoreOptions,
@@ -6,13 +7,15 @@ import {
 } from "@shikijs/core";
 import { createJavaScriptRegexEngine } from "@shikijs/engine-javascript";
 import langMd from "@shikijs/langs/md";
-import { fromHighlighter } from "@shikijs/markdown-it/core";
+import { fromHighlighter } from "@shikijs/markdown-it";
 import { transformerMetaHighlight } from "@shikijs/transformers";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { load } from "js-yaml";
-import MarkdownIt from "markdown-it";
-import type { Options as MarkdownItOptions, PluginSimple } from "markdown-it";
-import Anchor from "markdown-it-anchor";
+import {
+	default as MarkdownIt,
+	type Options as MarkdownItOptions,
+	type PluginSimple,
+} from "markdown-it";
 
 export interface Heading {
 	/** The heading's `id` (lowercase name separated by dashes). */
@@ -56,7 +59,7 @@ export interface Options {
 	 */
 	markdownIt?: MarkdownItOptions;
 
-	/** Set to `false` to disable the markdown-it-anchor plugin for headings. */
+	/** Set to `false` to disable heading anchors. */
 	anchor?: boolean;
 
 	/** Shiki highlighter options. */
@@ -131,9 +134,6 @@ export class Processor extends MarkdownIt {
 	/** Matches headings while extracting them from markdown. */
 	static #headingExtractPattern = /^(#{1,6})\s+(.+)$/gm;
 
-	/** Matches non-word characters while generating heading ids. */
-	static #slugPattern = /[^\w-]+/g;
-
 	/**
 	 * Creates a markdown processor with optional plugins, anchor support, and
 	 * syntax highlighting.
@@ -151,6 +151,8 @@ export class Processor extends MarkdownIt {
 		super(options.markdownIt);
 
 		options.plugins.push(tableOverflow);
+
+		if (options.anchor) options.plugins.push(anchor);
 
 		if (options.highlighter?.langs) {
 			options.plugins.push(
@@ -172,10 +174,6 @@ export class Processor extends MarkdownIt {
 		}
 
 		for (const plugin of options.plugins) this.use(plugin);
-
-		if (options.anchor) {
-			this.use(Anchor, { permalink: Anchor.permalink.headerLink() });
-		}
 	}
 
 	/**
@@ -330,14 +328,7 @@ export class Processor extends MarkdownIt {
 			const name = match.at(2)?.trim();
 
 			if (level && name) {
-				headings.push({
-					id: name
-						.toLowerCase()
-						.replaceAll(" ", "-")
-						.replace(Processor.#slugPattern, ""),
-					level,
-					name,
-				});
+				headings.push({ id: slug(name), level, name });
 			}
 		}
 

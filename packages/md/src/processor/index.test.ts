@@ -338,6 +338,12 @@ test("generator flushes an ATX heading when the line ends", async () => {
 	wait.done();
 });
 
+test("render adds linked heading anchors", () => {
+	expect(processor.render("# Heading 1")).toContain(
+		'<h1 id="heading-1" tabindex="-1"><a class="header-anchor" href="#heading-1">Heading 1</a></h1>\n',
+	);
+});
+
 test("process", async () => {
 	const { article, headings, html, frontmatter } = await processor.process(md);
 
