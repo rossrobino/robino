@@ -15,7 +15,7 @@ import MarkdownIt from "markdown-it";
 import type { Options as MarkdownItOptions, PluginSimple } from "markdown-it";
 import Anchor from "markdown-it-anchor";
 
-export type Heading = {
+export interface Heading {
 	/** The heading's `id` (lowercase name separated by dashes). */
 	id: string;
 
@@ -24,9 +24,9 @@ export type Heading = {
 
 	/** The text content of the heading element. */
 	name: string;
-};
+}
 
-export type Result<T extends StandardSchemaV1 = StandardSchemaV1> = {
+export interface Result<T extends StandardSchemaV1 = StandardSchemaV1> {
 	/** The markdown content, without the frontmatter if it is parsed. */
 	article: string;
 
@@ -38,9 +38,9 @@ export type Result<T extends StandardSchemaV1 = StandardSchemaV1> = {
 
 	/** The parsed frontmatter inferred from the passed in schema. */
 	frontmatter: StandardSchemaV1.InferOutput<T>;
-};
+}
 
-export type Options = {
+export interface Options {
 	/**
 	 * MarkdownIt options
 	 *
@@ -74,7 +74,7 @@ export type Options = {
 
 	/** Plugins to apply. */
 	plugins?: PluginSimple[];
-};
+}
 
 export class Processor extends MarkdownIt {
 	#highlighter;
