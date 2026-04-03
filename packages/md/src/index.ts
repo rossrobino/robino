@@ -1,4 +1,7 @@
-export * from "./processor/index.js";
-export * from "./anchor/index.js";
-export * from "./table-overflow/index.js";
-export * from "./plugin/index.js";
+export {
+	Processor,
+	type Heading,
+	type Result,
+	type Options,
+} from "./processor/index.js";
+export { md } from "./vite/index.js";

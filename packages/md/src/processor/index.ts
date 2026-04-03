@@ -1,5 +1,5 @@
-import { anchor, slug } from "../anchor/index.js";
-import { tableOverflow } from "../table-overflow/index.js";
+import { anchor, slug } from "./plugin/anchor.js";
+import { tableOverflow } from "./plugin/table-overflow.js";
 import {
 	type HighlighterCoreOptions,
 	createCssVariablesTheme,
