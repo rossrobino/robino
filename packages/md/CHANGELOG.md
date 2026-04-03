@@ -1,5 +1,12 @@
 # @robino/md
 
+## 5.0.1
+
+### Patch Changes
+
+- 26fac15: Improve incremental markdown streaming so completed content can flush before an unfinished fenced code block, and flush heading lines earlier while streaming.
+- 0777166: Replace the `markdown-it-anchor` dependency with a simplified built-in heading anchor plugin while preserving linked heading output.
+
 ## 4.0.0
 
 ### Major Changes
