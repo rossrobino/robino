@@ -192,10 +192,10 @@ export class Processor extends MarkdownIt {
 
 		return {
 			article,
-			headings: this.getHeadings(article),
+			headings: this.headings(article),
 			html: this.render(article),
 			frontmatter: processFrontmatter
-				? await this.getFrontmatter(yaml, FrontmatterSchema)
+				? await this.frontmatter(yaml, FrontmatterSchema)
 				: {},
 		};
 	}
@@ -317,7 +317,7 @@ export class Processor extends MarkdownIt {
 	 * @param md
 	 * @returns heading objects with level, name, and id
 	 */
-	getHeadings(md: string) {
+	headings(md: string) {
 		const headings: Heading[] = [];
 
 		for (const match of md
@@ -344,7 +344,7 @@ export class Processor extends MarkdownIt {
 	 * - if no `frontmatterSchema` is provided, return type is `unknown`
 	 * @returns parsed frontmatter object
 	 */
-	async getFrontmatter<T extends StandardSchemaV1>(
+	async frontmatter<T extends StandardSchemaV1>(
 		yaml: string,
 		frontmatterSchema: T,
 	) {
