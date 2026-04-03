@@ -25,22 +25,22 @@
 		"build": "tsc -p tsconfig.build.json"
 	},
 	"dependencies": {
-		"@shikijs/core": "^3.20.0",
-		"@shikijs/engine-javascript": "^3.20.0",
-		"@shikijs/langs": "^3.20.0",
-		"@shikijs/markdown-it": "^3.20.0",
-		"@shikijs/transformers": "^3.20.0",
-		"@standard-schema/spec": "^1.0.0",
+		"@shikijs/core": "^4.0.2",
+		"@shikijs/engine-javascript": "^4.0.2",
+		"@shikijs/langs": "^4.0.2",
+		"@shikijs/markdown-it": "^4.0.2",
+		"@shikijs/transformers": "^4.0.2",
+		"@standard-schema/spec": "^1.1.0",
 		"@types/markdown-it": "^14.1.2",
 		"js-yaml": "^4.1.1",
-		"markdown-it": "^14.1.0"
+		"markdown-it": "^14.1.1"
 	},
 	"devDependencies": {
 		"@robino/tsconfig": "*",
 		"@types/js-yaml": "^4.0.9",
-		"@types/node": "^25.5.0",
-		"vite": "^7.3.0",
-		"zod": "^4.2.0"
+		"@types/node": "^25.5.2",
+		"vite": "^8.0.3",
+		"zod": "^4.3.6"
 	},
 	"peerDependencies": {
 		"vite": "^7.0.0 || ^8.0.0"
