@@ -152,6 +152,25 @@ async function read(chunks: string[]) {
 	return (await collectStream(stream)).join("");
 }
 
+function pullWithin(reader: ReadableStreamDefaultReader<string>, ms = 100) {
+	return new Promise<ReadableStreamReadResult<string>>((resolve, reject) => {
+		const timer = setTimeout(() => {
+			reject(new Error(`Timed out waiting for streamed HTML within ${ms}ms`));
+		}, ms);
+
+		reader.read().then(
+			(value) => {
+				clearTimeout(timer);
+				resolve(value);
+			},
+			(error) => {
+				clearTimeout(timer);
+				reject(error);
+			},
+		);
+	});
+}
+
 async function make(chunks: string[]) {
 	return (
 		await collectGenerate(
@@ -257,6 +276,19 @@ test("render and generator produce same output with varied chunk boundaries", as
 	}
 });
 
+test("render and generator produce same output when one chunk contains multiple flushes", async () => {
+	const value = "# Heading\n\nParagraph\n\n```ts\nconsole.log(1)\n```\n";
+	const streamed = (
+		await collectGenerate(
+			(async function* () {
+				yield value;
+			})(),
+		)
+	).join("");
+
+	expect(streamed).toEqual(processor.render(value));
+});
+
 test("generator flushes a completed paragraph before an unfinished fenced code block", async () => {
 	const prefix = "# Title\n\nA full paragraph.\n\n";
 	const start = "```js\nconsole.log(";
@@ -279,6 +311,41 @@ test("generator flushes a completed paragraph before an unfinished fenced code b
 
 	for await (const value of gen) {
 		html += value;
+	}
+
+	expect(html).toEqual(processor.render(prefix + start + end));
+});
+
+test("stream flushes a completed paragraph before an unfinished fenced code block", async () => {
+	const prefix = "# Title\n\nA full paragraph.\n\n";
+	const start = "```js\nconsole.log(";
+	const end = "1);\n```\n";
+	const wait = defer();
+	const stream = processor.stream(
+		new ReadableStream({
+			async start(controller) {
+				controller.enqueue(prefix + start);
+				await wait.promise;
+				controller.enqueue(end);
+				controller.close();
+			},
+		}),
+	);
+	const reader = stream.getReader();
+	const first = await pullWithin(reader);
+
+	expect(first).toEqual({ value: processor.render(prefix), done: false });
+
+	wait.done();
+
+	let html = first.value ?? "";
+
+	// eslint-disable-next-line no-constant-condition
+	while (true) {
+		const { value, done } = await reader.read();
+
+		if (done) break;
+		if (value != null) html += value;
 	}
 
 	expect(html).toEqual(processor.render(prefix + start + end));
@@ -336,6 +403,33 @@ test("generator flushes an ATX heading when the line ends", async () => {
 	expect(first).toEqual({ value: processor.render(heading), done: false });
 
 	wait.done();
+});
+
+test("stream flushes an ATX heading when the line ends", async () => {
+	const heading = "## Hello\n";
+	const wait = defer();
+	const stream = processor.stream(
+		new ReadableStream({
+			async start(controller) {
+				controller.enqueue(heading);
+				await wait.promise;
+				controller.enqueue("\nParagraph\n");
+				controller.close();
+			},
+		}),
+	);
+	const reader = stream.getReader();
+	const first = await pullWithin(reader);
+
+	expect(first).toEqual({ value: processor.render(heading), done: false });
+
+	wait.done();
+});
+
+test("render and stream handle inline triple backticks without treating them as a fence", async () => {
+	const value = "Paragraph with ```inline``` backticks.\n\nNext paragraph.\n";
+
+	expect(await read(chunk(value))).toEqual(processor.render(value));
 });
 
 test("render adds linked heading anchors", () => {
