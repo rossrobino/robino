@@ -1,5 +1,13 @@
 # @robino/md
 
+## 6.0.0
+
+### Major Changes
+
+- 1c356d4: Rename `Processor#getHeadings()` to `Processor#headings()` and `Processor#getFrontmatter()` to `Processor#frontmatter()`.
+- affc388: Upgrade the package from Shiki `3.x` to `4.x`.
+- 9adf766: Stop exporting the internal `anchor` and `tableOverflow` plugins from the package root.
+
 ## 5.0.1
 
 ### Patch Changes
