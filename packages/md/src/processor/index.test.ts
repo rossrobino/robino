@@ -77,6 +77,33 @@ function chunk(md: string) {
 	return md.split(/(?<=\n)/);
 }
 
+function fixed(md: string, size: number) {
+	const chunks: string[] = [];
+
+	for (let i = 0; i < md.length; i += size) {
+		chunks.push(md.slice(i, i + size));
+	}
+
+	return chunks;
+}
+
+function random(md: string, seed: number) {
+	const chunks: string[] = [];
+	let value = seed;
+	let i = 0;
+
+	while (i < md.length) {
+		value = (value * 1_664_525 + 1_013_904_223) >>> 0;
+
+		const size = (value % 23) + 1;
+
+		chunks.push(md.slice(i, i + size));
+		i += size;
+	}
+
+	return chunks;
+}
+
 function defer() {
 	let done!: () => void;
 
@@ -110,6 +137,29 @@ async function collectGenerate(gen: Iterable<string> | AsyncIterable<string>) {
 	}
 
 	return chunks;
+}
+
+async function read(chunks: string[]) {
+	const stream = processor.stream(
+		new ReadableStream({
+			start(controller) {
+				for (const value of chunks) controller.enqueue(value);
+				controller.close();
+			},
+		}),
+	);
+
+	return (await collectStream(stream)).join("");
+}
+
+async function make(chunks: string[]) {
+	return (
+		await collectGenerate(
+			(function* () {
+				for (const value of chunks) yield value;
+			})(),
+		)
+	).join("");
 }
 
 function nextWithin(gen: AsyncIterator<string>, ms = 100) {
@@ -153,20 +203,23 @@ test("render and stream produce same output", async () => {
 	expect(streamed).toEqual(html);
 });
 
-test("render and stream produce same output with line chunks", async () => {
+test("render and stream produce same output with varied chunk boundaries", async () => {
 	const html = processor.render(md);
-	const stream = processor.stream(
-		new ReadableStream({
-			start(controller) {
-				for (const value of chunk(md)) controller.enqueue(value);
-				controller.close();
-			},
-		}),
-	);
+	const cases = [
+		chunk(md),
+		fixed(md, 1),
+		fixed(md, 2),
+		fixed(md, 3),
+		fixed(md, 5),
+		fixed(md, 8),
+		random(md, 1),
+		random(md, 2),
+		random(md, 3),
+	];
 
-	const streamed = (await collectStream(stream)).join("");
-
-	expect(streamed).toEqual(html);
+	for (const value of cases) {
+		expect(await read(value)).toEqual(html);
+	}
 });
 
 test("render and generator produce same output", async () => {
@@ -185,17 +238,23 @@ test("render and generator produce same output", async () => {
 	expect(streamed).toEqual(html);
 });
 
-test("render and generator produce same output with line chunks", async () => {
+test("render and generator produce same output with varied chunk boundaries", async () => {
 	const html = processor.render(md);
-	const streamed = (
-		await collectGenerate(
-			(async function* () {
-				for (const value of chunk(md)) yield value;
-			})(),
-		)
-	).join("");
+	const cases = [
+		chunk(md),
+		fixed(md, 1),
+		fixed(md, 2),
+		fixed(md, 3),
+		fixed(md, 5),
+		fixed(md, 8),
+		random(md, 1),
+		random(md, 2),
+		random(md, 3),
+	];
 
-	expect(streamed).toEqual(html);
+	for (const value of cases) {
+		expect(await make(value)).toEqual(html);
+	}
 });
 
 test("generator flushes a completed paragraph before an unfinished fenced code block", async () => {
