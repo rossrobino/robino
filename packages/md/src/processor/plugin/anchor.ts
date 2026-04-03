@@ -17,7 +17,7 @@ export const slug = (text: string) => {
 /**
  * Markdown-it plugin that adds linked ids to headings.
  */
-export const anchor: PluginSimple = (mdIt) => {
+export const plugin: PluginSimple = (mdIt) => {
 	const proxy: RenderRule = (tokens, i, options, _env, self) =>
 		self.renderToken(tokens, i, options);
 	const originalHeadingOpen = mdIt.renderer.rules.heading_open ?? proxy;

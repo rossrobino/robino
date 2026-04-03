@@ -1,5 +1,5 @@
-import { anchor, slug } from "./plugin/anchor.js";
-import { tableOverflow } from "./plugin/table-overflow.js";
+import * as anchor from "./plugin/anchor.js";
+import * as table from "./plugin/table-overflow.js";
 import {
 	type HighlighterCoreOptions,
 	createCssVariablesTheme,
@@ -150,9 +150,9 @@ export class Processor extends MarkdownIt {
 
 		super(options.markdownIt);
 
-		options.plugins.push(tableOverflow);
+		options.plugins.push(table.plugin);
 
-		if (options.anchor) options.plugins.push(anchor);
+		if (options.anchor) options.plugins.push(anchor.plugin);
 
 		if (options.highlighter?.langs) {
 			options.plugins.push(
@@ -328,7 +328,7 @@ export class Processor extends MarkdownIt {
 			const name = match.at(2)?.trim();
 
 			if (level && name) {
-				headings.push({ id: slug(name), level, name });
+				headings.push({ id: anchor.slug(name), level, name });
 			}
 		}
 
