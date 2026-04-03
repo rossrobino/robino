@@ -14,8 +14,9 @@ An extended [markdown-it](https://github.com/markdown-it/markdown-it) instance w
 - [`process`](#process) markdown with `headings` and `frontmatter` using a [Standard Schema](https://standardschema.dev/#what-schema-libraries-implement-the-spec) validator
 - Syntax highlighting with [shiki](https://shiki.style/) using the [CSS variables](https://shiki.style/guide/theme-colors#css-variables-theme) theme to style
 - Adds `<div style="overflow-x: auto;">...</div>` around each table element to prevent overflow
+- Adds anchors and id attributes to headings
+- [`stream`](#stream) and `generate` functions to render and highlight a stream or iterable of markdown
 - [Vite plugin](#plugin) to process markdown at build time
-- [`stream`](#stream) function to render and highlight a stream of markdown
 
 ## Processor
 
