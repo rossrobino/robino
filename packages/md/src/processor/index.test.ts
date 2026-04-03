@@ -1,6 +1,4 @@
 import { Processor } from "./index.js";
-import fs from "node:fs/promises";
-import path from "node:path";
 import langHtml from "shiki/langs/html.mjs";
 import langLua from "shiki/langs/lua.mjs";
 import langMd from "shiki/langs/md.mjs";
@@ -104,9 +102,7 @@ async function collectStream(stream: ReadableStream<string>) {
 	return chunks;
 }
 
-async function collectGenerate(
-	gen: Iterable<string> | AsyncIterable<string>,
-) {
+async function collectGenerate(gen: Iterable<string> | AsyncIterable<string>) {
 	const chunks: string[] = [];
 
 	for await (const value of processor.generate(gen)) {
@@ -116,15 +112,10 @@ async function collectGenerate(
 	return chunks;
 }
 
-function nextWithin(
-	gen: AsyncIterator<string>,
-	ms = 100,
-) {
+function nextWithin(gen: AsyncIterator<string>, ms = 100) {
 	return new Promise<IteratorResult<string>>((resolve, reject) => {
 		const timer = setTimeout(() => {
-			reject(
-				new Error(`Timed out waiting for streamed HTML within ${ms}ms`),
-			);
+			reject(new Error(`Timed out waiting for streamed HTML within ${ms}ms`));
 		}, ms);
 
 		gen.next().then(
@@ -196,11 +187,13 @@ test("render and generator produce same output", async () => {
 
 test("render and generator produce same output with line chunks", async () => {
 	const html = processor.render(md);
-	const streamed = (await collectGenerate(
-		(async function* () {
-			for (const value of chunk(md)) yield value;
-		})(),
-	)).join("");
+	const streamed = (
+		await collectGenerate(
+			(async function* () {
+				for (const value of chunk(md)) yield value;
+			})(),
+		)
+	).join("");
 
 	expect(streamed).toEqual(html);
 });
@@ -219,10 +212,7 @@ test("generator flushes a completed paragraph before an unfinished fenced code b
 	);
 	const first = await nextWithin(gen);
 
-	expect(first).toEqual({
-		value: processor.render(prefix),
-		done: false,
-	});
+	expect(first).toEqual({ value: processor.render(prefix), done: false });
 
 	wait.done();
 
@@ -259,10 +249,7 @@ test("generator flushes a completed paragraph before a later unfinished fenced c
 
 	const second = await nextWithin(gen);
 
-	expect(second).toEqual({
-		value: processor.render(prefix),
-		done: false,
-	});
+	expect(second).toEqual({ value: processor.render(prefix), done: false });
 
 	wait.done();
 
@@ -287,10 +274,7 @@ test("generator flushes an ATX heading when the line ends", async () => {
 	);
 	const first = await nextWithin(gen);
 
-	expect(first).toEqual({
-		value: processor.render(heading),
-		done: false,
-	});
+	expect(first).toEqual({ value: processor.render(heading), done: false });
 
 	wait.done();
 });
@@ -309,9 +293,7 @@ test("process", async () => {
 });
 
 test("with frontmatter", async () => {
-	const { frontmatter, html } = await processor.process(md, frontmatterSchema);
-
-	await fs.writeFile(path.join(import.meta.dirname, "test.html"), html);
+	const { frontmatter } = await processor.process(md, frontmatterSchema);
 
 	expect(frontmatter.title).toBeTypeOf("string");
 	expect(frontmatter.description).toBeTypeOf("string");

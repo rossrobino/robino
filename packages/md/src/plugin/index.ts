@@ -3,7 +3,7 @@ import type { StandardSchemaV1 } from "@standard-schema/spec";
 import type { Plugin } from "vite";
 
 /**
- * @param options
+ * @param options processor options
  * @returns vite plugin
  */
 export const md = (

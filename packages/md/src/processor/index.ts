@@ -1,7 +1,6 @@
 import { tableOverflow } from "../table-overflow/index.js";
 import {
 	type HighlighterCoreOptions,
-	type HighlighterGeneric,
 	createCssVariablesTheme,
 	createHighlighterCoreSync,
 } from "@shikijs/core";
@@ -40,6 +39,7 @@ export interface Result<T extends StandardSchemaV1 = StandardSchemaV1> {
 	frontmatter: StandardSchemaV1.InferOutput<T>;
 }
 
+/** Processor options */
 export interface Options {
 	/**
 	 * MarkdownIt options
@@ -76,45 +76,105 @@ export interface Options {
 	plugins?: PluginSimple[];
 }
 
-export class Processor extends MarkdownIt {
-	#highlighter;
+/** Mutable streaming scanner state reused across markdown chunks. */
+class StreamState {
+	/** End index of the stable prefix in the current buffer. */
+	end = 0;
 
+	/** Start index of the current unmatched fenced code block. */
+	fence = -1;
+
+	/** Fence marker for the current unmatched fenced code block. */
+	marker = "";
+
+	/** Current scan position in the buffered markdown. */
+	pos = 0;
+
+	/**
+	 * Shifts the scan state after the rendered prefix has been removed from the
+	 * buffer.
+	 *
+	 * @param end end of the rendered prefix
+	 */
+	shift(end: number) {
+		if (!this.marker) {
+			this.end = 0;
+			this.fence = -1;
+			this.marker = "";
+			this.pos = 0;
+			return;
+		}
+
+		this.end = 0;
+		this.pos -= end;
+		this.fence = 0;
+	}
+}
+
+/**
+ * Markdown processor with frontmatter parsing, heading extraction, and
+ * streaming-safe HTML rendering.
+ */
+export class Processor extends MarkdownIt {
+	/** Matches a fenced code block closing line. */
+	static #fenceClosePattern = /^[ \t]{0,3}(`{3,})[ \t]*\n$/;
+
+	/** Matches the opening marker of a fenced code block. */
+	static #fenceOpenPattern = /^[ \t]{0,3}(`{3,})/;
+
+	/** Matches a complete hash-style heading line. */
+	static #headingPattern = /^[ \t]{0,3}#{1,6}(?!#)(?:[ \t]+.*)?\n$/;
+
+	/** Matches fenced code blocks while extracting headings. */
+	static #codeBlockPattern = /```[\s\S]*?```/g;
+
+	/** Matches headings while extracting them from markdown. */
+	static #headingExtractPattern = /^(#{1,6})\s+(.+)$/gm;
+
+	/** Matches non-word characters while generating heading ids. */
+	static #slugPattern = /[^\w-]+/g;
+
+	/**
+	 * Creates a markdown processor with optional plugins, anchor support, and
+	 * syntax highlighting.
+	 *
+	 * @param options processor options
+	 */
 	constructor(options: Options = {}) {
 		options.markdownIt ??= {};
 		options.markdownIt.typographer ??= true;
 		options.markdownIt.linkify ??= true;
 		options.markdownIt.html ??= true;
+		options.anchor ??= true;
 		options.plugins ??= [];
 
 		super(options.markdownIt);
 
-		for (const plugin of options.plugins) {
-			this.use(plugin);
-		}
-
-		this.#highlighter = createHighlighterCoreSync({
-			themes: [createCssVariablesTheme()],
-			langs: [langMd, ...(options.highlighter?.langs ?? [])],
-			engine: createJavaScriptRegexEngine(),
-			langAlias: options.highlighter?.langAlias,
-		}) as HighlighterGeneric<any, any>;
-
-		if (options.anchor !== false) {
-			// true or undefined ok
-			this.use(Anchor, { permalink: Anchor.permalink.headerLink() });
-		}
-
-		this.use(tableOverflow);
+		options.plugins.push(tableOverflow);
 
 		if (options.highlighter?.langs) {
-			this.use(
-				fromHighlighter(this.#highlighter, {
-					theme: "css-variables",
-					transformers: [transformerMetaHighlight()],
-					defaultLanguage: "md",
-					fallbackLanguage: "md",
-				}),
+			options.plugins.push(
+				fromHighlighter(
+					createHighlighterCoreSync({
+						themes: [createCssVariablesTheme()],
+						langs: [langMd, ...(options.highlighter?.langs ?? [])],
+						engine: createJavaScriptRegexEngine(),
+						langAlias: options.highlighter?.langAlias,
+					}),
+					{
+						theme: "css-variables",
+						transformers: [transformerMetaHighlight()],
+						defaultLanguage: "md",
+						fallbackLanguage: "md",
+					},
+				),
 			);
+		}
+
+		for (const plugin of options.plugins) this.use(plugin);
+
+		if (options.anchor) {
+			this.use(Anchor, { permalink: Anchor.permalink.headerLink() });
 		}
 	}
 
@@ -131,13 +191,15 @@ export class Processor extends MarkdownIt {
 		const processFrontmatter = yaml && FrontmatterSchema;
 
 		const article = processFrontmatter ? articleSegments.join("---") : md;
-		const frontmatter = processFrontmatter
-			? await this.getFrontmatter(yaml, FrontmatterSchema)
-			: {};
-		const headings = this.getHeadings(article);
-		const html = this.render(article);
 
-		return { article, headings, html, frontmatter };
+		return {
+			article,
+			headings: this.getHeadings(article),
+			html: this.render(article),
+			frontmatter: processFrontmatter
+				? await this.getFrontmatter(yaml, FrontmatterSchema)
+				: {},
+		};
 	}
 
 	/**
@@ -146,34 +208,62 @@ export class Processor extends MarkdownIt {
 	 * @param md markdown to render
 	 * @returns rendered markdown and remaining to be highlight in the next run
 	 */
-	#processCompleteElements(md: string) {
-		const notComplete = { html: "", remaining: md };
+	#processCompleteElements(md: string, state: StreamState) {
+		const incomplete = { html: "", remaining: md };
 
-		if (!md.trim()) return notComplete;
+		if (!md.trim()) return incomplete;
 
-		if (md.includes("```")) {
-			const codeBlockMatch = md.match(
-				/^```\s*(\w+)?\n([\s\S]*?)\n```(?:\n|$)/m,
-			);
+		const end = this.#findStableEnd(md, state);
+		if (!end) return incomplete;
 
-			if (!codeBlockMatch) return notComplete;
+		const remaining = md.slice(end);
+		state.shift(end);
 
-			const endPos = codeBlockMatch.index! + codeBlockMatch[0].length;
+		return { html: this.render(md.slice(0, end)), remaining };
+	}
 
-			return {
-				html: this.render(md.slice(0, endPos)),
-				remaining: md.slice(endPos),
-			};
+	/**
+	 * Finds the end of the prefix that is safe to render during streaming.
+	 * If a fenced code block is still open, returns the start of that fence so
+	 * everything before it can flush while the unmatched tail stays buffered.
+	 *
+	 * @param md markdown buffer collected so far
+	 * @returns end index of the stable prefix
+	 */
+	#findStableEnd(md: string, state: StreamState) {
+		while (true) {
+			const end = md.indexOf("\n", state.pos);
+			if (end < 0) break;
+
+			const next = end + 1;
+			const line = md.slice(state.pos, next);
+
+			if (state.marker) {
+				const close = line.match(Processor.#fenceClosePattern);
+
+				if (close) {
+					const [, marker = ""] = close;
+
+					if (marker.length >= state.marker.length) {
+						state.marker = "";
+						state.end = next;
+					}
+				}
+			} else {
+				const open = line.match(Processor.#fenceOpenPattern);
+
+				if (open) {
+					[, state.marker = ""] = open;
+					state.fence = state.pos;
+				} else if (!line.trim() || Processor.#headingPattern.test(line)) {
+					state.end = next;
+				}
+			}
+
+			state.pos = next;
 		}
 
-		const double = "\n\n";
-		const parts = md.split(double);
-		let html = "";
-
-		for (let i = 0; i < parts.length - 1; i++)
-			html += this.render(parts[i]! + double);
-
-		return { html, remaining: parts.at(-1) ?? "" };
+		return state.marker ? state.fence : state.end;
 	}
 
 	/**
@@ -182,16 +272,15 @@ export class Processor extends MarkdownIt {
 	 */
 	async *generate(mdIterable: Iterable<string> | AsyncIterable<string>) {
 		let buffer = "";
+		const state = new StreamState();
 
 		for await (const chunk of mdIterable) {
 			buffer += chunk;
-			let result = this.#processCompleteElements(buffer);
+			let result;
 
-			while (result.html) {
+			while ((result = this.#processCompleteElements(buffer, state)).html) {
 				yield result.html;
-				buffer = result.remaining;
-				if (!buffer) break;
-				result = this.#processCompleteElements(buffer);
+				if (!(buffer = result.remaining)) break;
 			}
 		}
 
@@ -204,18 +293,17 @@ export class Processor extends MarkdownIt {
 	 */
 	stream(mdStream: ReadableStream<string>) {
 		let buffer = "";
+		const state = new StreamState();
 
 		return mdStream.pipeThrough<string>(
 			new TransformStream<string>({
 				transform: (chunk, c) => {
 					buffer += chunk;
-					let result = this.#processCompleteElements(buffer);
+					let result;
 
-					while (result.html) {
+					while ((result = this.#processCompleteElements(buffer, state)).html) {
 						c.enqueue(result.html);
-						buffer = result.remaining;
-						if (!buffer) break;
-						result = this.#processCompleteElements(buffer);
+						if (!(buffer = result.remaining)) break;
 					}
 				},
 				flush: (c) => {
@@ -233,11 +321,11 @@ export class Processor extends MarkdownIt {
 	 */
 	getHeadings(md: string) {
 		const headings: Heading[] = [];
-		// removes content inside code blocks
-		const withoutCodeBlocks = md.replace(/```[\s\S]*?```/g, "");
-		const matches = withoutCodeBlocks.matchAll(/^(#{1,6})\s+(.+)$/gm);
 
-		for (const match of matches) {
+		for (const match of md
+			// removes content inside code blocks
+			.replace(Processor.#codeBlockPattern, "")
+			.matchAll(Processor.#headingExtractPattern)) {
 			const level = match.at(1)?.length;
 			const name = match.at(2)?.trim();
 
@@ -246,7 +334,7 @@ export class Processor extends MarkdownIt {
 					id: name
 						.toLowerCase()
 						.replaceAll(" ", "-")
-						.replace(/[^\w-]+/g, ""),
+						.replace(Processor.#slugPattern, ""),
 					level,
 					name,
 				});
