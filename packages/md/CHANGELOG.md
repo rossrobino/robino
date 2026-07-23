@@ -1,5 +1,11 @@
 # @robino/md
 
+## 6.0.1
+
+### Patch Changes
+
+- 4854cf2: Require TypeScript 7 and enable additional strict compiler checks.
+
 ## 6.0.0
 
 ### Major Changes
