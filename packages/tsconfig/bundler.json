@@ -1,5 +1,5 @@
 {
 	"$schema": "https://json.schemastore.org/tsconfig",
 	"extends": "./check.json",
-	"compilerOptions": { "moduleResolution": "Bundler", "module": "Preserve" }
+	"compilerOptions": { "module": "Preserve" }
 }

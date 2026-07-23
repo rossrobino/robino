@@ -159,9 +159,11 @@ export class Processor extends MarkdownIt {
 				fromHighlighter(
 					createHighlighterCoreSync({
 						themes: [createCssVariablesTheme()],
-						langs: [langMd, ...(options.highlighter?.langs ?? [])],
+						langs: [langMd, ...options.highlighter.langs],
 						engine: createJavaScriptRegexEngine(),
-						langAlias: options.highlighter?.langAlias,
+						...(options.highlighter.langAlias == null
+							? {}
+							: { langAlias: options.highlighter.langAlias }),
 					}),
 					{
 						theme: "css-variables",
