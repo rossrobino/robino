@@ -1,5 +1,11 @@
 # @robino/tsconfig
 
+## 3.0.0
+
+### Major Changes
+
+- 4854cf2: Require TypeScript 7 and enable additional strict compiler checks.
+
 ## 2.0.0
 
 ### Major Changes
