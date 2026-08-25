@@ -1,5 +1,11 @@
 # @robino/md
 
+## 6.0.2
+
+### Patch Changes
+
+- 4970e4d: Export the complete, unmodified Markdown `source` from processor and Vite results.
+
 ## 6.0.1
 
 ### Patch Changes
