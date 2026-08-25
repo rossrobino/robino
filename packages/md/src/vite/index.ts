@@ -19,11 +19,12 @@ export const md = (
 		transform: {
 			filter: { id: /\.md$/ },
 			async handler(md) {
-				const { html, article, headings, frontmatter } =
+				const { source, html, article, headings, frontmatter } =
 					await processor.process(md, options?.FrontmatterSchema);
 
 				return {
 					code: `
+				export const source = ${JSON.stringify(source)};
 				export const html = ${JSON.stringify(html)};
 				export const article = ${JSON.stringify(article)};
 				export const headings = ${JSON.stringify(headings)};

@@ -29,6 +29,9 @@ export interface Heading {
 }
 
 export interface Result<T extends StandardSchemaV1 = StandardSchemaV1> {
+	/** The complete, unmodified markdown source. */
+	source: string;
+
 	/** The markdown content, without the frontmatter if it is parsed. */
 	article: string;
 
@@ -181,7 +184,7 @@ export class Processor extends MarkdownIt {
 	/**
 	 * @param md markdown string to process
 	 * @param FrontmatterSchema optional frontmatter [Standard Schema](https://github.com/standard-schema/standard-schema)
-	 * @returns headings, article, frontmatter, html
+	 * @returns source, article, headings, html, frontmatter
 	 */
 	async process<T extends StandardSchemaV1>(
 		md: string,
@@ -193,6 +196,7 @@ export class Processor extends MarkdownIt {
 		const article = processFrontmatter ? articleSegments.join("---") : md;
 
 		return {
+			source: md,
 			article,
 			headings: this.headings(article),
 			html: this.render(article),

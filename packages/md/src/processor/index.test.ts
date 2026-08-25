@@ -439,8 +439,10 @@ test("render adds linked heading anchors", () => {
 });
 
 test("process", async () => {
-	const { article, headings, html, frontmatter } = await processor.process(md);
+	const { source, article, headings, html, frontmatter } =
+		await processor.process(md);
 
+	expect(source).toBe(md);
 	expect(article).toBeTypeOf("string");
 	expect(article.at(0)).toBe("-");
 	expect(headings).toBeInstanceOf(Array);
@@ -452,8 +454,12 @@ test("process", async () => {
 });
 
 test("with frontmatter", async () => {
-	const { frontmatter } = await processor.process(md, frontmatterSchema);
+	const { source, frontmatter } = await processor.process(
+		md,
+		frontmatterSchema,
+	);
 
+	expect(source).toBe(md);
 	expect(frontmatter.title).toBeTypeOf("string");
 	expect(frontmatter.description).toBeTypeOf("string");
 	expect(frontmatter.keywords).toBeInstanceOf(Array);
