@@ -17,6 +17,7 @@ An extended [markdown-it](https://github.com/markdown-it/markdown-it) instance w
 - Adds anchors and id attributes to headings
 - [`stream`](#stream) and `generate` functions to render and highlight a stream or iterable of markdown
 - [Vite plugin](#plugin) to process markdown at build time
+- A `?frontmatter` Vite query for importing metadata without eagerly loading full Markdown modules
 
 ## Processor
 
@@ -168,6 +169,26 @@ const content = import.meta.glob<Result<typeof FrontmatterSchema>>(
 );
 ```
 
+### Lazy content with eager frontmatter
+
+Use the `?frontmatter` query when a listing needs all post metadata eagerly while the complete posts should remain lazy. The `md` plugin includes separate transforms for Markdown and frontmatter imports. The frontmatter transform validates with the configured `FrontmatterSchema` and exports the result without rendering the Markdown.
+
+The query requires `FrontmatterSchema` and throws an error if it is not configured. Regular Markdown imports continue to work without a schema.
+
+```ts
+import type { Frontmatter } from "./schema";
+
+const content = import.meta.glob("./content/*.md");
+
+const metadata = import.meta.glob<Frontmatter>("./content/*.md", {
+	eager: true,
+	import: "frontmatter",
+	query: "?frontmatter",
+});
+```
+
+Importing the `frontmatter` named export eagerly from the same `.md` module would make that module static and prevent its other exports from being split into a lazy chunk. The query creates a separate module boundary for the metadata.
+
 You can also import normally, add a `d.ts` file for type safety.
 
 ```ts
@@ -175,13 +196,19 @@ You can also import normally, add a `d.ts` file for type safety.
 declare module "*.md" {
 	import type { Heading } from "@robino/md";
 
+	export const source: string;
 	export const html: string;
 	export const article: string;
 	export const headings: Heading[];
 	export const frontmatter: Frontmatter; // inferred output type from your schema
 }
+
+declare module "*.md?frontmatter" {
+	export const frontmatter: Frontmatter;
+}
 ```
 
 ```ts
-import { article, frontmatter, headings, html } from "./post.md";
+import { article, frontmatter, headings, html, source } from "./post.md";
+import { frontmatter } from "./post.md?frontmatter";
 ```
