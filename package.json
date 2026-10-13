@@ -19,7 +19,7 @@
 		"build": "turbo build",
 		"format": "prettier --write .",
 		"changeset": "changeset",
-		"version": "changeset version",
+		"version": "changeset version && npm install --package-lock-only --ignore-scripts",
 		"release": "npm run build && changeset publish"
 	},
 	"devDependencies": {
