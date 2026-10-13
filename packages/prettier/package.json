@@ -28,8 +28,8 @@
 		"prettier": "^3.0.0"
 	},
 	"dependencies": {
-		"@trivago/prettier-plugin-sort-imports": "^6.0.0",
-		"prettier-plugin-css-order": "^2.1.2"
+		"@trivago/prettier-plugin-sort-imports": "^6.0.2",
+		"prettier-plugin-css-order": "^2.2.0"
 	},
 	"devDependencies": {
 		"@robino/tsconfig": "*"

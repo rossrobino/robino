@@ -1,8 +1,8 @@
 import { Processor } from "./index.js";
-import langHtml from "shiki/langs/html.mjs";
-import langLua from "shiki/langs/lua.mjs";
-import langMd from "shiki/langs/md.mjs";
-import langTsx from "shiki/langs/tsx.mjs";
+import langHtml from "@shikijs/langs/html";
+import langLua from "@shikijs/langs/lua";
+import langMd from "@shikijs/langs/md";
+import langTsx from "@shikijs/langs/tsx";
 import { expect, test } from "vitest";
 import { z } from "zod";
 
@@ -437,6 +437,63 @@ test("render adds linked heading anchors", () => {
 		'<h1 id="heading-1" tabindex="-1"><a class="header-anchor" href="#heading-1">Heading 1</a></h1>\n',
 	);
 });
+
+test("render wraps tables in an overflow container", () => {
+	const html = processor.render("| Header |\n| --- |\n| Cell |\n");
+
+	expect(html).toContain('<div style="overflow-x: auto"><table>');
+	expect(html).toContain("</table>\n</div>");
+});
+
+test("link detection requires a scheme unless fuzzy links are enabled", () => {
+	const processor = new Processor();
+
+	expect(processor.render("example.com https://example.com")).toBe(
+		'<p>example.com <a href="https://example.com">https://example.com</a></p>\n',
+	);
+
+	processor.linkify.set({ fuzzyLink: true });
+
+	expect(processor.render("example.com")).toBe(
+		'<p><a href="http://example.com">example.com</a></p>\n',
+	);
+});
+
+test("frontmatter uses YAML 1.2 core scalar types", async () => {
+	expect(
+		await processor.frontmatter(
+			"date: 2026-10-13\nlabel: yes\nenabled: true\ncount: 012",
+			z.object({
+				date: z.string(),
+				label: z.string(),
+				enabled: z.boolean(),
+				count: z.number(),
+			}),
+		),
+	).toEqual({ date: "2026-10-13", label: "yes", enabled: true, count: 12 });
+});
+
+test("frontmatter keeps YAML merge keys as ordinary fields", async () => {
+	expect(
+		await processor.frontmatter(
+			"defaults: &defaults\n  title: Shared\npost:\n  <<: *defaults",
+			z.object({
+				defaults: z.object({ title: z.string() }),
+				post: z.object({ "<<": z.object({ title: z.string() }) }).strict(),
+			}),
+		),
+	).toEqual({
+		defaults: { title: "Shared" },
+		post: { "<<": { title: "Shared" } },
+	});
+});
+
+test.each(["", "\n", "# comment\n"])(
+	"frontmatter rejects YAML without a document: %j",
+	async (yaml) => {
+		await expect(processor.frontmatter(yaml, z.undefined())).rejects.toThrow();
+	},
+);
 
 test("process", async () => {
 	const { source, article, headings, html, frontmatter } =

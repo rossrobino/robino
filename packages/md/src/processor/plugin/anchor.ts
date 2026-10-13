@@ -1,5 +1,4 @@
-import type { PluginSimple } from "markdown-it";
-import type { RenderRule } from "markdown-it/lib/renderer.mjs";
+import type { MarkdownIt, RendererRule } from "markdown-it";
 
 /** Matches non-word characters while generating heading ids. */
 const slugPattern = /[^\w-]+/g;
@@ -17,8 +16,8 @@ export const slug = (text: string) => {
 /**
  * Markdown-it plugin that adds linked ids to headings.
  */
-export const plugin: PluginSimple = (mdIt) => {
-	const proxy: RenderRule = (tokens, i, options, _env, self) =>
+export const plugin = (mdIt: MarkdownIt) => {
+	const proxy: RendererRule = (tokens, i, options, _env, self) =>
 		self.renderToken(tokens, i, options);
 	const originalHeadingOpen = mdIt.renderer.rules.heading_open ?? proxy;
 	const originalHeadingClose = mdIt.renderer.rules.heading_close ?? proxy;

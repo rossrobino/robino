@@ -11,10 +11,9 @@ import { fromHighlighter } from "@shikijs/markdown-it";
 import { transformerMetaHighlight } from "@shikijs/transformers";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { load } from "js-yaml";
-import {
-	default as MarkdownIt,
-	type Options as MarkdownItOptions,
-	type PluginSimple,
+import MarkdownIt, {
+	type MarkdownIt as Markdown,
+	type MarkdownItOptions,
 } from "markdown-it";
 
 export interface Heading {
@@ -79,7 +78,7 @@ export interface Options {
 	};
 
 	/** Plugins to apply. */
-	plugins?: PluginSimple[];
+	plugins?: ((md: Markdown) => void)[];
 }
 
 /** Mutable streaming scanner state reused across markdown chunks. */

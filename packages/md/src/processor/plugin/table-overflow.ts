@@ -1,11 +1,10 @@
-import type { PluginSimple } from "markdown-it";
-import type { RenderRule } from "markdown-it/lib/renderer.mjs";
+import type { MarkdownIt, RendererRule } from "markdown-it";
 
 /**
  * Markdown-it plugin that wraps table elements in a container with horizontal overflow.
  */
-export const plugin: PluginSimple = (mdIt) => {
-	const proxy: RenderRule = (tokens, i, options, _env, self) =>
+export const plugin = (mdIt: MarkdownIt) => {
+	const proxy: RendererRule = (tokens, i, options, _env, self) =>
 		self.renderToken(tokens, i, options);
 
 	const originalTableOpen = mdIt.renderer.rules.table_open ?? proxy;
