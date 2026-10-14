@@ -76,9 +76,29 @@ const html = processor.render(md);
 
 `stream` streams the result of a markdown stream through the renderer/highlighter. You can easily render/highlight and stream the output from an LLM on the server.
 
-The result will come in chunks of elements instead of by word since the entire element needs to be present to render and highlight correctly.
+Headings and horizontal rules can render as soon as their lines finish. Paragraphs, lists, and other blocks wait until their structure is stable.
 
 `generate` is also available to transform a generator of markdown into a generator of HTML.
+
+Top-level fenced code blocks emit complete code lines, preserving syntax highlighting across multiline comments and strings. Top-level tables emit their header after the alignment row, then complete body rows as they arrive. Blocks inside lists or blockquotes wait until their enclosing block is stable.
+
+```ts
+const htmlStream = processor.stream(mdStream);
+
+return new Response(htmlStream.pipeThrough(new TextEncoderStream()), {
+	headers: { "Content-Type": "text/html; charset=utf-8" },
+});
+```
+
+The browser parses this as one continuous HTML response; no client-side JavaScript is required. Incremental chunks can contain open `<pre>`, `<code>`, or table containers. Write them in order to the same response, without parsing each chunk as a separate HTML fragment. The concatenated result matches `render` for the same input.
+
+```ts
+for await (const html of processor.generate(mdIterable)) {
+	// Write html to the same response.
+}
+```
+
+Markdown that depends on later input stays buffered. Potential reference links and link definitions keep the remaining document together until the input ends. Tables with missing or extra cells also buffer their remaining content to preserve the parser's limits. Custom plugins, highlighting callbacks, or modified parser/renderer rules use a full render at the end of the input.
 
 #### ai-sdk
 
