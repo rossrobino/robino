@@ -1,5 +1,5 @@
 ---
-"@robino/md": major
+"@robino/md": minor
 ---
 
 Improve server-side Markdown streaming in `stream` and `generate`.
